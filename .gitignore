@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+.env.*  # optional: ignores .env.dev, .env.prod etc.
+.env
+**/.env
+**/.env.*
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Python egg files
+*.egg
+
+# PyInstaller
+*.spec
+
+# SQLite (if used locally)
+*.sqlite3
+*.db
+
+# Logs
+*.log
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# mypy, pylint, coverage
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+.cache
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Alembic migration cache (optional)
+alembic.ini
+migrations/__pycache__/
+
+# Mac/Linux/Windows system files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+*.pid.lock
+*.sock

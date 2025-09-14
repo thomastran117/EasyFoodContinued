@@ -1,0 +1,52 @@
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+__pycache__
+
+# Ignore environment files
+.env
+.env.*
+.venv
+*.env
+
+# Ignore version control directories
+.git
+.gitignore
+
+# Ignore IDE/editor directories and files
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# Ignore dependency directories
+node_modules
+dist
+build
+*.egg-info
+*.eggs
+
+# Ignore test and coverage files
+*.log
+*.pot
+*.mo
+*.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+
+# Ignore Docker-related files
+Dockerfile*
+.docker-compose.yml
+
+# Ignore temporary and OS-specific files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Ignore FastAPI app directories that aren't needed in production
+tests/
+static/
+templates/
