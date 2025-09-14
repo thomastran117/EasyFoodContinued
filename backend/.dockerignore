@@ -1,52 +1,42 @@
-# Ignore Python bytecode files
+# Python cache/bytecode
+__pycache__/
 *.pyc
 *.pyo
-__pycache__
+*.pyd
+*.pdb
+*.egg-info/
+.eggs/
 
-# Ignore environment files
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+pip-wheel-metadata/
+
+# Logs
+*.log
+
+# Env files (keep secrets out of images)
 .env
 .env.*
-.venv
-*.env
 
-# Ignore version control directories
+# Alembic local artifacts
+alembic/*.ini
+alembic/versions/__pycache__/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+
+# Git
 .git
 .gitignore
 
-# Ignore IDE/editor directories and files
-.vscode
-.idea
-*.sublime-project
-*.sublime-workspace
-
-# Ignore dependency directories
-node_modules
-dist
-build
-*.egg-info
-*.eggs
-
-# Ignore test and coverage files
-*.log
-*.pot
-*.mo
-*.coverage
-.coverage.*
-nosetests.xml
-coverage.xml
-*.cover
-
-# Ignore Docker-related files
-Dockerfile*
-.docker-compose.yml
-
-# Ignore temporary and OS-specific files
-.DS_Store
-Thumbs.db
-*.swp
-*~
-
-# Ignore FastAPI app directories that aren't needed in production
-tests/
-static/
-templates/
+# Tests & coverage
+.coverage
+htmlcov/
+.pytest_cache/
