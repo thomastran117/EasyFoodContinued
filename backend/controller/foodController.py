@@ -10,7 +10,7 @@ from service.foodService import (
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
 from utilities.errorRaiser import raise_error
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 from dtos.foodDtos import FoodCreateDto, FoodUpdateDto
 from service.tokenService import oauth2_scheme, decode_token
 from utilities.exception import BadRequestException

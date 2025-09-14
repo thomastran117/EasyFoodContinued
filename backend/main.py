@@ -11,6 +11,7 @@ from middleware.exceptionMiddleware import setup_exception_handlers
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware
 from config.envConfig import settings
 from utilities.logger import get_logger
+import os
 
 logger = get_logger(__name__)
 
@@ -23,7 +24,11 @@ app.add_middleware(SessionMiddleware, secret_key="dev-session-secret")
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RateLimiterMiddleware, max_requests=100, window=60)
 
-app.mount("/public", StaticFiles(directory="public"), name="public")
+PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
+if os.path.isdir(PUBLIC_DIR):
+    app.mount("/public", StaticFiles(directory=PUBLIC_DIR), name="public")
+else:
+    logger.warning("Static directory %s not found; skipping mount.", PUBLIC_DIR)
 
 app.include_router(serverRouter, prefix="/api")
 

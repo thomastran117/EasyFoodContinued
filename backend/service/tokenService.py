@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from utilities.exception import UnauthorizedException
 import secrets
 from datetime import datetime, timedelta, timezone
-from resource.redisDb import redis_client
+from resources.redisDb import redis_client
 from config.envConfig import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

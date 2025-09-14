@@ -12,7 +12,7 @@ from service.tokenService import oauth2_scheme, decode_token
 from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
 from utilities.errorRaiser import raise_error
 from utilities.exception import BadRequestException
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 
 
 async def getRestaurant(id: int):

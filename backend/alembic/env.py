@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from resource.alchemy import Base
+from resources.alchemy import Base
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 

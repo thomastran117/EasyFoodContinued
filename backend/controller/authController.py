@@ -10,7 +10,7 @@ from service.tokenService import create_token, get_token_data, invalidate_token
 from dtos.authDtos import AuthRequestDto, AuthResponseDto
 from utilities.errorRaiser import raise_error
 from utilities.exception import BadRequestException
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 from config.envConfig import settings
 from starlette.responses import RedirectResponse
 from middleware.oauth import oauth

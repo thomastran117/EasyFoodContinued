@@ -7,7 +7,7 @@ from service.reservationService import (
     find_reservations_by_restaurant,
     find_reservations_by_user,
 )
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 from utilities.errorRaiser import raise_error
 from service.tokenService import oauth2_scheme, decode_token
 from utilities.exception import BadRequestException

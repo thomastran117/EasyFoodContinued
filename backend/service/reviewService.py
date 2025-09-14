@@ -1,4 +1,4 @@
-from resource.alchemy import Review
+from resources.alchemy import Review
 from utilities.exception import ForbiddenException, NotFoundException
 from service.restaurantService import find_restaurant_by_id
 

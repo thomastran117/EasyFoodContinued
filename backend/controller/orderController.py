@@ -11,7 +11,7 @@ from service.orderService import (
 from dtos.orderDtos import CreateOrderRequest, FoodRequest
 from utilities.errorRaiser import raise_error
 from utilities.exception import BadRequestException
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 
 
 def serialize_order(order):

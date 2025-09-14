@@ -3,7 +3,7 @@ from service.tokenService import oauth2_scheme, decode_token
 from service.userService import get_user_by_id, update_user, delete_user
 from dtos.userDtos import UpdateUserDto
 from utilities.errorRaiser import raise_error
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 
 
 async def get_user(id: int):

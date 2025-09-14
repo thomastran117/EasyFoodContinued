@@ -1,4 +1,4 @@
-from resource.alchemy import User
+from resources.alchemy import User
 import bcrypt
 from utilities.exception import (
     ConflictException,
@@ -76,7 +76,7 @@ def change_password(db, email: str, password: str):
 
 from typing import Optional
 from sqlalchemy.orm import Session
-from resource.alchemy import User
+from resources.alchemy import User
 
 
 def get_oauth_user(

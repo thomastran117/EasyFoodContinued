@@ -7,7 +7,7 @@ from service.reviewService import (
     find_reviews_by_restaurant,
     find_reviews_by_user,
 )
-from resource.alchemy import SessionLocal
+from resources.alchemy import SessionLocal
 from utilities.errorRaiser import raise_error
 from utilities.exception import BadRequestException
 from service.tokenService import oauth2_scheme, decode_token
