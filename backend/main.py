@@ -43,9 +43,14 @@ def api_check():
     return "EasyFood API is running"
 
 
+@app.get("/health")
+def api_check():
+    return "Health check is ok!"
+
+
 if __name__ == "__main__":
     port = int(settings.port)
-    logger.info("Server has started")
+    logger.info(f"Server starting at http://localhost:{port}")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

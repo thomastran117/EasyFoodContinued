@@ -2,6 +2,7 @@ from fastapi import HTTPException, Request
 from service.authService import (
     loginUser,
     signupUser,
+    signupUserWOVerify,
     change_password,
     create_user,
     get_oauth_user,
@@ -9,11 +10,12 @@ from service.authService import (
 from service.tokenService import create_token, get_token_data, invalidate_token
 from dtos.authDtos import AuthRequestDto, AuthResponseDto
 from utilities.errorRaiser import raise_error
-from utilities.exception import BadRequestException
+from utilities.exception import BadRequestException, ServiceUnavaliableException
 from resources.alchemy import SessionLocal
 from config.envConfig import settings
 from starlette.responses import RedirectResponse
 from middleware.oauth import oauth
+from utilities.logger import logger
 
 
 async def login(request: AuthRequestDto):
@@ -34,8 +36,15 @@ async def login(request: AuthRequestDto):
 async def signup(request: AuthRequestDto):
     db = SessionLocal()
     try:
-        await signupUser(db, request.email, request.password)
-        return {"message": "Check your email"}
+        if not settings.email_enabled:
+            logger.warn(
+                "Email service is not avaliable. Proceeding with signing up the user w/o verification"
+            )
+            await signupUserWOVerify(db, request.email, request.password)
+            return {"message": "Signup completed without verification. Please login"}
+        else:
+            await signupUser(db, request.email, request.password)
+            return {"message": "Verification sent. Check your email"}
     except Exception as e:
         raise_error(e)
     finally:
@@ -45,6 +54,11 @@ async def signup(request: AuthRequestDto):
 async def verify_email(token: str):
     db = SessionLocal()
     try:
+        if not settings.email_enabled:
+            logger.warn(
+                "Email service is not avaliable. Please correct"
+            )
+            raise ServiceUnavaliableException("Verification route is not avaliable")
         data = get_token_data(token)
         if not data:
             raise BadRequestException("Invalid token")
@@ -61,13 +75,26 @@ async def renew_token(request):
 
 
 async def google_login(request: Request):
-    redirect_uri = settings.google_redirect_uri
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    try:
+        if not settings.google_oauth_enabled:
+            logger.warn("Google OAuth is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Google OAuth is unavaliable. Please login with another method"
+            )
+        redirect_uri = settings.google_redirect_uri
+        return await oauth.google.authorize_redirect(request, redirect_uri)
+    except Exception as e:
+        raise_error(e)
 
 
 async def google_callback(request: Request):
     db = SessionLocal()
     try:
+        if not settings.google_oauth_enabled:
+            logger.warn("Google OAuth is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Google OAuth is unavaliable. Please login with another method"
+            )
         token = await oauth.google.authorize_access_token(request)
         userinfo = await oauth.google.parse_id_token(request, token)
         if not userinfo:
@@ -99,18 +126,33 @@ async def google_callback(request: Request):
             "name": user.name,
             "avatar": user.profileUrl,
         }
+    except Exception as e:
+        raise_error(e)
     finally:
         db.close()
 
 
 async def microsoft_start(request: Request):
-    redirect_uri = settings.ms_redirect_uri
-    return await oauth.microsoft.authorize_redirect(request, redirect_uri)
+    try:
+        if not settings.ms_oauth_enabled:
+            logger.warn("Microsoft OAuth is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Microsoft OAuth is unavaliable. Please login with another method"
+            )
+        redirect_uri = settings.ms_redirect_uri
+        return await oauth.microsoft.authorize_redirect(request, redirect_uri)
+    except Exception as e:
+        raise_error(e)
 
 
 async def microsoft_callback(request: Request):
     db = SessionLocal()
     try:
+        if not settings.ms_oauth_enabled:
+            logger.warn("Microsoft OAuth is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Microsoft OAuth is unavaliable. Please login with another method"
+            )
         token = await oauth.microsoft.authorize_access_token(request)
         userinfo = await oauth.microsoft.parse_id_token(request, token)
         if not userinfo:
@@ -142,5 +184,7 @@ async def microsoft_callback(request: Request):
             "name": user.name,
             "avatar": user.profileUrl,
         }
+    except Exception as e:
+        raise_error(e)
     finally:
         db.close()

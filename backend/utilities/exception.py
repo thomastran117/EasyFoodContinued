@@ -28,3 +28,7 @@ class BadRequestException(Exception):
 
 class NotImplementedException(Exception):
     pass
+
+
+class ServiceUnavaliableException(Exception):
+    pass

@@ -59,6 +59,20 @@ def loginUser(db, email: str, password: str):
     return user
 
 
+def signupUserWOVerify(db, email: str, password: str):
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        raise ConflictException("Email already registered.")
+    hashed_pw = hash_password(password)
+    new_user = User(email=email, password=hashed_pw)
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
+
+
 def change_password(db, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
     if not user:

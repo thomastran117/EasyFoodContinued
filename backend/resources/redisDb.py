@@ -10,6 +10,6 @@ redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 try:
     redis_client.ping()
     logger.info("Redis connected successfully")
-except redis.exceptions.ConnectionError as e:
+except:
     logger.error("Redis connection failed")
     raise

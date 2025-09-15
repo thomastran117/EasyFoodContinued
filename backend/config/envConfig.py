@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 from pydantic import field_validator
 import os
 from utilities.logger import get_logger
@@ -22,25 +22,46 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     expire_minutes: int = 360
 
-    email: str
-    password: str
+    email: Optional[str] = None
+    password: Optional[str] = None
 
-    google_client_id: str
-    google_client_secret: str
-    google_redirect_uri: str
+    google_client_id: Optional[str] = None
+    google_client_secret: Optional[str] = None
+    google_redirect_uri: Optional[str] = None
 
-    ms_tenant_id: str
-    ms_client_id: str
-    ms_client_secret: str
-    ms_redirect_uri: str
+    ms_tenant_id: Optional[str] = None
+    ms_client_id: Optional[str] = None
+    ms_client_secret: Optional[str] = None
+    ms_redirect_uri: Optional[str] = None
+
+    google_oauth_enabled: bool = False
+    ms_oauth_enabled: bool = False
+    email_enabled: bool = False
 
     @field_validator("database_url", "redis_url")
     def must_not_be_empty(cls, v, field):
         if not v:
-            raise ValueError(
-                logger.error("The database or redis url is not set in .env")
-            )
+            logger.error(f"The {field.name} is not set in .env")
+            raise ValueError(f"The {field.name} is not set in .env")
         return v
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.google_oauth_enabled = all(
+            [self.google_client_id, self.google_client_secret, self.google_redirect_uri]
+        )
+
+        self.ms_oauth_enabled = all(
+            [
+                self.ms_tenant_id,
+                self.ms_client_id,
+                self.ms_client_secret,
+                self.ms_redirect_uri,
+            ]
+        )
+
+        self.email_enabled = all([self.email, self.password])
 
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
