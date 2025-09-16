@@ -1,52 +1,47 @@
-param(
-  [switch]$Rebuild,
-  [string]$ComposeFile = "docker-compose.yml",
-  [string]$DbService = "db",
-  [string]$BackendService = "backend",
-  [string]$FrontendService = "frontend",
-  [string]$PgUser = "postgres",
-  [string]$PgDb   = "postgres"
-)
-
 $ErrorActionPreference = "Stop"
-Set-StrictMode -Version Latest
 
-function Invoke-Step($msg) {
-  Write-Host "==> $msg" -ForegroundColor Cyan
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot  = Join-Path $scriptDir ".."
+$frontend  = Join-Path $repoRoot "frontend"
+$backend   = Join-Path $repoRoot "backend"
+
+Write-Host "🚀 Starting frontend..." -ForegroundColor Cyan
+$frontendProc = Start-Process `
+  -FilePath "cmd.exe" `
+  -ArgumentList "/c","npm run dev" `
+  -WorkingDirectory $frontend `
+  -NoNewWindow `
+  -PassThru
+
+$activateBat1 = Join-Path $backend "venv\Scripts\activate.bat"
+$activateBat2 = Join-Path $backend ".venv\Scripts\activate.bat"
+$activateBat  = $null
+if (Test-Path $activateBat1) { $activateBat = $activateBat1 }
+elseif (Test-Path $activateBat2) { $activateBat = $activateBat2 }
+
+if ($activateBat) {
+  $backendCmd = "call `"$activateBat`" && python main.py"
+  Write-Host "🐍 Using virtual environment: $activateBat" -ForegroundColor DarkCyan
+} else {
+  $backendCmd = "python main.py"
+  Write-Host "⚠️ No venv found in backend. Using system Python." -ForegroundColor Yellow
 }
 
-$buildArgs = @("compose","-f",$ComposeFile,"build")
-if ($Rebuild) { $buildArgs += "--no-cache" }
-Invoke-Step "Building images..."
-docker @buildArgs
+Write-Host "🚀 Starting backend..." -ForegroundColor Cyan
+$backendProc = Start-Process `
+  -FilePath "cmd.exe" `
+  -ArgumentList "/c",$backendCmd `
+  -WorkingDirectory $backend `
+  -NoNewWindow `
+  -PassThru
 
-Invoke-Step "Starting database and redis..."
-docker compose -f $ComposeFile up -d $DbService redis
+Write-Host "`n Both servers are running. Press Ctrl+C to stop them." -ForegroundColor Green
 
-Invoke-Step "Waiting for Postgres ($DbService) to be ready..."
-$maxAttempts = 60
-$attempt = 0
-$pgReady = $false
-while (-not $pgReady -and $attempt -lt $maxAttempts) {
-  $attempt++
-  try {
-    docker compose -f $ComposeFile exec -T $DbService pg_isready -U $PgUser -d $PgDb | Out-Null
-    $pgReady = $true
-  }
-  catch {
-    Start-Sleep -Seconds 2
-  }
+try {
+  Wait-Process -Id $frontendProc.Id,$backendProc.Id
+} finally {
+  Write-Host "`n Stopping servers..." -ForegroundColor Yellow
+  if ($frontendProc -and -not $frontendProc.HasExited) { Stop-Process -Id $frontendProc.Id -Force }
+  if ($backendProc  -and -not $backendProc.HasExited)  { Stop-Process -Id $backendProc.Id  -Force }
+  Write-Host " All stopped." -ForegroundColor Green
 }
-if (-not $pgReady) { throw "Postgres did not become ready in time." }
-
-Invoke-Step "Applying Alembic migrations (alembic upgrade head)..."
-docker compose -f $ComposeFile run --rm $BackendService alembic upgrade head
-
-Invoke-Step "Starting backend and frontend (attached)..."
-Write-Host "Press Ctrl+C to stop containers."
-Write-Host ""
-Write-Host "   Frontend: http://localhost:3090"
-Write-Host "   Backend:  http://localhost:8090/"
-Write-Host ""
-
-docker compose -f $ComposeFile up $BackendService $FrontendService

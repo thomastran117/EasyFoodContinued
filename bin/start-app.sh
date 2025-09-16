@@ -1,65 +1,41 @@
 set -euo pipefail
 
-REBUILD=false
-COMPOSE_FILE="docker-compose.yml"
-DB_SERVICE="db"
-BACKEND_SERVICE="backend"
-FRONTEND_SERVICE="frontend"
-PG_USER="postgres"
-PG_DB="postgres"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+FRONTEND="$REPO_ROOT/frontend"
+BACKEND="$REPO_ROOT/backend"
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --rebuild) REBUILD=true; shift ;;
-    --file) COMPOSE_FILE="$2"; shift 2 ;;
-    --db) DB_SERVICE="$2"; shift 2 ;;
-    --backend) BACKEND_SERVICE="$2"; shift 2 ;;
-    --frontend) FRONTEND_SERVICE="$2"; shift 2 ;;
-    --pg-user) PG_USER="$2"; shift 2 ;;
-    --pg-db) PG_DB="$2"; shift 2 ;;
-    *) echo "Unknown option: $1" >&2; exit 1 ;;
-  esac
-done
+echo "🚀 Starting frontend..."
+(
+  cd "$FRONTEND"
+  npm run dev
+) &
+FRONTEND_PID=$!
 
-if docker compose version >/dev/null 2>&1; then
-  COMPOSE=("docker" "compose" "-f" "$COMPOSE_FILE")
-elif command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE=("docker-compose" "-f" "$COMPOSE_FILE")
+VENV_ACTIVATE1="$BACKEND/venv/bin/activate"
+VENV_ACTIVATE2="$BACKEND/.venv/bin/activate"
+BACKEND_CMD="python main.py"
+
+if [[ -f "$VENV_ACTIVATE1" ]]; then
+  BACKEND_CMD="source \"$VENV_ACTIVATE1\" && python main.py"
+  echo "🐍 Using virtual environment: $VENV_ACTIVATE1"
+elif [[ -f "$VENV_ACTIVATE2" ]]; then
+  BACKEND_CMD="source \"$VENV_ACTIVATE2\" && python main.py"
+  echo "🐍 Using virtual environment: $VENV_ACTIVATE2"
 else
-  echo "Error: neither 'docker compose' nor 'docker-compose' found on PATH." >&2
-  exit 1
+  echo "⚠️ No venv found in backend. Using system Python."
 fi
 
-step() { printf '\n==> %s\n' "$*"; }
+echo "🚀 Starting backend..."
+(
+  cd "$BACKEND"
+  bash -c "$BACKEND_CMD"
+) &
+BACKEND_PID=$!
 
-BUILD_CMD=("${COMPOSE[@]}" build)
-$REBUILD && BUILD_CMD+=("--no-cache")
-step "Building images..."
-"${BUILD_CMD[@]}"
-
-step "Starting database and redis..."
-"${COMPOSE[@]}" up -d "$DB_SERVICE" redis
-
-step "Waiting for Postgres ($DB_SERVICE) to be ready..."
-max_attempts=60
-attempt=0
-until "${COMPOSE[@]}" exec -T "$DB_SERVICE" pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; do
-  attempt=$((attempt+1))
-  if (( attempt >= max_attempts )); then
-    echo "Postgres did not become ready in time." >&2
-    exit 1
-  fi
-  sleep 2
-done
-
-step "Applying Alembic migrations (alembic upgrade head)..."
-"${COMPOSE[@]}" run --rm "$BACKEND_SERVICE" alembic upgrade head
-
-step "Starting backend and frontend (attached)..."
-echo "Press Ctrl+C to stop containers."
 echo
-echo "   Frontend: http://localhost:3090"
-echo "   Backend:  http://localhost:8090/"
-echo
+echo "Both servers are running. Press Ctrl+C to stop them."
 
-exec "${COMPOSE[@]}" up "$BACKEND_SERVICE" "$FRONTEND_SERVICE"
+trap 'echo; echo "Stopping servers..."; kill $FRONTEND_PID $BACKEND_PID 2>/dev/null || true; wait $FRONTEND_PID $BACKEND_PID 2>/dev/null || true; echo "✅ All stopped."; exit 0' INT
+
+wait $FRONTEND_PID $BACKEND_PID
