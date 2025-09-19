@@ -31,8 +31,8 @@ function Show-Help {
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 switch ($Command) {
-    "docker" { & "$ScriptDir\bin\start.ps1"; break }
-    "app"    { & "$ScriptDir\bin\start.ps1"; break }
+    "docker" { & "$ScriptDir\bin\start-docker.ps1"; break }
+    "app"    { & "$ScriptDir\bin\start-app.ps1"; break }
     "env"    { & "$ScriptDir\bin\create-env.ps1"; break }
     "setup"  { & "$ScriptDir\bin\setup.ps1"; break }
     "--help" { Show-Help; break }

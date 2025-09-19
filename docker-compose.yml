@@ -1,5 +1,6 @@
 services:
   frontend:
+    container_name: easyfood-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -23,6 +24,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: ["python", "main.py"]
+    container_name: easyfood-backend
     ports:
       - "8090:8090"
     environment:
@@ -47,6 +49,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
       PGDATA: /var/lib/postgresql/data/pgdata
+    container_name: easyfood-psql
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -62,6 +65,7 @@ services:
   redis:
     image: redis:7
     command: ["redis-server", "--appendonly", "yes"]
+    container_name: easyfood-redis
     ports:
       - "6380:6379"
     networks:
