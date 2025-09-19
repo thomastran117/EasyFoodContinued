@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -euo pipefail
 
 info() { printf '[INFO]  %s\n' "$*"; }

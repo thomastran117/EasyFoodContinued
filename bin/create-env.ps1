@@ -25,6 +25,11 @@ if ((Test-Path $envPath) -and -not $Force) {
 $secret = if ($RandomSecret) { New-RandomSecret } else { "change_me_dev_secret" }
 
 $envContent = @"
+##############################################
+# Server
+##############################################
+
+FRONTEND_CLIENT="http://localhost:3090"
 PORT=8090
 
 ##############################################
