@@ -10,6 +10,7 @@ logger = get_logger(__name__)
 class Settings(BaseSettings):
     database_url: str
     redis_url: str
+    mongo_url: str
     port: int = 8090
 
     cors_allowed_region: List[str] = [

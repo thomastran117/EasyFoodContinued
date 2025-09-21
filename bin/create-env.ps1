@@ -33,16 +33,12 @@ FRONTEND_CLIENT="http://localhost:3090"
 PORT=8090
 
 ##############################################
-# Database & Redis
+# Databases
 ##############################################
-# Default local Postgres connection (user: postgres, pass: postgres, db: postgres)
-# If running inside Docker and your app connects to the compose service, use host 'db' instead of 'localhost':
-#   DATABASE_URL="postgresql+psycopg://postgres:postgres@db:5432/postgres"
-DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
 
-# Default local Redis connection (DB 0). For Docker compose service, host is 'redis':
-#   REDIS_URL="redis://redis:6379/0"
+DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
 REDIS_URL="redis://localhost:6379/0"
+MONGO_URL="mongodb://localhost:27017/app"
 
 ##############################################
 # CORS Configuration
