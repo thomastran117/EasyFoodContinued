@@ -14,14 +14,15 @@ class Settings(BaseSettings):
     port: int = 8090
 
     cors_allowed_region: List[str] = [
-        "http://localhost:3090",
-        "http://127.0.0.1:3090",
+        "http://localhost:3050",
+        "http://127.0.0.1:3050",
         "http://localhost:5173",
     ]
 
-    secret_key: str = "default-key"
+    jwt_secret_access: str = "default-key"
+    jwt_secret_refresh: str = "default-key"
+    jwt_secret_verify: str = "default-key"
     algorithm: str = "HS256"
-    expire_minutes: int = 360
 
     email: Optional[str] = None
     password: Optional[str] = None
