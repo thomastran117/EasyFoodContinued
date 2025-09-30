@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from config.envConfig import settings
 from utilities.logger import get_logger
 
@@ -34,6 +35,14 @@ except Exception as e:
     logger.error("PSQL Database connection failed")
     raise
 
+
+@contextmanager
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 class OccasionEnum(enum.Enum):
     BIRTHDAY = "birthday"

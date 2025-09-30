@@ -1,67 +1,40 @@
 import json
-from datetime import datetime, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from utilities.exception import UnauthorizedException
-import secrets
-from datetime import datetime, timedelta, timezone
 from resources.redisDb import redis_client
 from config.envConfig import settings
+from utilities.errorRaiser import UnauthorizedException
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-SECRET_KEY = settings.secret_key
+JWT_SECRET_ACCESS = settings.jwt_secret_access
+JWT_SECRET_REFRESH = settings.jwt_secret_refresh + "_refresh"
+JWT_SECRET_VERIFY = settings.jwt_secret_verify + "_verify"
+
 ALGORITHM = settings.algorithm
-EXPIRE_MINUTES = settings.expire_minutes
+
+ACCESS_EXPIRE_MINUTES = 15
+REFRESH_EXPIRE_DAYS = 7
+VERIFY_EXPIRE_MINUTES = 15
 
 
-def _token_key(token: str) -> str:
+def _refresh_key(token: str) -> str:
+    return f"refresh:{token}"
+
+
+def _verify_key(token: str) -> str:
     return f"verify:{token}"
 
 
-def create_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def _store_token(key: str, token: str, expire: timedelta, payload: dict):
+    redis_client.setex(key, expire, json.dumps(payload))
 
 
-def decode_token(token: str) -> dict:
-    try:
-        if token is None:
-            raise UnauthorizedException("Missing token")
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
-        raise UnauthorizedException("Invalid token")
-
-
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
-    payload = decode_token(token)
-    user_id = payload.get("id")
-    email = payload.get("email")
-    role = payload.get("role")
-
-    if user_id is None or email is None or role is None:
-        raise UnauthorizedException("Invalid token payload")
-
-    return {"id": user_id, "email": email, "role": role}
-
-
-def create_verification_token(email: str, password: str) -> str:
-    token = secrets.token_urlsafe(32)
-    payload = {
-        "email": email,
-        "password": password,
-        "expires": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    redis_client.setex(_token_key(token), 900, json.dumps(payload))
-    return token
-
-
-def get_token_data(token: str):
-    raw = redis_client.get(_token_key(token))
+def _load_token(key: str):
+    raw = redis_client.get(key)
     if not raw:
         return None
     try:
@@ -70,5 +43,103 @@ def get_token_data(token: str):
         return None
 
 
-def invalidate_token(token: str):
-    redis_client.delete(_token_key(token))
+def _delete_token(key: str):
+    redis_client.delete(key)
+
+
+def create_access_token(data: dict) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_EXPIRE_MINUTES)
+    to_encode = {**data, "exp": expire}
+    return jwt.encode(to_encode, JWT_SECRET_ACCESS, algorithm=ALGORITHM)
+
+
+def decode_access_token(token: str) -> dict:
+    if not token:
+        raise UnauthorizedException("Missing access token")
+    try:
+        return jwt.decode(token, JWT_SECRET_ACCESS, algorithms=[ALGORITHM])
+    except JWTError:
+        raise UnauthorizedException("Invalid access token")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+    payload = decode_access_token(token)
+    required = ("id", "email", "role")
+    if not all(payload.get(f) for f in required):
+        raise UnauthorizedException("Invalid token payload")
+    return {f: payload[f] for f in required}
+
+
+def create_refresh_token(data: dict) -> str:
+    expire = datetime.utcnow() + timedelta(days=REFRESH_EXPIRE_DAYS)
+    to_encode = {**data, "exp": expire, "jti": secrets.token_hex(16)}
+    token = jwt.encode(to_encode, JWT_SECRET_REFRESH, algorithm=ALGORITHM)
+
+    _store_token(
+        _refresh_key(token), token, timedelta(days=REFRESH_EXPIRE_DAYS), to_encode
+    )
+    return token
+
+
+def verify_refresh_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, JWT_SECRET_REFRESH, algorithms=[ALGORITHM])
+    except JWTError:
+        raise UnauthorizedException("Invalid refresh token")
+
+    data = _load_token(_refresh_key(token))
+    if not data:
+        raise UnauthorizedException("Refresh token expired or revoked")
+
+    return payload
+
+
+def invalidate_refresh_token(token: str):
+    _delete_token(_refresh_key(token))
+
+
+def create_verification_token(email: str, password: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=VERIFY_EXPIRE_MINUTES)
+    payload = {
+        "email": email,
+        "password": password,
+        "exp": expire,
+        "jti": secrets.token_hex(16),
+    }
+    token = jwt.encode(payload, JWT_SECRET_VERIFY, algorithm=ALGORITHM)
+
+    _store_token(
+        _verify_key(token), token, timedelta(minutes=VERIFY_EXPIRE_MINUTES), payload
+    )
+    return token
+
+
+def verify_verification_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, JWT_SECRET_VERIFY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise UnauthorizedException("Invalid verification token")
+
+    data = _load_token(_verify_key(token))
+    if not data:
+        raise UnauthorizedException("Verification token expired or revoked")
+    return payload
+
+
+def invalidate_verification_token(token: str):
+    _delete_token(_verify_key(token))
+
+
+def generate_tokens(user_id: str, email: str, role: str = "user"):
+    user_data = {"id": user_id, "email": email, "role": role}
+    return create_access_token(user_data), create_refresh_token(user_data)
+
+
+def rotate_refresh_token(old_refresh: str):
+    payload = verify_refresh_token(old_refresh)
+    user_data = {k: payload[k] for k in ("id", "email", "role")}
+
+    access_token = create_access_token(user_data)
+    _delete_token(_refresh_key(old_refresh))
+    new_refresh = create_refresh_token(user_data)
+    return access_token, new_refresh, payload["email"]
