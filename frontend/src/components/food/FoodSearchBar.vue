@@ -1,21 +1,23 @@
 <style>
-  /* Add this style block inside your component or global styles */
-  .modern-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 2px solid #d1d5db; /* gray-300 */
-    border-radius: 0.5rem; /* rounded-lg */
-    background-color: #f9fafb; /* gray-50 */
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    outline-offset: 2px;
-  }
+/* Add this style block inside your component or global styles */
+.modern-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #d1d5db; /* gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  background-color: #f9fafb; /* gray-50 */
+  font-size: 1rem;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  outline-offset: 2px;
+}
 
-  .modern-input:focus {
-    border-color: #2563eb; /* blue-600 */
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4); /* subtle blue glow */
-    background-color: white;
-  }
+.modern-input:focus {
+  border-color: #2563eb; /* blue-600 */
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4); /* subtle blue glow */
+  background-color: white;
+}
 </style>
 
 <template>

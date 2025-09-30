@@ -138,15 +138,11 @@ const auth = useAuth();
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    await axios.put(
-      `${props.link}/api/food/${localItem.id}`,
-      localItem,
-      {
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
+    await axios.put(`${props.link}/api/food/${localItem.id}`, localItem, {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
       },
-    );
+    });
     emit("close");
   } catch (err) {
     console.error("Update failed:", err);

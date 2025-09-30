@@ -63,7 +63,12 @@ const routes = [
     component: PasswordView,
     props: (route) => ({ link: LINK }),
   },
-  { path: "/profile", name: "Profile", component: ProfileManageView, props: (route) => ({ link: LINK }), },
+  {
+    path: "/profile",
+    name: "Profile",
+    component: ProfileManageView,
+    props: (route) => ({ link: LINK }),
+  },
   {
     path: "/cart",
     name: "Cart",

@@ -74,102 +74,100 @@ onMounted(() => {
   </section>
   <main class="min-h-screen bg-gray-50 text-gray-800 font-sans py-12 px-6">
     <section class="max-w-6xl mx-auto">
-
-<form
-  @submit.prevent="fetchRestaurants"
-  class="mb-10 bg-white p-6 rounded-2xl shadow-lg grid grid-cols-1 md:grid-cols-3 gap-6 items-end border border-gray-200"
->
-  <div>
-    <label
-      class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
-    >
-      <svg
-        class="h-4 w-4 text-green-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
+      <form
+        @submit.prevent="fetchRestaurants"
+        class="mb-10 bg-white p-6 rounded-2xl shadow-lg grid grid-cols-1 md:grid-cols-3 gap-6 items-end border border-gray-200"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Title
-    </label>
-    <input
-      v-model="title"
-      type="text"
-      placeholder="e.g. Pizza Palace"
-      class="modern-input"
-    />
-  </div>
+        <div>
+          <label
+            class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
+          >
+            <svg
+              class="h-4 w-4 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Title
+          </label>
+          <input
+            v-model="title"
+            type="text"
+            placeholder="e.g. Pizza Palace"
+            class="modern-input"
+          />
+        </div>
 
-  <div>
-    <label
-      class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
-    >
-      <svg
-        class="h-4 w-4 text-green-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Description
-    </label>
-    <input
-      v-model="description"
-      type="text"
-      placeholder="e.g. Italian cuisine"
-      class="modern-input"
-    />
-  </div>
+        <div>
+          <label
+            class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
+          >
+            <svg
+              class="h-4 w-4 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Description
+          </label>
+          <input
+            v-model="description"
+            type="text"
+            placeholder="e.g. Italian cuisine"
+            class="modern-input"
+          />
+        </div>
 
-  <div>
-    <label
-      class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
-    >
-      <svg
-        class="h-4 w-4 text-green-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-      Location
-    </label>
-    <input
-      v-model="location"
-      type="text"
-      placeholder="e.g. Toronto"
-      class="modern-input"
-    />
-  </div>
+        <div>
+          <label
+            class="block text-sm font-semibold text-gray-800 mb-1 flex items-center gap-1"
+          >
+            <svg
+              class="h-4 w-4 text-green-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            Location
+          </label>
+          <input
+            v-model="location"
+            type="text"
+            placeholder="e.g. Toronto"
+            class="modern-input"
+          />
+        </div>
 
-  <div class="md:col-span-3 flex justify-end mt-2">
-    <button
-      type="submit"
-      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm transition-all duration-200"
-    >
-      🔍 Search
-    </button>
-  </div>
-</form>
-
+        <div class="md:col-span-3 flex justify-end mt-2">
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-xl shadow-sm transition-all duration-200"
+          >
+            🔍 Search
+          </button>
+        </div>
+      </form>
 
       <LoadingState v-if="loading" resource="restaurants" />
       <ErrorState
@@ -192,20 +190,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-  .modern-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 2px solid #d1d5db;
-    border-radius: 0.75rem;
-    background-color: #f9fafb;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    font-size: 1rem;
-    outline-offset: 2px;
-  }
+.modern-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  font-size: 1rem;
+  outline-offset: 2px;
+}
 
-  .modern-input:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
-    background-color: white;
-  }
+.modern-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+  background-color: white;
+}
 </style>
