@@ -10,7 +10,7 @@ from service.tokenService import (
     rotate_refresh_token,
     create_verification_token,
     verify_verification_token,
-    invalidate_refresh_token
+    invalidate_refresh_token,
 )
 from service.emailService import send_verification_email
 

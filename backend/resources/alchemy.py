@@ -44,6 +44,7 @@ def get_db():
     finally:
         db.close()
 
+
 class OccasionEnum(enum.Enum):
     BIRTHDAY = "birthday"
     ANNIVERSARY = "anniversary"

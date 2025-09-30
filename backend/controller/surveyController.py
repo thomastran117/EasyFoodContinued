@@ -1,6 +1,10 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error, BadRequestException, NotImplementedException
+from utilities.errorRaiser import (
+    raise_error,
+    BadRequestException,
+    NotImplementedException,
+)
 from resources.alchemy import SessionLocal
 from service.tokenService import oauth2_scheme, get_current_user
 from service.surveyService import (

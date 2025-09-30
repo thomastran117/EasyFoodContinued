@@ -10,7 +10,12 @@ from service.authService import (
 )
 
 from dtos.authDtos import AuthRequestDto
-from utilities.errorRaiser import raise_error, ServiceUnavaliableException, UnauthorizedException
+from utilities.errorRaiser import (
+    raise_error,
+    ServiceUnavaliableException,
+    UnauthorizedException,
+    NotImplementedException,
+)
 from config.envConfig import settings
 from utilities.logger import logger
 
@@ -110,5 +115,19 @@ async def logout(request: Request):
         )
         return response
 
+    except Exception as e:
+        raise_error(e)
+
+
+async def google():
+    try:
+        raise NotImplementedException("Google OAuth is not implemented yet")
+    except Exception as e:
+        raise_error(e)
+
+
+async def microsoft():
+    try:
+        raise NotImplementedException("Microsoft OAuth is not implemented yet")
     except Exception as e:
         raise_error(e)

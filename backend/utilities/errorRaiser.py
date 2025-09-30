@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from utilities.logger import logger
 
+
 class UserAlreadyExistsException(Exception):
     pass
 
