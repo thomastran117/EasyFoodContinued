@@ -7,9 +7,10 @@ from service.authService import (
     verifyUser,
     exchangeTokens,
     logoutTokens,
+    microsoft_login
 )
-
-from dtos.authDtos import AuthRequestDto
+import httpx
+from dtos.authDtos import AuthRequestDto, MicrosoftAuthRequest
 from utilities.errorRaiser import (
     raise_error,
     ServiceUnavaliableException,
@@ -126,8 +127,25 @@ async def google():
         raise_error(e)
 
 
-async def microsoft():
+async def microsoft(auth_req: MicrosoftAuthRequest):
     try:
-        raise NotImplementedException("Microsoft OAuth is not implemented yet")
+        access, refresh, user = await microsoft_login(auth_req.id_token)
+        response = JSONResponse(
+            content={
+                "token": access,
+                "email": user.email,
+            }
+        )
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh,
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+            max_age=7 * 24 * 60 * 60,
+        )
+
+        return response
     except Exception as e:
         raise_error(e)

@@ -10,3 +10,7 @@ class AuthResponseDto(BaseModel):
     token: str
     email: EmailStr
     id: int
+
+
+class MicrosoftAuthRequest(BaseModel):
+    id_token: str

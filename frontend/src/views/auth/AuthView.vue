@@ -84,6 +84,7 @@
 
               <div class="flex gap-3">
                 <button
+                  @click="handleGoogle"
                   type="button"
                   class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
                 >
@@ -114,6 +115,7 @@
                 </button>
 
                 <button
+                  @click="handleMicrosoft"
                   type="button"
                   class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
                 >
@@ -186,6 +188,9 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/vue/24/outline";
 import { useAuth } from "../../composables/useAuth";
 import { useRouter } from "vue-router";
 
+const clientId = "6fbb3c76-8f8d-4280-87b5-ff2e23574279";
+const tenant = "common";
+const redirectUri = "http://localhost:3050/auth/callback";
 const apiUrl = "http://localhost:8050";
 const auth = useAuth();
 const showPassword = ref(false);
@@ -209,6 +214,43 @@ function toggleAuth() {
       transitioning.value = false;
     }, 50);
   }, 250);
+}
+
+async function handleGoogle() {
+  console.log("Google pressed");
+};
+
+
+function base64URLEncode(str) {
+  return btoa(String.fromCharCode.apply(null, new Uint8Array(str)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function generateCodeChallenge(verifier) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return base64URLEncode(digest);
+}
+
+async function handleMicrosoft() {
+  const codeVerifier = crypto.randomUUID() + crypto.randomUUID();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+  sessionStorage.setItem("ms_code_verifier", codeVerifier);
+
+  const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize` +
+    `?client_id=${clientId}` +
+    `&response_type=code` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_mode=query` +
+    `&scope=openid profile email offline_access` +
+    `&code_challenge=${codeChallenge}` +
+    `&code_challenge_method=S256`;
+
+  window.location.href = authUrl;
 }
 
 async function handleSubmit() {

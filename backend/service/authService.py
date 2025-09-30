@@ -13,7 +13,10 @@ from service.tokenService import (
     invalidate_refresh_token,
 )
 from service.emailService import send_verification_email
-
+from config.envConfig import settings
+import jwt
+from jose import jwk, jwt as jose_jwt
+import httpx
 
 async def loginUser(email: str, password: str):
     with get_db() as db:
@@ -64,6 +67,59 @@ def createUser(email: str, password: str):
         db.refresh(new_user)
 
         return new_user
+
+
+async def microsoft_login(id_token: str):
+    with get_db() as db:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://login.microsoftonline.com/common/discovery/v2.0/keys")
+            resp.raise_for_status()
+            jwks = resp.json()
+
+        header = jose_jwt.get_unverified_header(id_token)
+        kid = header.get("kid")
+
+        key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
+        if not key:
+            raise BadRequestException("Unable to find matching JWKS key")
+
+        decoded_ms = jose_jwt.decode(
+            id_token,
+            key,
+            algorithms=["RS256"],
+            audience=settings.ms_client_id,
+            options={"verify_iss": False}
+        )
+
+        email = decoded_ms.get("preferred_username") or decoded_ms.get("email")
+        user_id = decoded_ms.get("sub")
+        name = decoded_ms.get("name")
+        picture = decoded_ms.get("picture")
+
+        if not email:
+            raise BadRequestException("No email claim in Microsoft token")
+
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(
+                email=email,
+                provider="microsoft",
+                microsoft_id=user_id,
+                name=name,
+                profileUrl=picture,
+            )
+            db.add(user)
+        else:
+            if not user.microsoft_id:
+                user.microsoft_id = user_id
+            if not user.provider or user.provider == "local":
+                user.provider = "microsoft"
+
+        db.commit()
+        db.refresh(user)
+
+        access, refresh = generate_tokens(user.id, user.email, user.role)
+        return access, refresh, user
 
 
 async def exchangeTokens(token: str):
