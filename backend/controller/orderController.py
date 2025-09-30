@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from service.tokenService import oauth2_scheme, decode_token
+from service.tokenService import oauth2_scheme, get_current_user
 from service.orderService import (
     create_order,
     update_order,
@@ -9,8 +9,7 @@ from service.orderService import (
     find_orders_by_user,
 )
 from dtos.orderDtos import CreateOrderRequest, FoodRequest
-from utilities.errorRaiser import raise_error
-from utilities.exception import BadRequestException
+from utilities.errorRaiser import raise_error, BadRequestException
 from resources.alchemy import SessionLocal
 
 
@@ -38,7 +37,7 @@ def serialize_order(order):
 async def getOrdersByUser(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         orders = find_orders_by_user(db, user_payload["id"])
         orders_response = [serialize_order(order) for order in orders]
         return {"message": "User orders found successfully", "orders": orders_response}
@@ -51,7 +50,7 @@ async def getOrdersByUser(token: str = Depends(oauth2_scheme)):
 async def getOrdersByRestaurant(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         orders = find_orders_by_restaurant(db, user_payload["id"])
         orders_response = [serialize_order(order) for order in orders]
         return {
@@ -67,7 +66,7 @@ async def getOrdersByRestaurant(token: str = Depends(oauth2_scheme)):
 async def getOrderById(id: int, token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         if id <= 0:
             raise BadRequestException("Invalid order ID")
         order = find_order_by_id(db, id, user_payload["id"])
@@ -88,7 +87,7 @@ async def createOrder(
 ):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
 
         food_requests = [
             {"food_id": item.food_id, "quantity": item.quantity} for item in data.items
@@ -121,7 +120,7 @@ async def updateOrder(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException("Invalid order ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         pass
     except Exception as e:
         raise_error(e)
@@ -134,7 +133,7 @@ async def deleteOrder(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException("Invalid order ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_order(db, id, user_payload["id"])
         return {"message": f"Order with ID {id} deleted successfully"}
     except Exception as e:

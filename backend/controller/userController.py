@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from service.tokenService import oauth2_scheme, decode_token
+from service.tokenService import oauth2_scheme, get_current_user
 from service.userService import get_user_by_id, update_user, delete_user
 from dtos.userDtos import UpdateUserDto
 from utilities.errorRaiser import raise_error
@@ -28,7 +28,7 @@ async def get_user(id: int):
 async def get_me(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         user = get_user_by_id(db, user_id=user_payload["id"])
         return {
             "id": user.id,
@@ -48,7 +48,7 @@ async def get_me(token: str = Depends(oauth2_scheme)):
 async def update_me(update: UpdateUserDto, token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         updated_user = update_user(
             db,
             user_payload["id"],
@@ -68,7 +68,7 @@ async def update_me(update: UpdateUserDto, token: str = Depends(oauth2_scheme)):
 async def delete_me(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_user(db, user_payload["id"])
         return {"message": "User deleted successfully"}
     except Exception as e:

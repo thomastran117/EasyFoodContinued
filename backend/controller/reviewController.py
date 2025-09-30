@@ -8,16 +8,15 @@ from service.reviewService import (
     find_reviews_by_user,
 )
 from resources.alchemy import SessionLocal
-from utilities.errorRaiser import raise_error
-from utilities.exception import BadRequestException
-from service.tokenService import oauth2_scheme, decode_token
+from utilities.errorRaiser import raise_error, BadRequestException
+from service.tokenService import oauth2_scheme, get_current_user
 from dtos.reviewDtos import ReviewCreateDto, ReviewUpdateDto
 
 
 async def getReviewsByUser(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         reviews = find_reviews_by_user(db, user_payload["id"])
         return {"message": "user's reviews found", "reviews": reviews}
     except Exception as e:
@@ -59,7 +58,7 @@ async def createReview(
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid restaurant ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         review = create_review(
             db,
             restaurant_id=id,
@@ -85,7 +84,7 @@ async def updateReview(
     try:
         if id <= 0:
             raise BadRequestException("Invalid reservation ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         review = update_review(
             db,
             restaurant_id=id,
@@ -109,7 +108,7 @@ async def deleteReview(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException("Invalid ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_review(db, id, user_payload["id"])
         return {"message": f"Review with id {id} deleted successfully"}
     except Exception as e:

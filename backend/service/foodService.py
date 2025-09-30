@@ -1,5 +1,5 @@
 from resources.alchemy import Food
-from utilities.exception import (
+from utilities.errorRaiser import (
     ForbiddenException,
     NotFoundException,
     BadRequestException,

@@ -8,10 +8,9 @@ from service.restaurantService import (
     find_restaurant_by_id,
     find_restaurant_by_userid,
 )
-from service.tokenService import oauth2_scheme, decode_token
+from service.tokenService import oauth2_scheme, get_current_user
 from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
-from utilities.errorRaiser import raise_error
-from utilities.exception import BadRequestException
+from utilities.errorRaiser import raise_error, BadRequestException
 from resources.alchemy import SessionLocal
 
 
@@ -49,7 +48,7 @@ async def getRestaurants(
 async def getUserRestaurant(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         restaurant = find_restaurant_by_userid(db, user_payload["id"])
         return {"message": "User's restaurant found", "restaurant": restaurant}
     except Exception as e:
@@ -63,7 +62,7 @@ async def addRestaurant(
 ):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         restaurant = create_restaurant(
             db,
             owner_id=user_payload["id"],
@@ -87,7 +86,7 @@ async def updateRestaurant(
 ):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         restaurant = update_restaurant(
             db,
             owner_id=user_payload["id"],
@@ -109,7 +108,7 @@ async def updateRestaurant(
 async def deleteRestaurant(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_restaurant(db, user_payload["id"])
         return {"message": f"Restaurant deleted successfully"}
     except Exception as e:

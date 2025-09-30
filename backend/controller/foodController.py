@@ -9,11 +9,10 @@ from service.foodService import (
 )
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error
+from utilities.errorRaiser import raise_error, BadRequestException
 from resources.alchemy import SessionLocal
 from dtos.foodDtos import FoodCreateDto, FoodUpdateDto
-from service.tokenService import oauth2_scheme, decode_token
-from utilities.exception import BadRequestException
+from service.tokenService import oauth2_scheme, get_current_user
 
 
 async def getFood(id: int):
@@ -79,7 +78,7 @@ async def getFoodsByUserRestaurant(
         if priceMin is not None and priceMax is not None:
             if priceMax < priceMin:
                 raise BadRequestException("Invalid price range")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         result = find_foods_by_user_restaurant(
             db,
             user_payload["id"],
@@ -145,7 +144,7 @@ async def getFoodsByRestaurant(
 async def addFood(create: FoodCreateDto, token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         food = create_food(
             db,
             user_id=user_payload["id"],
@@ -175,7 +174,7 @@ async def updateFood(
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid Food ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         food = update_food(
             db,
             food_id=id,
@@ -201,7 +200,7 @@ async def deleteFood(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException("Invalid ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_food(db, id, user_payload["id"])
         return {"message": f"Food with ID {id} deleted successfully"}
     except Exception as e:

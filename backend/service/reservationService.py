@@ -1,5 +1,5 @@
 from resources.alchemy import Reservation
-from utilities.exception import ForbiddenException, NotFoundException
+from utilities.errorRaiser import ForbiddenException, NotFoundException
 from service.restaurantService import find_restaurant_by_id
 
 

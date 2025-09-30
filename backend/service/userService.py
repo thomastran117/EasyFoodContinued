@@ -1,5 +1,5 @@
 from resources.alchemy import User
-from utilities.exception import NotFoundException, BadRequestException
+from utilities.errorRaiser import NotFoundException, BadRequestException
 from utilities.imageValidator import is_valid_image_url
 
 

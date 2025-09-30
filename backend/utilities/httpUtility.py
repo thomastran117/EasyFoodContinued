@@ -1,5 +1,9 @@
 import random
 
+def is_positive_integer(s):
+    return s.isdigit() and int(s) > 0
+
+
 BASE_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 BASE = len(BASE_ALPHABET)
 KEY = "mysecretkey123"

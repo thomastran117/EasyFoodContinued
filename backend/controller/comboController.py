@@ -1,9 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error
+from utilities.errorRaiser import raise_error, BadRequestException
 from resources.alchemy import SessionLocal
-from service.tokenService import oauth2_scheme, decode_token
-from utilities.exception import BadRequestException
+from service.tokenService import oauth2_scheme, get_current_user
 
 
 async def createCombo(token: str = Depends(oauth2_scheme)):

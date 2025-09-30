@@ -1,5 +1,5 @@
 from resources.alchemy import Restaurant
-from utilities.exception import (
+from utilities.errorRaiser import (
     ConflictException,
     ForbiddenException,
     NotFoundException,

@@ -8,16 +8,15 @@ from service.reservationService import (
     find_reservations_by_user,
 )
 from resources.alchemy import SessionLocal
-from utilities.errorRaiser import raise_error
-from service.tokenService import oauth2_scheme, decode_token
-from utilities.exception import BadRequestException
+from utilities.errorRaiser import raise_error, BadRequestException
+from service.tokenService import oauth2_scheme, get_current_user
 from dtos.reservationDtos import ReservationCreateDto, ReservationUpdateDto
 
 
 async def getReservationsByUser(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         reservations = find_reservations_by_user(db, user_payload["id"])
         return {"message": "user's reservations found", "reservations": reservations}
     except Exception as e:
@@ -65,7 +64,7 @@ async def createReservation(
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid restaurant ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         reservation = create_reservation(
             db,
             restaurant_id=id,
@@ -91,7 +90,7 @@ async def updateReservation(
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid reservation ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         reservation = update_reservation(
             db,
             restaurant_id=id,
@@ -115,7 +114,7 @@ async def deleteReservation(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException("Invalid ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         delete_reservation(db, id, user_payload["id"])
         return {"message": f"Reservation with id {id} deleted successfully"}
     except Exception as e:

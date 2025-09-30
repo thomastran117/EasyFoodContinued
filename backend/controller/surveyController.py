@@ -1,9 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error
+from utilities.errorRaiser import raise_error, BadRequestException, NotImplementedException
 from resources.alchemy import SessionLocal
-from service.tokenService import oauth2_scheme, decode_token
-from utilities.exception import BadRequestException, NotImplementedException
+from service.tokenService import oauth2_scheme, get_current_user
 from service.surveyService import (
     create_survey,
     update_survey,
@@ -20,7 +19,7 @@ async def getSurvey(id: int, token: str = Depends(oauth2_scheme)):
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid reservation ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         survey = find_survey_by_id(db, id, user_payload["id"])
         return {"message": "survey found", "survey": survey}
     except Exception as e:
@@ -32,7 +31,7 @@ async def getSurvey(id: int, token: str = Depends(oauth2_scheme)):
 async def getSurveysByUser(token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         surveys = find_surveys_by_user(db, user_payload["id"])
         return {"message": "surveys found", "surveys": surveys}
     except Exception as e:
@@ -54,7 +53,7 @@ async def getSurveys():
 async def createSurvey(create: SurveyCreateDto, token: str = Depends(oauth2_scheme)):
     db = SessionLocal()
     try:
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         survey = create_survey(
             db,
             user_id=user_payload["id"],
@@ -78,7 +77,7 @@ async def updateSurvey(
     try:
         if id <= 0:
             raise BadRequestException(f"{id} is an invalid reservation ID")
-        user_payload = decode_token(token)
+        user_payload = get_current_user(token)
         survey = update_survey(
             db,
             survey_id=id,

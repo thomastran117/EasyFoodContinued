@@ -9,13 +9,15 @@ from utilities.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class User(Document):
-    email: Indexed(EmailStr, unique=True) # type: ignore
+    email: Indexed(EmailStr, unique=True)  # type: ignore
     name: Optional[str] = None
     role: str = "user"
 
     class Settings:
         name = "users"
+
 
 _client = motor.motor_asyncio.AsyncIOMotorClient(settings.mongo_url)
 
