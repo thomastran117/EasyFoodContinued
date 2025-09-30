@@ -17,7 +17,7 @@ from utilities.logger import logger
 
 async def login(request: AuthRequestDto):
     try:
-        access, refresh, user = loginUser(request.email, request.password)
+        access, refresh, user = await loginUser(request.email, request.password)
 
         response = JSONResponse(
             content={
@@ -60,7 +60,7 @@ async def verify_email(token: str):
         if not settings.email_enabled:
             logger.warn("Email service is not avaliable. Please correct")
             raise ServiceUnavaliableException("Verification route is not avaliable")
-        user = verifyUser(token)
+        user = await verifyUser(token)
         return {"message": "Signup successful"}
     except Exception as e:
         raise_error(e)
@@ -71,7 +71,7 @@ async def renew(request: Request):
         refresh_token = request.cookies.get("refresh_token")
         if not refresh_token:
             raise UnauthorizedException("Missing refresh token cookie")
-        access, refresh, email = exchangeTokens(refresh_token)
+        access, refresh, email = await exchangeTokens(refresh_token)
         response = JSONResponse(
             content={
                 "token": access,
@@ -89,5 +89,26 @@ async def renew(request: Request):
         )
 
         return response
+    except Exception as e:
+        raise_error(e)
+
+
+async def logout(request: Request):
+    try:
+        refresh_token = request.cookies.get("refresh_token")
+        if not refresh_token:
+            raise UnauthorizedException("No refresh token cookie found")
+
+        await logoutTokens(refresh_token)
+
+        response = JSONResponse({"message": "Logged out successfully"})
+        response.delete_cookie(
+            key="refresh_token",
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+        )
+        return response
+
     except Exception as e:
         raise_error(e)

@@ -1,5 +1,5 @@
 from resources.alchemy import Survey
-from utilities.exception import ForbiddenException, NotFoundException
+from utilities.errorRaiser import ForbiddenException, NotFoundException
 
 
 def find_survey_by_id(db, survey_id: int, user_id: int):

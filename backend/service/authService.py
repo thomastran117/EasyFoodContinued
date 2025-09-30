@@ -10,6 +10,7 @@ from service.tokenService import (
     rotate_refresh_token,
     create_verification_token,
     verify_verification_token,
+    invalidate_refresh_token
 )
 from service.emailService import send_verification_email
 
@@ -66,12 +67,15 @@ def createUser(email: str, password: str):
 
 
 async def exchangeTokens(token: str):
-    access, refresh, email = await rotate_refresh_token(token)
+    access, refresh, email = rotate_refresh_token(token)
     return access, refresh, email
 
 
 async def logoutTokens(token: str):
-    pass
+    if not token:
+        raise UnauthorizedException("Missing refresh token")
+    invalidate_refresh_token(token)
+    return {"message": "Logged out successfully"}
 
 
 def hash_password(plain_password: str) -> str:
