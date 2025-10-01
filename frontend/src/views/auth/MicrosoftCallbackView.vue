@@ -36,7 +36,7 @@ onMounted(async () => {
       client_id: "6fbb3c76-8f8d-4280-87b5-ff2e23574279",
       grant_type: "authorization_code",
       code,
-      redirect_uri: "http://localhost:3050/auth/callback",
+      redirect_uri: "http://localhost:3050/auth/microsoft",
       code_verifier: verifier,
     });
 

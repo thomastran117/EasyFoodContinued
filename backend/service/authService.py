@@ -17,6 +17,10 @@ from config.envConfig import settings
 import jwt
 from jose import jwk, jwt as jose_jwt
 import httpx
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+GOOGLE_CLIENT_ID="199609700164-qjnh0va1o1l6a87vac4lmro1j6kfqhnq.apps.googleusercontent.com"
 
 async def loginUser(email: str, password: str):
     with get_db() as db:
@@ -117,6 +121,33 @@ async def microsoft_login(id_token: str):
 
         db.commit()
         db.refresh(user)
+
+        access, refresh = generate_tokens(user.id, user.email, user.role)
+        return access, refresh, user
+
+
+async def google_login(token: str):
+    with get_db() as db:
+        idinfo = id_token.verify_oauth2_token(
+            token, requests.Request(), GOOGLE_CLIENT_ID
+        )
+
+        if idinfo["iss"] not in [
+            "accounts.google.com",
+            "https://accounts.google.com",
+        ]:
+            raise UnauthorizedException("Invalid issuer.")
+
+        email = idinfo.get("email")
+        name = idinfo.get("name")
+        picture = idinfo.get("picture")
+
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            user = User(email=email, username=name, avatar=picture)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
 
         access, refresh = generate_tokens(user.id, user.email, user.role)
         return access, refresh, user

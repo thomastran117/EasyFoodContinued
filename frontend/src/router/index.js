@@ -28,6 +28,8 @@ import ReviewView from "../views/review/ReviewView.vue";
 import NotFoundView from "../views/error/NotFoundView.vue";
 import HistoryView from "../views/main/HistoryView.vue";
 import OrderConfirmationView from "../views/order/OrderConfirmationView.vue";
+import MicrosoftCallbackView from "../views/auth/MicrosoftCallbackView.vue";
+import GoogleCallbackView from "../views/auth/GoogleCallbackView.vue";
 
 const LINK = import.meta.env.VITE_BACKEND_URL;
 
@@ -37,6 +39,16 @@ const routes = [
   { path: "/contact", name: "Contact", component: ContactView },
   { path: "/services", name: "Service", component: ServiceView },
   { path: "/careers", name: "Career", component: CareerView },
+  {
+    path: "/auth/microsoft",
+    name: "Microsoft",
+    component: MicrosoftCallbackView,
+  },
+  {
+    path: "/auth/google",
+    name: "Google",
+    component: GoogleCallbackView,
+  },
   {
     path: "/history",
     name: "History",

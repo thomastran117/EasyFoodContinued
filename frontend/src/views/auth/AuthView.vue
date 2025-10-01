@@ -190,7 +190,7 @@ import { useRouter } from "vue-router";
 
 const clientId = "6fbb3c76-8f8d-4280-87b5-ff2e23574279";
 const tenant = "common";
-const redirectUri = "http://localhost:3050/auth/callback";
+const redirectUri = "http://localhost:3050/auth/microsoft";
 const apiUrl = "http://localhost:8050";
 const auth = useAuth();
 const showPassword = ref(false);
@@ -218,8 +218,22 @@ function toggleAuth() {
 
 async function handleGoogle() {
   console.log("Google pressed");
-};
 
+  const clientId = "199609700164-qjnh0va1o1l6a87vac4lmro1j6kfqhnq.apps.googleusercontent.com";
+  const redirectUri = "http://localhost:3050/auth/google";
+  const scope = "openid email profile";
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "id_token",
+    scope,
+    nonce: crypto.randomUUID(),
+    prompt: "select_account",
+  });
+
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
 
 function base64URLEncode(str) {
   return btoa(String.fromCharCode.apply(null, new Uint8Array(str)))

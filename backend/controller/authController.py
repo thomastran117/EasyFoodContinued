@@ -7,10 +7,11 @@ from service.authService import (
     verifyUser,
     exchangeTokens,
     logoutTokens,
-    microsoft_login
+    microsoft_login,
+    google_login
 )
 import httpx
-from dtos.authDtos import AuthRequestDto, MicrosoftAuthRequest
+from dtos.authDtos import AuthRequestDto, MicrosoftAuthRequest, GoogleAuthRequest
 from utilities.errorRaiser import (
     raise_error,
     ServiceUnavaliableException,
@@ -120,9 +121,26 @@ async def logout(request: Request):
         raise_error(e)
 
 
-async def google():
+async def google(auth_req: GoogleAuthRequest):
     try:
-        raise NotImplementedException("Google OAuth is not implemented yet")
+        access, refresh, user = await google_login(auth_req.id_token)
+        response = JSONResponse(
+            content={
+                "token": access,
+                "email": user.email,
+            }
+        )
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh,
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+            max_age=7 * 24 * 60 * 60,
+        )
+
+        return response
     except Exception as e:
         raise_error(e)
 

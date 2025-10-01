@@ -14,3 +14,7 @@ class AuthResponseDto(BaseModel):
 
 class MicrosoftAuthRequest(BaseModel):
     id_token: str
+
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
