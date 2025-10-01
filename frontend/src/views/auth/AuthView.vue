@@ -7,7 +7,7 @@
     >
       <div class="relative w-full h-full">
         <div
-          class="absolute w-[65%] h-full right-0 flex items-center justify-center p-10 bg-white transition-all duration-500 ease-in-out z-10"
+          class="absolute w-[65%] h-full right-0 flex items-center justify-center p-10 bg-gradient-to-br from-white via-blue-50 to-purple-50 bg-opacity-90 transition-all duration-500 ease-in-out z-10"
           :style="{
             transform: isSignup ? 'translateX(-52%)' : 'translateX(0)',
           }"
@@ -16,6 +16,7 @@
             <h1 class="text-3xl font-bold text-gray-800 text-center">
               {{ isSignup ? "Sign Up" : "Login" }}
             </h1>
+
             <form @submit.prevent="handleSubmit" class="space-y-5">
               <div class="relative">
                 <EnvelopeIcon
@@ -53,7 +54,20 @@
                 </button>
               </div>
 
-              <div v-if="!isSignup" class="text-right -mt-3">
+              <div
+                v-if="!isSignup"
+                class="flex items-center justify-between -mt-2"
+              >
+                <label
+                  class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    v-model="rememberMe"
+                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Remember Me
+                </label>
                 <router-link
                   to="/password"
                   class="text-sm text-blue-600 hover:underline"
@@ -65,7 +79,7 @@
               <button
                 type="submit"
                 :disabled="loading"
-                class="w-2/3 mx-auto block bg-blue-600 text-white py-4 rounded-full hover:bg-blue-700 transition text-lg font-medium"
+                class="w-2/3 mx-auto block bg-blue-600 text-white py-4 rounded-full text-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg hover:bg-blue-700 active:scale-95"
               >
                 {{
                   loading
@@ -86,7 +100,7 @@
                 <button
                   @click="handleGoogle"
                   type="button"
-                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
+                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 text-gray-700 font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md hover:bg-gray-50 active:scale-95"
                 >
                   <svg
                     class="h-5 w-5 mr-2"
@@ -111,34 +125,32 @@
                       d="M24 48c6.48 0 11.92-2.14 15.89-5.82l-7.39-5.73c-2.05 1.38-4.68 2.2-8.5 2.2-6.08 0-11.43-3.68-13.33-9.01l-7.98 6.2C6.57 42.64 14.62 48 24 48z"
                     />
                   </svg>
-                  <span class="text-gray-700 text-sm font-medium">Google</span>
+                  Google
                 </button>
 
                 <button
                   @click="handleMicrosoft"
                   type="button"
-                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
+                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 text-gray-700 font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md hover:bg-gray-50 active:scale-95"
                 >
                   <svg
                     class="h-5 w-5 mr-2"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 23 23"
-                    aria-hidden="true"
                   >
                     <rect x="1" y="1" width="10" height="10" fill="#F25022" />
                     <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
                     <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
                     <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
                   </svg>
-                  <span class="text-gray-700 text-sm font-medium"
-                    >Microsoft</span
-                  >
+                  Microsoft
                 </button>
               </div>
             </form>
           </div>
         </div>
 
+        <!-- SIDE PANEL -->
         <div
           class="absolute w-[35%] h-full left-0 flex items-center justify-center p-10 text-white transition-all duration-500 ease-in-out z-20"
           :class="
@@ -166,7 +178,7 @@
             </p>
             <button
               @click="toggleAuth"
-              class="border border-white text-white px-6 py-2 rounded-full hover:bg-white hover:text-blue-600 transition"
+              class="border border-white text-white px-6 py-2 rounded-full transition-all duration-200 transform hover:scale-105 hover:bg-white hover:text-blue-600 active:scale-95"
               :disabled="loading"
             >
               {{ isSignup ? "Back to Login" : "Sign Up" }}
@@ -183,55 +195,48 @@ import { ref } from "vue";
 import axios from "axios";
 import { toast } from "vue3-toastify";
 import "vue3-toastify/dist/index.css";
-import { EnvelopeIcon, LockClosedIcon } from "@heroicons/vue/24/outline";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/vue/24/outline";
+import {
+  EnvelopeIcon,
+  LockClosedIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/vue/24/outline";
 import { useAuth } from "../../composables/useAuth";
 import { useRouter } from "vue-router";
+import config from "../../config/envManager";
 
-const clientId = "6fbb3c76-8f8d-4280-87b5-ff2e23574279";
-const tenant = "common";
-const redirectUri = "http://localhost:3050/auth/microsoft";
-const apiUrl = "http://localhost:8050";
+const apiUrl = config.backend_url;
 const auth = useAuth();
 const showPassword = ref(false);
 const isSignup = ref(false);
 const transitioning = ref(false);
 const email = ref("");
 const password = ref("");
+const rememberMe = ref(false);
 const loading = ref(false);
 const router = useRouter();
 
-const togglePassword = () => {
-  showPassword.value = !showPassword.value;
-};
+const togglePassword = () => (showPassword.value = !showPassword.value);
 
 function toggleAuth() {
   if (loading.value) return;
   transitioning.value = true;
   setTimeout(() => {
     isSignup.value = !isSignup.value;
-    setTimeout(() => {
-      transitioning.value = false;
-    }, 50);
+    setTimeout(() => (transitioning.value = false), 50);
   }, 250);
 }
 
 async function handleGoogle() {
-  console.log("Google pressed");
-
-  const clientId = "199609700164-qjnh0va1o1l6a87vac4lmro1j6kfqhnq.apps.googleusercontent.com";
-  const redirectUri = "http://localhost:3050/auth/google";
   const scope = "openid email profile";
-
   const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
+    client_id: config.google_client,
+    redirect_uri: `${config.frontend_url}/auth/google`,
     response_type: "id_token",
     scope,
     nonce: crypto.randomUUID(),
     prompt: "select_account",
   });
-
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
@@ -252,13 +257,13 @@ async function generateCodeChallenge(verifier) {
 async function handleMicrosoft() {
   const codeVerifier = crypto.randomUUID() + crypto.randomUUID();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
-
   sessionStorage.setItem("ms_code_verifier", codeVerifier);
 
-  const authUrl = `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize` +
-    `?client_id=${clientId}` +
+  const authUrl =
+    `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` +
+    `?client_id=${config.ms_client}` +
     `&response_type=code` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&redirect_uri=${encodeURIComponent(`${config.frontend_url}/auth/microsoft`)}` +
     `&response_mode=query` +
     `&scope=openid profile email offline_access` +
     `&code_challenge=${codeChallenge}` +
@@ -269,7 +274,6 @@ async function handleMicrosoft() {
 
 async function handleSubmit() {
   loading.value = true;
-
   try {
     const url = isSignup.value
       ? `${apiUrl}/api/auth/signup`
@@ -278,6 +282,7 @@ async function handleSubmit() {
     const res = await axios.post(url, {
       email: email.value,
       password: password.value,
+      rememberMe: rememberMe.value, // send to backend
     });
 
     if (isSignup.value) {
@@ -292,24 +297,17 @@ async function handleSubmit() {
     }
   } catch (err) {
     const status = err.response?.status;
-
-    if (status === 400) {
-      toast.error("Invalid input. Please check your form.");
-    } else if (status === 401) {
+    if (status === 400) toast.error("Invalid input. Please check your form.");
+    else if (status === 401)
       toast.error("Invalid credentials. Please try again.");
-    } else if (status === 409) {
+    else if (status === 409)
       toast.error("Email already in use. Try logging in instead.");
-    } else if (status === 500) {
+    else if (status === 500)
       toast.error("Server error. Please try again later.");
-    } else {
-      toast.error(err.response?.data?.message || "Something went wrong.");
-    }
-
+    else toast.error(err.response?.data?.message || "Something went wrong.");
     console.error(err);
   } finally {
     loading.value = false;
   }
 }
 </script>
-
-<style scoped></style>

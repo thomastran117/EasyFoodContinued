@@ -14,13 +14,11 @@ from service.tokenService import (
 )
 from service.emailService import send_verification_email
 from config.envConfig import settings
-import jwt
-from jose import jwk, jwt as jose_jwt
+from jose import jwt as jose_jwt
 import httpx
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
-GOOGLE_CLIENT_ID="199609700164-qjnh0va1o1l6a87vac4lmro1j6kfqhnq.apps.googleusercontent.com"
 
 async def loginUser(email: str, password: str):
     with get_db() as db:
@@ -101,7 +99,7 @@ async def microsoft_login(id_token: str):
         picture = decoded_ms.get("picture")
 
         if not email:
-            raise BadRequestException("No email claim in Microsoft token")
+            raise UnauthorizedException("No email claim in Microsoft token")
 
         user = db.query(User).filter(User.email == email).first()
         if not user:
@@ -129,7 +127,7 @@ async def microsoft_login(id_token: str):
 async def google_login(token: str):
     with get_db() as db:
         idinfo = id_token.verify_oauth2_token(
-            token, requests.Request(), GOOGLE_CLIENT_ID
+            token, requests.Request(), settings.google_client_id
         )
 
         if idinfo["iss"] not in [
@@ -141,10 +139,17 @@ async def google_login(token: str):
         email = idinfo.get("email")
         name = idinfo.get("name")
         picture = idinfo.get("picture")
+        user_id= idinfo.get("sub")
 
         user = db.query(User).filter(User.email == email).first()
         if not user:
-            user = User(email=email, username=name, avatar=picture)
+            user = User(
+                email=email,
+                provider="google",
+                microsoft_id=user_id,
+                name=name,
+                profileUrl=picture,
+            )
             db.add(user)
             db.commit()
             db.refresh(user)

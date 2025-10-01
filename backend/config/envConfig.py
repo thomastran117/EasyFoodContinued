@@ -28,13 +28,9 @@ class Settings(BaseSettings):
     password: Optional[str] = None
 
     google_client_id: Optional[str] = None
-    google_client_secret: Optional[str] = None
-    google_redirect_uri: Optional[str] = None
 
     ms_tenant_id: Optional[str] = None
     ms_client_id: Optional[str] = None
-    ms_client_secret: Optional[str] = None
-    ms_redirect_uri: Optional[str] = None
 
     google_oauth_enabled: bool = False
     ms_oauth_enabled: bool = False
@@ -51,15 +47,13 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
 
         self.google_oauth_enabled = all(
-            [self.google_client_id, self.google_client_secret, self.google_redirect_uri]
+            [self.google_client_id]
         )
 
         self.ms_oauth_enabled = all(
             [
                 self.ms_tenant_id,
-                self.ms_client_id,
-                self.ms_client_secret,
-                self.ms_redirect_uri,
+                self.ms_client_id
             ]
         )
 

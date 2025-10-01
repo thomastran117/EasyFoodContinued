@@ -3,17 +3,19 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { useAuth } from "../../composables/useAuth";
+import config from "../../config/envManager";
 
 const auth = useAuth();
 const router = useRouter();
-const apiUrl = "http://localhost:8050";
+const backendUrl = config.backend_url;
+const frontendUrl = config.frontend_url;
 
-const loading = ref(true);
-const error = ref(null);
+const status = ref("loading"); // "loading" | "success" | "error"
+const message = ref("Signing you in with Microsoft…");
 
 const retryLogin = () => {
-  loading.value = true;
-  error.value = null;
+  status.value = "loading";
+  message.value = "Retrying Microsoft sign-in…";
   window.location.reload();
 };
 
@@ -33,29 +35,24 @@ onMounted(async () => {
 
     const tokenUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/token`;
     const data = new URLSearchParams({
-      client_id: "6fbb3c76-8f8d-4280-87b5-ff2e23574279",
+      client_id: config.ms_client,
       grant_type: "authorization_code",
       code,
-      redirect_uri: "http://localhost:3050/auth/microsoft",
+      redirect_uri: `${frontendUrl}/auth/microsoft`,
       code_verifier: verifier,
     });
 
-    const tokenResp = await axios.post(
-      tokenUrl,
-      data,
-      {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      }
-    );
+    const tokenResp = await axios.post(tokenUrl, data, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
 
     const tokenResponse = tokenResp.data;
-
     const idToken = tokenResponse.id_token;
     if (!idToken) {
       throw new Error("No id_token returned from Microsoft.");
     }
 
-    const backendResp = await axios.post(`${apiUrl}/api/auth/microsoft`, {
+    const backendResp = await axios.post(`${backendUrl}/api/auth/microsoft`, {
       id_token: idToken,
     });
 
@@ -64,54 +61,83 @@ onMounted(async () => {
       email: backendResp.data.email,
     });
 
-    router.push("/restaurant");
+    status.value = "success";
+    message.value = "Login successful! Redirecting…";
+
+    setTimeout(() => {
+      router.push("/restaurant");
+    }, 1500);
   } catch (err) {
-    error.value = err.message || "An unexpected error occurred.";
-  } finally {
-    loading.value = false;
+    console.error(err);
+    status.value = "error";
+    message.value = err.message || "Microsoft sign-in failed.";
   }
 });
 </script>
 
 <template>
-  <div class="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 px-4">
+  <div
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-sky-100 px-4"
+  >
     <div
-      class="backdrop-blur-md bg-white/70 shadow-2xl rounded-2xl p-8 max-w-md w-full text-center border border-gray-200"
+      class="w-full max-w-md bg-white shadow-xl rounded-2xl p-8 text-center flex flex-col items-center border border-gray-100"
     >
-      <div v-if="loading" class="flex flex-col items-center space-y-4">
-        <div class="relative w-12 h-12">
-          <div class="absolute inset-0 border-4 border-blue-400 rounded-full animate-ping"></div>
-          <div class="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
-        </div>
-        <p class="text-gray-700 font-medium">Signing you in with Microsoft...</p>
+      <div v-if="status === 'loading'" class="space-y-6">
+        <div
+          class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"
+        ></div>
+        <p class="text-gray-700 text-lg font-medium animate-pulse">
+          {{ message }}
+        </p>
       </div>
 
-      <div v-else-if="error" class="space-y-6">
-        <p class="text-red-600 font-semibold">
-          ⚠️ Login failed
-        </p>
-        <p class="text-gray-600">{{ error }}</p>
+      <div v-else-if="status === 'success'" class="space-y-6">
+        <svg
+          class="w-16 h-16 text-green-500 mx-auto"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p class="text-gray-800 text-lg font-semibold">{{ message }}</p>
+      </div>
 
-        <div class="flex justify-center gap-4">
+      <div v-else class="space-y-6">
+        <svg
+          class="w-16 h-16 text-red-500 mx-auto"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p class="text-gray-800 text-lg font-semibold">{{ message }}</p>
+
+        <div class="flex gap-4 justify-center">
           <button
             @click="retryLogin"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            class="px-5 py-2 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
           >
             Retry
           </button>
           <button
             @click="goToAuth"
-            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg shadow hover:bg-gray-300 transition"
+            class="px-5 py-2 rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
           >
-            Return to Auth
+            Back to Auth
           </button>
         </div>
-      </div>
-
-      <div v-else>
-        <p class="text-green-600 font-medium">
-          ✅ Login successful! Redirecting...
-        </p>
       </div>
     </div>
   </div>
