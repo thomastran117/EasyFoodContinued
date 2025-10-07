@@ -7,13 +7,60 @@
     >
       <div class="relative w-full h-full">
         <div
-          class="absolute w-[65%] h-full right-0 flex items-center justify-center p-10 bg-gradient-to-br from-white via-blue-50 to-purple-50 bg-opacity-90 transition-all duration-500 ease-in-out z-10"
+          class="absolute w-[65%] h-full right-0 flex items-center justify-center p-10 bg-white/90 backdrop-blur-lg overflow-hidden transition-all duration-700 ease-in-out z-10"
           :style="{
-            transform: isSignup ? 'translateX(-52%)' : 'translateX(0)',
+            transform: isSignup ? 'translateX(-53.5%)' : 'translateX(0)',
           }"
         >
-          <div class="w-full max-w-sm space-y-6">
-            <h1 class="text-3xl font-bold text-gray-800 text-center">
+          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-blue-200 via-pink-100 to-purple-200 opacity-80 animate-gradient-move"
+            ></div>
+
+            <svg
+              class="absolute bottom-0 left-0 w-full h-[250px] opacity-80"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 1440 320"
+              preserveAspectRatio="none"
+            >
+              <path
+                fill="url(#formWaveGradient)"
+                fill-opacity="1"
+                d="M0,160L48,138.7C96,117,192,75,288,58.7C384,43,480,53,576,80C672,107,768,149,864,149.3C960,149,1056,107,1152,90.7C1248,75,1344,85,1392,90.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+              ></path>
+              <defs>
+                <linearGradient
+                  id="formWaveGradient"
+                  x1="0"
+                  x2="1"
+                  y1="0"
+                  y2="1"
+                >
+                  <stop offset="0%" stop-color="#60a5fa" />
+                  <stop offset="50%" stop-color="#a855f7" />
+                  <stop offset="100%" stop-color="#ec4899" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <svg
+              class="absolute bottom-0 left-0 w-full h-[200px] opacity-40 animate-wave-slow"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 1440 320"
+              preserveAspectRatio="none"
+            >
+              <path
+                fill="url(#formWaveGradient)"
+                fill-opacity="1"
+                d="M0,192L40,186.7C80,181,160,171,240,144C320,117,400,75,480,64C560,53,640,75,720,101.3C800,128,880,160,960,176C1040,192,1120,192,1200,186.7C1280,181,1360,171,1400,165.3L1440,160L1440,320L1400,320C1360,320,1280,320,1200,320C1120,320,1040,320,960,320C880,320,800,320,720,320C640,320,560,320,480,320C400,320,320,320,240,320C160,320,80,320,40,320L0,320Z"
+              ></path>
+            </svg>
+          </div>
+
+          <div class="relative w-full max-w-lg space-y-6 z-10">
+            <h1
+              class="text-4xl font-bold text-gray-800 text-center drop-shadow-sm"
+            >
               {{ isSignup ? "Sign Up" : "Login" }}
             </h1>
 
@@ -90,17 +137,23 @@
                 }}
               </button>
 
-              <div class="flex items-center justify-center my-4">
-                <div class="w-full border-t border-gray-300"></div>
-                <span class="px-3 text-gray-500 text-sm">OR</span>
-                <div class="w-full border-t border-gray-300"></div>
+              <div class="flex items-center justify-center my-6">
+                <div
+                  class="w-full h-[1.5px] bg-gray-500/60 shadow-[0_0_4px_rgba(0,0,0,0.15)]"
+                ></div>
+                <span
+                  class="px-4 text-gray-700 text-sm font-semibold tracking-wide"
+                  >OR</span
+                >
+                <div
+                  class="w-full h-[1.5px] bg-gray-500/60 shadow-[0_0_4px_rgba(0,0,0,0.15)]"
+                ></div>
               </div>
-
-              <div class="flex gap-3">
+              <div class="flex gap-4">
                 <button
                   @click="handleGoogle"
                   type="button"
-                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 text-gray-700 font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md hover:bg-gray-50 active:scale-95"
+                  class="flex items-center justify-center w-1/2 py-3 rounded-xl font-medium transition-all duration-300 transform active:scale-95 bg-gray-500/40 backdrop-blur-md border border-gray-400 text-white shadow-md hover:bg-gray-400/50 hover:shadow-lg"
                 >
                   <svg
                     class="h-5 w-5 mr-2"
@@ -131,7 +184,7 @@
                 <button
                   @click="handleMicrosoft"
                   type="button"
-                  class="flex items-center justify-center w-1/2 border border-gray-300 rounded-lg py-2 text-gray-700 font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md hover:bg-gray-50 active:scale-95"
+                  class="flex items-center justify-center w-1/2 py-3 rounded-xl font-medium transition-all duration-300 transform active:scale-95 bg-gray-500/40 backdrop-blur-md border border-gray-400 text-white shadow-md hover:bg-gray-400/50 hover:shadow-lg"
                 >
                   <svg
                     class="h-5 w-5 mr-2"
@@ -150,7 +203,6 @@
           </div>
         </div>
 
-        <!-- SIDE PANEL -->
         <div
           class="absolute w-[35%] h-full left-0 flex items-center justify-center p-10 text-white transition-all duration-500 ease-in-out z-20"
           :class="
@@ -282,7 +334,7 @@ async function handleSubmit() {
     const res = await axios.post(url, {
       email: email.value,
       password: password.value,
-      rememberMe: rememberMe.value, // send to backend
+      rememberMe: rememberMe.value,
     });
 
     if (isSignup.value) {
@@ -311,3 +363,36 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped>
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-15px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.animate-wave-slow {
+  animation: wave 12s ease-in-out infinite;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.animate-gradient-move {
+  background-size: 200% 200%;
+  animation: gradientMove 10s ease infinite;
+}
+</style>

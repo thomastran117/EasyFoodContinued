@@ -2,29 +2,49 @@ import { defineStore } from "pinia";
 
 export const useAuth = defineStore("auth", {
   state: () => ({
-    token: localStorage.getItem("authToken") || null,
+    accessToken: null,
+
     email: localStorage.getItem("authEmail") || null,
+    userType: localStorage.getItem("authUserType") || null,
+    avatar: localStorage.getItem("authAvatar") || null,
+    role: localStorage.getItem("authRole") || null,
   }),
 
   actions: {
-    setAuth({ token, email }) {
-      this.token = token;
+    setAuth({ accessToken, email, userType, avatar, role }) {
+      this.accessToken = accessToken;
       this.email = email;
-      localStorage.setItem("authToken", token);
+      this.userType = userType;
+      this.avatar = avatar;
+      this.role = role;
+
       localStorage.setItem("authEmail", email);
+      localStorage.setItem("authUserType", userType);
+      localStorage.setItem("authAvatar", avatar);
+      localStorage.setItem("authRole", role);
     },
 
-    clearAuth() {
-      this.token = null;
+    async clearAuth() {
+      this.accessToken = null;
       this.email = null;
-      localStorage.removeItem("authToken");
+      this.userType = null;
+      this.avatar = null;
+      this.role = null;
+
       localStorage.removeItem("authEmail");
+      localStorage.removeItem("authUserType");
+      localStorage.removeItem("authAvatar");
+      localStorage.removeItem("authRole");
     },
   },
 
   getters: {
-    isAuthenticated: (state) => !!state.token,
+    isAuthenticated: (state) => !!state.accessToken,
+    getProfile: (state) => ({
+      email: state.email,
+      userType: state.userType,
+      avatar: state.avatar,
+      role: state.role,
+    }),
   },
-
-  persist: true,
 });

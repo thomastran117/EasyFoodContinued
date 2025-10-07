@@ -3,7 +3,7 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import config from "../../config/envManager";
 
-const status = ref("loading"); // "loading" | "success" | "error"
+const status = ref("loading");
 const message = ref("Completing Google sign-in…");
 const router = useRouter();
 const backendUrl = config.backend_url;

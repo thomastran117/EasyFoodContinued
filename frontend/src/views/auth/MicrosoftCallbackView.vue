@@ -10,7 +10,7 @@ const router = useRouter();
 const backendUrl = config.backend_url;
 const frontendUrl = config.frontend_url;
 
-const status = ref("loading"); // "loading" | "success" | "error"
+const status = ref("loading");
 const message = ref("Signing you in with Microsoft…");
 
 const retryLogin = () => {
