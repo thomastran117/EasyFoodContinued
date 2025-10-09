@@ -2,11 +2,14 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import config from "../../config/envManager";
+import { useAuth } from "../../composables/useAuth";
+import axios from "axios";
 
 const status = ref("loading");
 const message = ref("Completing Google sign-in…");
 const router = useRouter();
 const backendUrl = config.backend_url;
+const auth = useAuth();
 
 async function handleGoogleCallback() {
   try {
@@ -19,18 +22,17 @@ async function handleGoogleCallback() {
       return;
     }
 
-    const res = await fetch(`${backendUrl}/api/auth/google`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_token: idToken }),
-      credentials: "include",
+    const res = await axios.post(
+      `${backendUrl}/api/auth/google`,
+      { id_token: idToken },
+      { withCredentials: true }
+    );
+
+    auth.setAuth({
+      accessToken: res.data.token,
+      email: res.data.email,
     });
-
-    if (!res.ok) throw new Error("Failed to exchange token");
-    const data = await res.json();
-
-    localStorage.setItem("app_token", data.token);
-
+  
     status.value = "success";
     message.value = "Login successful! Redirecting…";
 

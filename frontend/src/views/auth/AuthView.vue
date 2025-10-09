@@ -59,9 +59,14 @@
 
           <div class="relative w-full max-w-lg space-y-6 z-10">
             <h1
-              class="text-4xl font-bold text-gray-800 text-center drop-shadow-sm"
+              class="relative text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 text-center tracking-tight drop-shadow-md"
             >
-              {{ isSignup ? "Sign Up" : "Login" }}
+              {{ isSignup ? "Create Account ✨" : "Login 👋" }}
+
+              <!-- Animated underline -->
+              <span
+                class="absolute left-1/2 -bottom-2 w-24 h-[3px] rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 transform -translate-x-1/2 animate-pulse"
+              ></span>
             </h1>
 
             <form @submit.prevent="handleSubmit" class="space-y-5">
@@ -342,7 +347,7 @@ async function handleSubmit() {
     } else {
       toast.success("Logged in successfully!");
       auth.setAuth({
-        token: res.data.token,
+        accessToken: res.data.token,
         email: res.data.email,
       });
       router.push("/restaurant");

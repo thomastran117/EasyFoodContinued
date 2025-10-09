@@ -18,7 +18,7 @@ const auth = useAuth();
 const cart = useCart();
 const router = useRouter();
 
-const isLoggedIn = computed(() => !!auth.token);
+const isLoggedIn = computed(() => !!auth.accessToken);
 const firstInitial = computed(() =>
   auth.email ? auth.email.charAt(0).toUpperCase() : "?",
 );

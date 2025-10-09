@@ -20,7 +20,7 @@ api.interceptors.request.use(
 
     return request;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
@@ -59,7 +59,7 @@ api.interceptors.response.use(
         const refreshResponse = await axios.post(
           `${config.backend_url}/api/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const newAccessToken = refreshResponse.data.accessToken;
@@ -81,7 +81,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

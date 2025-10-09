@@ -46,16 +46,9 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.google_oauth_enabled = all(
-            [self.google_client_id]
-        )
+        self.google_oauth_enabled = all([self.google_client_id])
 
-        self.ms_oauth_enabled = all(
-            [
-                self.ms_tenant_id,
-                self.ms_client_id
-            ]
-        )
+        self.ms_oauth_enabled = all([self.ms_tenant_id, self.ms_client_id])
 
         self.email_enabled = all([self.email, self.password])
 

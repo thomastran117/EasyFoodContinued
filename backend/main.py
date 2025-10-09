@@ -22,7 +22,7 @@ setup_exception_handlers(app)
 
 app.add_middleware(SessionMiddleware, secret_key="dev-session-secret")
 app.add_middleware(HTTPLoggerMiddleware)
-app.add_middleware(RateLimiterMiddleware, max_requests=100, window=60)
+# app.add_middleware(RateLimiterMiddleware, max_requests=100, window=60)
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 if os.path.isdir(PUBLIC_DIR):
@@ -56,4 +56,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port,
         access_log=False,
+        reload=True,
     )

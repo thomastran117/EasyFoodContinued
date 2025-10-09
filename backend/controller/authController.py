@@ -1,4 +1,4 @@
-from fastapi import Request
+from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from service.authService import (
     loginUser,
@@ -8,9 +8,8 @@ from service.authService import (
     exchangeTokens,
     logoutTokens,
     microsoft_login,
-    google_login
+    google_login,
 )
-import httpx
 from dtos.authDtos import AuthRequestDto, MicrosoftAuthRequest, GoogleAuthRequest
 from utilities.errorRaiser import (
     raise_error,
@@ -33,16 +32,8 @@ async def login(request: AuthRequestDto):
             }
         )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=True,
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
-        )
+        return set_refresh_cookie(response, refresh)
 
-        return response
     except Exception as e:
         raise_error(e)
 
@@ -77,7 +68,7 @@ async def renew(request: Request):
     try:
         refresh_token = request.cookies.get("refresh_token")
         if not refresh_token:
-            raise UnauthorizedException("Missing refresh token cookie")
+            raise UnauthorizedException("Missing  refresh token cookie")
         access, refresh, email = await exchangeTokens(refresh_token)
         response = JSONResponse(
             content={
@@ -86,16 +77,8 @@ async def renew(request: Request):
             }
         )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=True,
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
-        )
+        return set_refresh_cookie(response, refresh)
 
-        return response
     except Exception as e:
         raise_error(e)
 
@@ -112,8 +95,8 @@ async def logout(request: Request):
         response.delete_cookie(
             key="refresh_token",
             httponly=True,
-            secure=True,
-            samesite="Lax",
+            secure=False,
+            samesite="lax",
         )
         return response
 
@@ -131,16 +114,8 @@ async def google(auth_req: GoogleAuthRequest):
             }
         )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=True,
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
-        )
+        return set_refresh_cookie(response, refresh)
 
-        return response
     except Exception as e:
         raise_error(e)
 
@@ -155,15 +130,31 @@ async def microsoft(auth_req: MicrosoftAuthRequest):
             }
         )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=True,
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60,
-        )
+        return set_refresh_cookie(response, refresh)
 
-        return response
     except Exception as e:
         raise_error(e)
+
+
+def set_refresh_cookie(response: Response, refresh_token: str):
+    """
+    Sets a refresh_token cookie on the response with consistent settings.
+
+    Args:
+        response (Response): The FastAPI response object.
+        refresh_token (str): The token value to set.
+    """
+
+    secure_flag = not getattr(settings, "debug", False)
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=secure_flag,
+        samesite="None",
+        path="/",
+        max_age=7 * 24 * 60 * 60,
+    )
+
+    return response

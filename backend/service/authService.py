@@ -74,7 +74,9 @@ def createUser(email: str, password: str):
 async def microsoft_login(id_token: str):
     with get_db() as db:
         async with httpx.AsyncClient() as client:
-            resp = await client.get("https://login.microsoftonline.com/common/discovery/v2.0/keys")
+            resp = await client.get(
+                "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+            )
             resp.raise_for_status()
             jwks = resp.json()
 
@@ -90,7 +92,7 @@ async def microsoft_login(id_token: str):
             key,
             algorithms=["RS256"],
             audience=settings.ms_client_id,
-            options={"verify_iss": False}
+            options={"verify_iss": False},
         )
 
         email = decoded_ms.get("preferred_username") or decoded_ms.get("email")
@@ -139,7 +141,7 @@ async def google_login(token: str):
         email = idinfo.get("email")
         name = idinfo.get("name")
         picture = idinfo.get("picture")
-        user_id= idinfo.get("sub")
+        user_id = idinfo.get("sub")
 
         user = db.query(User).filter(User.email == email).first()
         if not user:

@@ -4,7 +4,7 @@ import { useRoute } from "vue-router";
 import Navbar from "./components/shared/Navbar.vue";
 import Footer from "./components/shared/Footer.vue";
 import Breadcrumb from "./components/shared/Breadcrumbs.vue";
-
+import SessionManager from "./components/auth/SessionManager.vue";
 const route = useRoute();
 
 const breadcrumbs = computed(() => {
@@ -23,6 +23,7 @@ const breadcrumbs = computed(() => {
 </script>
 
 <template>
+  <SessionManager />
   <Navbar />
   <Breadcrumb :crumbs="breadcrumbs" />
   <router-view />
