@@ -1,5 +1,6 @@
 import AuthView from "../views/auth/AuthView.vue";
-import PasswordView from "../views/auth/PasswordView.vue";
+import ForgotPasswordView from "../views/auth/ForgotPasswordView.vue";
+import ChangePasswordView from "../views/auth/ChangePasswordView.vue";
 import VerifyEmailView from "../views/auth/VerifyEmailView.vue";
 import ProfileManageView from "../views/profile/ProfileManageView.vue";
 import MicrosoftCallbackView from "../views/auth/MicrosoftCallbackView.vue";
@@ -25,15 +26,15 @@ export default [
     component: GoogleCallbackView,
   },
   {
-    path: "/verify-email",
+    path: "/auth/verify",
     name: "Verify",
     component: VerifyEmailView,
     props: () => ({ link: LINK }),
   },
   {
-    path: "/password",
-    name: "Password",
-    component: PasswordView,
+    path: "/auth/forgot-password",
+    name: "Forgot Password",
+    component: ForgotPasswordView,
     props: () => ({ link: LINK }),
   },
   {

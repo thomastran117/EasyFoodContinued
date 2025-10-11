@@ -100,7 +100,7 @@ async function handleSubmit() {
         />
         Remember Me
       </label>
-      <router-link to="/password" class="text-sm text-blue-600 hover:underline">
+      <router-link to="/auth/forgot-password" class="text-sm text-blue-600 hover:underline">
         Forgot Password?
       </router-link>
     </div>
