@@ -333,8 +333,8 @@ async function handleSubmit() {
   loading.value = true;
   try {
     const url = isSignup.value
-      ? `${apiUrl}/api/auth/signup`
-      : `${apiUrl}/api/auth/login`;
+      ? `${apiUrl}/auth/signup`
+      : `${apiUrl}/auth/login`;
 
     const res = await axios.post(url, {
       email: email.value,

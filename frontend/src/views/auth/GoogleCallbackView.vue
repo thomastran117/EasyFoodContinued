@@ -23,7 +23,7 @@ async function handleGoogleCallback() {
     }
 
     const res = await axios.post(
-      `${backendUrl}/api/auth/google`,
+      `${backendUrl}/auth/google`,
       { id_token: idToken },
       { withCredentials: true }
     );

@@ -1,21 +1,14 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import axios from "axios";
+import PublicApi from "../../api/PublicApi";
 import { useAuth } from "../../composables/useAuth";
-import config from "../../config/envManager";
+
 const auth = useAuth();
 const loading = ref(true);
 
-const BACKEND_URL = config.backend_url;
-
-onMounted(async () => {
+const initSession = async () => {
   try {
-    const res = await axios.post(
-    `${BACKEND_URL}/api/auth/refresh`,
-    {},
-    { withCredentials: true }
-    );
-
+    const res = await PublicApi.post(`/auth/refresh`);
     if (res.data?.email) {
       auth.setAuth({
         accessToken: res.data.token,
@@ -28,14 +21,49 @@ onMounted(async () => {
       auth.clearAuth();
     }
   } catch (err) {
-    console.warn("No active session:", err.message);
     auth.clearAuth();
   } finally {
     loading.value = false;
   }
+};
+
+onMounted(() => {
+  initSession();
 });
 </script>
 
 <template>
-  <slot v-if="!loading" />
+  <div
+    v-if="loading"
+    class="flex justify-center items-center min-h-screen bg-white"
+  >
+    <div class="flex space-x-4">
+      <div class="dot bg-black" style="animation-delay: 0s"></div>
+      <div class="dot bg-black" style="animation-delay: 0.2s"></div>
+      <div class="dot bg-black" style="animation-delay: 0.4s"></div>
+    </div>
+  </div>
+
+  <slot v-else />
 </template>
+
+<style scoped>
+.dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  opacity: 0.2;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.2;
+  }
+  40% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+</style>

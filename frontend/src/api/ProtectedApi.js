@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuth } from "./composables/useAuth";
 import config from "../config/envManager";
 
-const api = axios.create({
+const ProtectedApi = axios.create({
   baseURL: config.backend_url,
   withCredentials: true,
   headers: {
@@ -10,7 +10,7 @@ const api = axios.create({
   },
 });
 
-api.interceptors.request.use(
+ProtectedApi.interceptors.request.use(
   (request) => {
     const auth = useAuth();
 
@@ -34,7 +34,7 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-api.interceptors.response.use(
+ProtectedApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const auth = useAuth();
@@ -47,7 +47,7 @@ api.interceptors.response.use(
         })
           .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
+            return ProtectedApi(originalRequest);
           })
           .catch((err) => Promise.reject(err));
       }
@@ -69,7 +69,7 @@ api.interceptors.response.use(
         isRefreshing = false;
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api(originalRequest);
+        return ProtectedApi(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
@@ -84,4 +84,4 @@ api.interceptors.response.use(
   },
 );
 
-export default api;
+export default ProtectedApi;

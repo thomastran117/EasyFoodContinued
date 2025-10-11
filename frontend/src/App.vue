@@ -23,11 +23,13 @@ const breadcrumbs = computed(() => {
 </script>
 
 <template>
-  <SessionManager />
+  <SessionManager>
   <Navbar />
   <Breadcrumb :crumbs="breadcrumbs" />
   <router-view />
   <Footer />
+  </SessionManager>
+
 </template>
 
 <style scoped>

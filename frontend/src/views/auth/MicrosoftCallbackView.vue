@@ -52,7 +52,7 @@ onMounted(async () => {
       throw new Error("No id_token returned from Microsoft.");
     }
 
-    const res = await axios.post(`${backendUrl}/api/auth/microsoft`, {
+    const res = await axios.post(`${backendUrl}/auth/microsoft`, {
       id_token: idToken,
     });
 

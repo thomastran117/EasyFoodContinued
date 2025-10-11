@@ -69,7 +69,7 @@ async function verifyEmail(token) {
   success.value = null;
 
   try {
-    const response = await axios.get(`${props.link}/api/auth/verify`, {
+    const response = await axios.get(`${props.link}/auth/verify`, {
       params: { token },
     });
     success.value = response.data.message || "Email verified successfully!";
