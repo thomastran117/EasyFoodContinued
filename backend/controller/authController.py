@@ -1,5 +1,4 @@
-from typing import Optional
-from fastapi import Query, Request, Response
+from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from service.authService import (
     loginUser,
@@ -14,7 +13,8 @@ from service.authService import (
     changePassword,
 )
 from dtos.authDtos import (
-    AuthRequestDto,
+    LoginRequestDto,
+    SignupRequestDto,
     ForgotPasswordDto,
     ChangePasswordDto,
     MicrosoftAuthRequest,
@@ -23,16 +23,15 @@ from dtos.authDtos import (
 from utilities.errorRaiser import (
     raise_error,
     ServiceUnavaliableException,
-    UnauthorizedException,
-    NotImplementedException,
+    UnauthorizedException
 )
 from config.envConfig import settings
 from utilities.logger import logger
 
 
-async def login(request: AuthRequestDto):
+async def login(request: LoginRequestDto):
     try:
-        access, refresh, user = await loginUser(request.email, request.password)
+        access, refresh, user = await loginUser(request.email, request.password, request.remember)
 
         response = JSONResponse(
             content={
@@ -47,7 +46,7 @@ async def login(request: AuthRequestDto):
         raise_error(e)
 
 
-async def signup(request: AuthRequestDto):
+async def signup(request: SignupRequestDto):
     try:
         if not settings.email_enabled:
             logger.warn(
@@ -141,7 +140,7 @@ async def change_password(token: str, request: ChangePasswordDto):
 
 async def google(auth_req: GoogleAuthRequest):
     try:
-        access, refresh, user = await google_login(auth_req.id_token)
+        access, refresh, user = await google_login(auth_req.id_token, False)
         response = JSONResponse(
             content={
                 "token": access,
@@ -157,7 +156,7 @@ async def google(auth_req: GoogleAuthRequest):
 
 async def microsoft(auth_req: MicrosoftAuthRequest):
     try:
-        access, refresh, user = await microsoft_login(auth_req.id_token)
+        access, refresh, user = await microsoft_login(auth_req.id_token, False)
         response = JSONResponse(
             content={
                 "token": access,

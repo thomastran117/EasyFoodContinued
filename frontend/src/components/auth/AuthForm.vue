@@ -1,6 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
-import axios from "axios";
+import { ref } from "vue";
 import { toast } from "vue3-toastify";
 import {
   EnvelopeIcon,
@@ -10,9 +9,9 @@ import {
 } from "@heroicons/vue/24/outline";
 import GoogleButton from "./GoogleButton.vue";
 import MicrosoftButton from "./MicrosoftButton.vue";
-import config from "../../config/envManager";
 import { useAuth } from "../../composables/useAuth";
 import { useRouter } from "vue-router";
+import PublicApi from "../../api/PublicApi";
 
 const props = defineProps({
   isSignup: Boolean,
@@ -20,7 +19,6 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:loading", "toggleAuth"]);
 
-const apiUrl = config.backend_url;
 const auth = useAuth();
 const router = useRouter();
 
@@ -35,13 +33,13 @@ async function handleSubmit() {
   emit("update:loading", true);
   try {
     const url = props.isSignup
-      ? `${apiUrl}/auth/signup`
-      : `${apiUrl}/auth/login`;
+      ? `/auth/signup`
+      : `/auth/login`;
 
-    const res = await axios.post(url, {
+    const res = await PublicApi.post(url, {
       email: email.value,
       password: password.value,
-      rememberMe: rememberMe.value,
+      remember: rememberMe.value,
     });
 
     if (props.isSignup) {

@@ -1,7 +1,13 @@
 from pydantic import BaseModel, EmailStr
 
 
-class AuthRequestDto(BaseModel):
+class LoginRequestDto(BaseModel):
+    email: EmailStr
+    password: str
+    remember: bool
+
+
+class SignupRequestDto(BaseModel):
     email: EmailStr
     password: str
 

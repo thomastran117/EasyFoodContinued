@@ -21,12 +21,12 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 
 
-async def loginUser(email: str, password: str):
+async def loginUser(email: str, password: str, remember: bool):
     with get_db() as db:
         user = db.query(User).filter(User.email == email).first()
         if not user or not verify_password(password, user.password):
             raise UnauthorizedException("Invalid credentials.")
-        access, refresh = generate_tokens(user.id, user.email, "user")
+        access, refresh = generate_tokens(user.id, user.email, "user", remember)
         return access, refresh, user
 
 
@@ -72,7 +72,7 @@ def createUser(email: str, password: str):
         return new_user
 
 
-async def microsoft_login(id_token: str):
+async def microsoft_login(id_token: str, remember: bool):
     with get_db() as db:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
@@ -123,11 +123,11 @@ async def microsoft_login(id_token: str):
         db.commit()
         db.refresh(user)
 
-        access, refresh = generate_tokens(user.id, user.email, user.role)
+        access, refresh = generate_tokens(user.id, user.email, user.role, remember)
         return access, refresh, user
 
 
-async def google_login(token: str):
+async def google_login(token: str, remember: bool):
     with get_db() as db:
         idinfo = id_token.verify_oauth2_token(
             token, requests.Request(), settings.google_client_id
@@ -157,7 +157,7 @@ async def google_login(token: str):
             db.commit()
             db.refresh(user)
 
-        access, refresh = generate_tokens(user.id, user.email, user.role)
+        access, refresh = generate_tokens(user.id, user.email, user.role, remember)
         return access, refresh, user
 
 
@@ -204,8 +204,6 @@ async def exchangeTokens(token: str):
 
 
 async def logoutTokens(token: str):
-    if not token:
-        raise UnauthorizedException("Missing refresh token")
     invalidate_refresh_token(token)
     return {"message": "Logged out successfully"}
 

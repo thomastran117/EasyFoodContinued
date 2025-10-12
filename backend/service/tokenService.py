@@ -17,8 +17,9 @@ JWT_SECRET_VERIFY = settings.jwt_secret_verify + "_verify"
 ALGORITHM = settings.algorithm
 
 ACCESS_EXPIRE_MINUTES = 15
-REFRESH_EXPIRE_DAYS = 7
-VERIFY_EXPIRE_MINUTES = 15
+REFRESH_EXPIRE_DAYS_SHORT = 1
+REFRESH_EXPIRE_DAYS_LONG = 7
+VERIFY_EXPIRE_MINUTES = 60
 
 
 def _refresh_key(token: str) -> str:
@@ -70,14 +71,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     return {f: payload[f] for f in required}
 
 
-def create_refresh_token(data: dict) -> str:
-    expire = datetime.utcnow() + timedelta(days=REFRESH_EXPIRE_DAYS)
+def create_refresh_token(data: dict, remember: bool) -> str:
+    refresh_days = REFRESH_EXPIRE_DAYS_LONG if remember else REFRESH_EXPIRE_DAYS_SHORT
+    expire = datetime.utcnow() + timedelta(days=refresh_days)
+
     to_encode = {**data, "exp": expire, "jti": secrets.token_hex(16)}
     token = jwt.encode(to_encode, JWT_SECRET_REFRESH, algorithm=ALGORITHM)
 
-    _store_token(
-        _refresh_key(token), token, timedelta(days=REFRESH_EXPIRE_DAYS), to_encode
-    )
+    _store_token(_refresh_key(token), token, timedelta(days=refresh_days), to_encode)
     return token
 
 
@@ -130,16 +131,16 @@ def invalidate_verification_token(token: str):
     _delete_token(_verify_key(token))
 
 
-def generate_tokens(user_id: str, email: str, role: str = "user"):
-    user_data = {"id": user_id, "email": email, "role": role}
-    return create_access_token(user_data), create_refresh_token(user_data)
+def generate_tokens(user_id: str, email: str, role: str = "user", remember: bool = False):
+    user_data = {"id": user_id, "email": email, "role": role, "remember": remember}
+    return create_access_token(user_data), create_refresh_token(user_data, remember)
 
 
 def rotate_refresh_token(old_refresh: str):
     payload = verify_refresh_token(old_refresh)
-    user_data = {k: payload[k] for k in ("id", "email", "role")}
+    user_data = {k: payload[k] for k in ("id", "email", "role", "remember")}
 
     access_token = create_access_token(user_data)
     _delete_token(_refresh_key(old_refresh))
-    new_refresh = create_refresh_token(user_data)
+    new_refresh = create_refresh_token(user_data, user_data["remember"])
     return access_token, new_refresh, payload["email"]
