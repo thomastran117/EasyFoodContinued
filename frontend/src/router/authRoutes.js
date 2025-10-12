@@ -38,6 +38,12 @@ export default [
     props: () => ({ link: LINK }),
   },
   {
+    path: "/auth/change-password",
+    name: "Change Password",
+    component: ChangePasswordView,
+    props: () => ({ link: LINK }),
+  },
+  {
     path: "/profile",
     name: "Profile",
     component: ProfileManageView,
