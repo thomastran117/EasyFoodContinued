@@ -7,6 +7,8 @@ from controller.authController import (
     logout,
     google,
     microsoft,
+    forgot_password,
+    change_password,
 )
 
 authRouter = APIRouter()
@@ -17,3 +19,5 @@ authRouter.add_api_route("/refresh", renew, methods=["POST"])
 authRouter.add_api_route("/logout", logout, methods=["POST"])
 authRouter.add_api_route("/google", google, methods=["POST"])
 authRouter.add_api_route("/microsoft", microsoft, methods=["POST"])
+authRouter.add_api_route("/forgot-password", forgot_password, methods=["POST"])
+authRouter.add_api_route("/change-password", change_password, methods=["POST"])

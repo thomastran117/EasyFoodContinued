@@ -12,6 +12,14 @@ class AuthResponseDto(BaseModel):
     id: int
 
 
+class ForgotPasswordDto(BaseModel):
+    email: EmailStr
+
+
+class ChangePasswordDto(BaseModel):
+    password: str
+
+
 class MicrosoftAuthRequest(BaseModel):
     id_token: str
 

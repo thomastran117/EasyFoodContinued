@@ -1,4 +1,5 @@
-from fastapi import Request, Response
+from typing import Optional
+from fastapi import Query, Request, Response
 from fastapi.responses import JSONResponse
 from service.authService import (
     loginUser,
@@ -9,8 +10,16 @@ from service.authService import (
     logoutTokens,
     microsoft_login,
     google_login,
+    forgotPassword,
+    changePassword,
 )
-from dtos.authDtos import AuthRequestDto, MicrosoftAuthRequest, GoogleAuthRequest
+from dtos.authDtos import (
+    AuthRequestDto,
+    ForgotPasswordDto,
+    ChangePasswordDto,
+    MicrosoftAuthRequest,
+    GoogleAuthRequest,
+)
 from utilities.errorRaiser import (
     raise_error,
     ServiceUnavaliableException,
@@ -57,7 +66,7 @@ async def verify_email(token: str):
     try:
         if not settings.email_enabled:
             logger.warn("Email service is not avaliable. Please correct")
-            raise ServiceUnavaliableException("Verification route is not avaliable")
+            raise ServiceUnavaliableException("Email verification  is not avaliable")
         user = await verifyUser(token)
         return {"message": "Signup successful"}
     except Exception as e:
@@ -100,6 +109,32 @@ async def logout(request: Request):
         )
         return response
 
+    except Exception as e:
+        raise_error(e)
+
+
+async def forgot_password(request: ForgotPasswordDto):
+    try:
+        if not settings.email_enabled:
+            logger.warn("Email service is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Forgot password is not avaliable right now"
+            )
+        await forgotPassword(request.email)
+        return {"message": "If your email exists, a reset link was sent."}
+    except Exception as e:
+        raise_error(e)
+
+
+async def change_password(token: str, request: ChangePasswordDto):
+    try:
+        if not settings.email_enabled:
+            logger.warn("Email service is not avaliable. Please correct")
+            raise ServiceUnavaliableException(
+                "Change password is not avaliable right now"
+            )
+        user = await changePassword(request.password, token)
+        return {"message": "Password changed successfully"}
     except Exception as e:
         raise_error(e)
 

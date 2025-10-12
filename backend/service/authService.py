@@ -2,6 +2,7 @@ from resources.alchemy import User, get_db
 import bcrypt
 from utilities.errorRaiser import (
     ConflictException,
+    NotFoundException,
     UnauthorizedException,
     BadRequestException,
 )
@@ -12,7 +13,7 @@ from service.tokenService import (
     verify_verification_token,
     invalidate_refresh_token,
 )
-from service.emailService import send_verification_email
+from service.emailService import send_verification_email, send_forgot_password_email
 from config.envConfig import settings
 from jose import jwt as jose_jwt
 import httpx
@@ -158,6 +159,43 @@ async def google_login(token: str):
 
         access, refresh = generate_tokens(user.id, user.email, user.role)
         return access, refresh, user
+
+
+async def forgotPassword(email: str):
+    with get_db() as db:
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            return
+
+        if user.provider in ["google", "microsoft"]:
+            return
+
+        token = create_verification_token(email, "empty")
+        await send_forgot_password_email(email, token)
+
+        return
+
+
+async def changePassword(password: str, token: str):
+    with get_db() as db:
+        data = verify_verification_token(token)
+        if not data:
+            raise BadRequestException("Invalid or expired token")
+
+        email = data["email"]
+
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise NotFoundException("User not found")
+
+        hashed_pw = hash_password(password)
+        user.password = hashed_pw
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        return user
 
 
 async def exchangeTokens(token: str):
