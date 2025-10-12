@@ -5,6 +5,7 @@ from service.tokenService import oauth2_scheme, get_current_user
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
+
 async def upload_user_avatar(
     file: UploadFile = File(...),
     image_type: str = Form(...),

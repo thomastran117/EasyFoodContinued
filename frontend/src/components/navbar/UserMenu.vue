@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../../composables/useAuth";
 import { useCart } from "../../composables/useCart";
+import PublicApi from "../../api/PublicApi";
 
 import {
   UserIcon,
@@ -23,11 +24,17 @@ const firstInitial = computed(() =>
   auth.email ? auth.email.charAt(0).toUpperCase() : "?",
 );
 
-const logout = () => {
-  auth.clearAuth();
-  cart.clearCart();
-  open.value = false;
-  router.push("/");
+const logout = async () => {
+  try {
+    await PublicApi.post(`/auth/logout`);
+  } catch (err) {
+    console.error("Logout failed", err);
+  } finally {
+    auth.clearAuth();
+    cart.clearCart();
+    open.value = false;
+    router.push("/");
+  }
 };
 
 const toggleMenu = () => (isOpen.value = !isOpen.value);

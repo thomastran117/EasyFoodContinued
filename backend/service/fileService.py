@@ -11,7 +11,9 @@ ALLOWED_CATEGORIES = {"foods", "restaurants", "users"}
 ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "webp"}
 
 
-async def save_upload_file(upload_file: UploadFile, category: str, image_type: str) -> str:
+async def save_upload_file(
+    upload_file: UploadFile, category: str, image_type: str
+) -> str:
     """Save uploaded file to category folder with secure random name."""
     category = category.lower().strip()
     if category not in ALLOWED_CATEGORIES:

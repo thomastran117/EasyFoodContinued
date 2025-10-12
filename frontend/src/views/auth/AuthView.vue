@@ -32,7 +32,9 @@ function handleLoading(val) {
       <div class="relative w-full h-full">
         <div
           class="absolute w-[65%] h-full right-0 flex items-center justify-center p-10 bg-white/90 backdrop-blur-lg overflow-hidden transition-all duration-700 ease-in-out z-10"
-          :style="{ transform: isSignup ? 'translateX(-53.5%)' : 'translateX(0)' }"
+          :style="{
+            transform: isSignup ? 'translateX(-53.5%)' : 'translateX(0)',
+          }"
         >
           <div class="relative w-full max-w-lg space-y-6 z-10">
             <AuthHeader :isSignup="isSignup" />

@@ -41,9 +41,10 @@ const submit = async () => {
 
   try {
     loading.value = true;
-    const res = await PublicApi.post(`/auth/change-password?token=${token.value}`,
+    const res = await PublicApi.post(
+      `/auth/change-password?token=${token.value}`,
       { password: password.value },
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
     success.value = res.data.message || "Password updated successfully!";
@@ -86,7 +87,10 @@ const retry = () => {
         {{ error }}
       </div>
 
-      <div v-if="success" class="text-green-600 text-sm text-center font-medium">
+      <div
+        v-if="success"
+        class="text-green-600 text-sm text-center font-medium"
+      >
         {{ success }}
       </div>
 
@@ -120,7 +124,9 @@ const retry = () => {
             v-model="showPw"
             class="rounded text-blue-600 focus:ring-blue-500"
           />
-          <label for="showPw" class="text-sm text-gray-700">Show password</label>
+          <label for="showPw" class="text-sm text-gray-700"
+            >Show password</label
+          >
         </div>
 
         <button

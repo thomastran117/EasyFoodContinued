@@ -10,9 +10,11 @@ const emit = defineEmits(["toggleAuth"]);
 <template>
   <div
     class="absolute w-[35%] h-full left-0 flex items-center justify-center p-10 text-white transition-all duration-500 ease-in-out z-20"
-    :class="isSignup
-      ? 'bg-gradient-to-br from-purple-600 to-blue-500'
-      : 'bg-gradient-to-br from-blue-500 to-purple-600'"
+    :class="
+      isSignup
+        ? 'bg-gradient-to-br from-purple-600 to-blue-500'
+        : 'bg-gradient-to-br from-blue-500 to-purple-600'
+    "
     :style="{ transform: isSignup ? 'translateX(186%)' : 'translateX(0)' }"
   >
     <div

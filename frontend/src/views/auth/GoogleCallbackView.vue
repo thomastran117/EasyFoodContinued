@@ -25,14 +25,14 @@ async function handleGoogleCallback() {
     const res = await axios.post(
       `${backendUrl}/auth/google`,
       { id_token: idToken },
-      { withCredentials: true }
+      { withCredentials: true },
     );
 
     auth.setAuth({
       accessToken: res.data.token,
       email: res.data.email,
     });
-  
+
     status.value = "success";
     message.value = "Login successful! Redirecting…";
 

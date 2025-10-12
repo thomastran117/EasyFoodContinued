@@ -24,12 +24,11 @@ const breadcrumbs = computed(() => {
 
 <template>
   <SessionManager>
-  <Navbar />
-  <Breadcrumb :crumbs="breadcrumbs" />
-  <router-view />
-  <Footer />
+    <Navbar />
+    <Breadcrumb :crumbs="breadcrumbs" />
+    <router-view />
+    <Footer />
   </SessionManager>
-
 </template>
 
 <style scoped>

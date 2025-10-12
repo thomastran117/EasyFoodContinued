@@ -64,13 +64,22 @@ onMounted(() => {
         Email Verification ✉️
       </h1>
 
-      <div v-if="loading" class="flex flex-col items-center justify-center py-6">
+      <div
+        v-if="loading"
+        class="flex flex-col items-center justify-center py-6"
+      >
         <div class="flex space-x-2 mb-4">
-          <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div
+            class="h-3 w-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"
+          ></div>
+          <div
+            class="h-3 w-3 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"
+          ></div>
           <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce"></div>
         </div>
-        <p class="text-blue-700 font-medium">Verifying your email, please wait...</p>
+        <p class="text-blue-700 font-medium">
+          Verifying your email, please wait...
+        </p>
       </div>
 
       <div v-else-if="error" class="space-y-4">
@@ -104,7 +113,11 @@ onMounted(() => {
             stroke-width="3"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         </div>
         <p class="text-green-700 font-medium text-lg">
@@ -123,7 +136,9 @@ onMounted(() => {
 
 <style scoped>
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
   40% {

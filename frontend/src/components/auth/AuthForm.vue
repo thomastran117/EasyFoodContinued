@@ -2,7 +2,12 @@
 import { ref, watch } from "vue";
 import axios from "axios";
 import { toast } from "vue3-toastify";
-import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/vue/24/outline";
+import {
+  EnvelopeIcon,
+  LockClosedIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/vue/24/outline";
 import GoogleButton from "./GoogleButton.vue";
 import MicrosoftButton from "./MicrosoftButton.vue";
 import config from "../../config/envManager";
@@ -29,7 +34,9 @@ const togglePassword = () => (showPassword.value = !showPassword.value);
 async function handleSubmit() {
   emit("update:loading", true);
   try {
-    const url = props.isSignup ? `${apiUrl}/auth/signup` : `${apiUrl}/auth/login`;
+    const url = props.isSignup
+      ? `${apiUrl}/auth/signup`
+      : `${apiUrl}/auth/login`;
 
     const res = await axios.post(url, {
       email: email.value,
@@ -50,9 +57,12 @@ async function handleSubmit() {
   } catch (err) {
     const status = err.response?.status;
     if (status === 400) toast.error("Invalid input. Please check your form.");
-    else if (status === 401) toast.error("Invalid credentials. Please try again.");
-    else if (status === 409) toast.error("Email already in use. Try logging in instead.");
-    else if (status === 500) toast.error("Server error. Please try again later.");
+    else if (status === 401)
+      toast.error("Invalid credentials. Please try again.");
+    else if (status === 409)
+      toast.error("Email already in use. Try logging in instead.");
+    else if (status === 500)
+      toast.error("Server error. Please try again later.");
     else toast.error(err.response?.data?.message || "Something went wrong.");
   } finally {
     emit("update:loading", false);
@@ -87,12 +97,17 @@ async function handleSubmit() {
         @click="togglePassword"
         class="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700"
       >
-        <component :is="showPassword ? EyeSlashIcon : EyeIcon" class="h-5 w-5" />
+        <component
+          :is="showPassword ? EyeSlashIcon : EyeIcon"
+          class="h-5 w-5"
+        />
       </button>
     </div>
 
     <div v-if="!props.isSignup" class="flex items-center justify-between -mt-2">
-      <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+      <label
+        class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none"
+      >
         <input
           type="checkbox"
           v-model="rememberMe"
@@ -100,7 +115,10 @@ async function handleSubmit() {
         />
         Remember Me
       </label>
-      <router-link to="/auth/forgot-password" class="text-sm text-blue-600 hover:underline">
+      <router-link
+        to="/auth/forgot-password"
+        class="text-sm text-blue-600 hover:underline"
+      >
         Forgot Password?
       </router-link>
     </div>
@@ -121,13 +139,15 @@ async function handleSubmit() {
 
     <div class="flex items-center justify-center my-6">
       <div class="w-full h-[1.5px] bg-gray-500/60"></div>
-      <span class="px-4 text-gray-700 text-sm font-semibold tracking-wide">OR</span>
+      <span class="px-4 text-gray-700 text-sm font-semibold tracking-wide"
+        >OR</span
+      >
       <div class="w-full h-[1.5px] bg-gray-500/60"></div>
     </div>
 
     <div class="flex gap-4">
-        <GoogleButton />
-        <MicrosoftButton />
+      <GoogleButton />
+      <MicrosoftButton />
     </div>
   </form>
 </template>

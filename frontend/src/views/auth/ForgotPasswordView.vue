@@ -21,7 +21,7 @@ async function handleForgotPassword() {
     });
 
     toast.info(
-      "If there is an account associated with this email, you will receive a password reset link shortly."
+      "If there is an account associated with this email, you will receive a password reset link shortly.",
     );
     email.value = "";
   } catch (err) {
@@ -32,7 +32,7 @@ async function handleForgotPassword() {
       toast.error("Server error. Please try again later.");
     else
       toast.error(
-        "Something went wrong while processing your request. Please try again later."
+        "Something went wrong while processing your request. Please try again later.",
       );
   } finally {
     loading.value = false;
@@ -61,10 +61,7 @@ async function handleForgotPassword() {
 
       <form @submit.prevent="handleForgotPassword" class="space-y-5">
         <div>
-          <label
-            for="email"
-            class="block text-gray-700 font-medium mb-2"
-          >
+          <label for="email" class="block text-gray-700 font-medium mb-2">
             Email
           </label>
           <input
