@@ -14,12 +14,13 @@ export class AccessTokenInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.accessToken;
-    if (token) {
-      const authReq = req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` },
-      });
-      return next.handle(authReq);
-    }
-    return next.handle(req);
+    const authReq = token
+      ? req.clone({
+          setHeaders: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        })
+      : req.clone({ withCredentials: true });
+
+    return next.handle(authReq);
   }
 }

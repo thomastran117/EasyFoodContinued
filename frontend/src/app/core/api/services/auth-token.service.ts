@@ -1,44 +1,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Store } from '@ngrx/store';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
+import { updateAccessToken, clearUser } from '../../stores/user.actions';
+import { UserState } from '../../stores/user.reducer';
 
 @Injectable({ providedIn: 'root' })
 export class AuthTokenService {
-  private accessKey = 'access_token';
-  private refreshKey = 'refresh_token';
+  accessToken: string | null = null;
 
-  constructor(private http: HttpClient) {}
-
-  get accessToken(): string | null {
-    return localStorage.getItem(this.accessKey);
+  constructor(private http: HttpClient, private store: Store<{ user: UserState }>) {
+    this.store.select((state) => state.user.user?.accessToken).subscribe((token) => {
+      this.accessToken = token || null;
+    });
   }
 
-  get refreshToken(): string | null {
-    return localStorage.getItem(this.refreshKey);
+  async refreshAccessToken(): Promise<void> {
+    const res = await firstValueFrom(
+      this.http.post<{ accessToken: string }>(
+        `${environment.backendUrl}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      )
+    );
+    this.store.dispatch(updateAccessToken({ accessToken: res.accessToken }));
+    this.accessToken = res.accessToken;
   }
 
-  setTokens(access: string, refresh: string) {
-    localStorage.setItem(this.accessKey, access);
-    localStorage.setItem(this.refreshKey, refresh);
-  }
-
-  clearTokens() {
-    localStorage.removeItem(this.accessKey);
-    localStorage.removeItem(this.refreshKey);
-  }
-
-  async refresh(): Promise<void> {
-    if (!this.refreshToken) throw new Error('Missing refresh token');
-    const res = await this.http
-      .post<TokenResponse>(`${environment.backendUrl}/auth/refresh`, {
-        refreshToken: this.refreshToken,
-      })
-      .toPromise();
-    this.setTokens(res!.accessToken, res!.refreshToken);
+  logout() {
+    this.store.dispatch(clearUser());
+    this.accessToken = null;
   }
 }

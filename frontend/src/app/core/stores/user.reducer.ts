@@ -1,20 +1,21 @@
 import { createReducer, on } from '@ngrx/store';
-import { loginSuccess, logout, setLoading } from './user.actions';
+import { setUser, clearUser, updateAccessToken } from './user.actions';
 import { User } from './user.model';
 
 export interface UserState {
   user: User | null;
-  loading: boolean;
 }
 
 export const initialState: UserState = {
   user: null,
-  loading: false,
 };
 
 export const userReducer = createReducer(
   initialState,
-  on(loginSuccess, (state, { user }) => ({ ...state, user })),
-  on(logout, (state) => ({ ...state, user: null })),
-  on(setLoading, (state, { loading }) => ({ ...state, loading }))
+  on(setUser, (state, { user }) => ({ ...state, user })),
+  on(clearUser, () => ({ user: null })),
+  on(updateAccessToken, (state, { accessToken }) => ({
+    ...state,
+    user: state.user ? { ...state.user, accessToken } : null,
+  }))
 );
