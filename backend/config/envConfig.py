@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     password: Optional[str] = None
 
     google_client_id: Optional[str] = None
-
+    google_secret_key: Optional[str] = None
+    
     ms_tenant_id: Optional[str] = None
     ms_client_id: Optional[str] = None
 
