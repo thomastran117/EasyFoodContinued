@@ -86,3 +86,4 @@ frontend/*.sln
 frontend/*.sw?
 
 uploads/
+frontends/
