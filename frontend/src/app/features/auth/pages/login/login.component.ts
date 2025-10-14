@@ -8,9 +8,10 @@ import { UserState } from '../../../../core/stores/user.reducer';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
-
+import { ReCaptchaV3Service, NgxCaptchaModule } from 'ngx-captcha';
 import { GoogleButtonComponent } from '../../components/google-button/google-button.component';
 import { MicrosoftButtonComponent } from '../../components/microsoft-button/microsoft-button.component';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -21,22 +22,25 @@ import { MicrosoftButtonComponent } from '../../components/microsoft-button/micr
     RouterModule,
     GoogleButtonComponent,
     MicrosoftButtonComponent,
+    NgxCaptchaModule,
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
 export class LoginComponent {
+  form!: FormGroup;
   loading = false;
   error = '';
-  submitted = false;
   showPw = false;
-  form!: FormGroup;
+  submitted = false;
+  siteKey = environment.googleSiteKey;
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private store: Store<{ user: UserState }>,
     private router: Router,
+    private reCaptchaV3Service: ReCaptchaV3Service
   ) {}
 
   ngOnInit() {
@@ -56,20 +60,18 @@ export class LoginComponent {
     if (this.form.invalid) return;
 
     this.loading = true;
-    this.error = '';
-
-    this.auth
-      .login(this.form.value)
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe({
-        next: (res) => {
-          this.store.dispatch(setUser({ user: res }));
-          this.router.navigate(['/dashboard']);
-        },
-        error: (err) => {
-          console.error('Login failed:', err);
-          this.error = err?.error?.message || 'Login failed.';
-        },
-      });
+    this.reCaptchaV3Service.execute(this.siteKey, 'login', (token) => {
+      const payload = { ...this.form.value, captcha: token };
+      this.auth
+        .login(payload)
+        .pipe(finalize(() => (this.loading = false)))
+        .subscribe({
+          next: (res) => {
+            this.store.dispatch(setUser({ user: res }));
+            this.router.navigate(['/dashboard']);
+          },
+          error: (err) => (this.error = err?.error?.message || 'Login failed.'),
+        });
+    });
   }
 }
