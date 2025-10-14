@@ -118,7 +118,7 @@ async def microsoft_login(id_token: str, remember: bool):
                 provider="microsoft",
                 microsoft_id=user_id,
                 name=name,
-                profileUrl=picture,
+                avatar=picture,
             )
             db.add(user)
         else:
@@ -158,7 +158,7 @@ async def google_login(token: str, remember: bool):
                 provider="google",
                 microsoft_id=user_id,
                 name=name,
-                profileUrl=picture,
+                avatar=picture,
             )
             db.add(user)
             db.commit()

@@ -36,8 +36,11 @@ async def login(request: LoginRequestDto):
 
         response = JSONResponse(
             content={
+                "message": "Login successful",
                 "token": access,
-                "email": user.email,
+                "username": user.username if user.username else user.email,
+                "avatar": user.avatar,
+                "role": user.role,
             }
         )
 
@@ -134,11 +137,16 @@ async def change_password(token: str, request: ChangePasswordDto):
 
 async def google(auth_req: GoogleAuthRequest):
     try:
+
         access, refresh, user = await google_login(auth_req.id_token, False)
+
         response = JSONResponse(
             content={
+                "message": "Login successful",
                 "token": access,
-                "email": user.email,
+                "username": user.username if user.username else user.email,
+                "avatar": user.avatar,
+                "role": user.role,
             }
         )
 
@@ -151,13 +159,17 @@ async def google(auth_req: GoogleAuthRequest):
 async def microsoft(auth_req: MicrosoftAuthRequest):
     try:
         access, refresh, user = await microsoft_login(auth_req.id_token, False)
+
         response = JSONResponse(
             content={
+                "message": "Login successful",
                 "token": access,
-                "email": user.email,
+                "username": user.username if user.username else user.email,
+                "avatar": user.avatar,
+                "role": user.role,
             }
         )
-
+        
         return set_refresh_cookie(response, refresh)
 
     except Exception as e:

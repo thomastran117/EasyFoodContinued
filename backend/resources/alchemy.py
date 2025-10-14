@@ -126,6 +126,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, nullable=True)
     password = Column(String, nullable=True)
     role = Column(String, nullable=False, default="user")
 
@@ -135,7 +136,7 @@ class User(Base):
     microsoft_id = Column(String, unique=True, nullable=True)
 
     name = Column(String, nullable=True)
-    profileUrl = Column(String, nullable=True)
+    avatar = Column(String, nullable=True)
 
     phone = Column(String, nullable=True)
     address = Column(String, nullable=True)
