@@ -1,11 +1,9 @@
-<nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm py-3">
+<nav class="navbar navbar-expand-lg shadow-sm py-3 custom-navbar bg-white">
   <div class="container-fluid d-flex justify-content-between align-items-center">
-    <!-- Brand -->
-    <a class="navbar-brand fw-bold fs-4" [routerLink]="brand.href">
+    <a class="navbar-brand fw-bold fs-4 text-primary" [routerLink]="brand.href">
       {{ brand.name }}
     </a>
 
-    <!-- Toggler (mobile) -->
     <button
       class="navbar-toggler border-0"
       type="button"
@@ -15,31 +13,36 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Center Nav Links -->
     <div
       class="collapse navbar-collapse justify-content-center"
       [class.show]="!isCollapsed"
       id="navbarNav"
     >
-      <ul class="navbar-nav gap-3">
+      <ul class="navbar-nav gap-2">
         <li
           class="nav-item"
           *ngFor="let link of links"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
         >
-          <a class="nav-link px-3 py-2" [routerLink]="link.to">
+          <a class="nav-link fw-medium px-3 py-2" [routerLink]="link.to">
             {{ link.label }}
           </a>
         </li>
       </ul>
     </div>
 
-    <!-- CTA Button -->
-    <div class="d-none d-lg-block">
-      <a class="btn btn-cta fw-semibold px-4 py-2" [routerLink]="cta.to">
+    <div *ngIf="user$ | async as user; else guest" class="d-flex align-items-center gap-3">
+      <span class="fw-semibold text-primary">Hi, {{ user.username }}</span>
+      <button class="btn btn-outline-primary btn-sm fw-semibold" (click)="logout()">
+        Logout
+      </button>
+    </div>
+
+    <ng-template #guest>
+      <a class="btn btn-primary fw-semibold px-4 py-2 shadow-sm" [routerLink]="cta.to">
         {{ cta.label }}
       </a>
-    </div>
+    </ng-template>
   </div>
 </nav>

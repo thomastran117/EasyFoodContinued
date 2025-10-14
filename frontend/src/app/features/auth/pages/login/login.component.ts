@@ -67,6 +67,7 @@ export class LoginComponent {
         .pipe(finalize(() => (this.loading = false)))
         .subscribe({
           next: (res) => {
+            console.log(res);
             this.store.dispatch(setUser({ user: res }));
             this.router.navigate(['/dashboard']);
           },

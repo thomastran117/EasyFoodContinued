@@ -1,77 +1,78 @@
-/* Base layout */
-.navbar {
+.custom-navbar {
   background-color: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  z-index: 1030; /* ensure it stays above other content */
+  border-bottom: 1px solid #e0e0e0;
+  transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
 }
 
-/* Brand text */
+.custom-navbar:hover {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
 .navbar-brand {
-  color: #16a34a !important; /* Emerald green */
-  letter-spacing: 0.5px;
-  transition: color 0.3s ease;
+  color: #0d47a1 !important;
+  letter-spacing: 0.3px;
+  transition: color 0.3s;
 }
+
 .navbar-brand:hover {
-  color: #15803d !important;
+  color: #1565c0 !important;
 }
 
-/* Nav links */
 .nav-link {
-  position: relative;
-  color: #333 !important;
-  font-weight: 500;
-  transition: color 0.25s ease;
+  color: #0d47a1 !important;
+  border-bottom: 2px solid transparent;
+  transition: color 0.25s, border-color 0.25s;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+  color: #1976d2 !important;
+  border-bottom-color: #1976d2;
+}
+
 .nav-link.active {
-  color: #16a34a !important;
+  color: #1976d2 !important;
+  border-bottom-color: #1976d2;
+  font-weight: 600;
 }
 
-.nav-link::after {
-  content: '';
-  position: absolute;
-  left: 15%;
-  bottom: 0;
-  width: 0;
-  height: 2px;
-  background-color: #16a34a;
-  transition: width 0.3s ease;
-}
-
-.nav-link:hover::after,
-.nav-link.active::after {
-  width: 70%;
-}
-
-/* CTA button */
-.btn-cta {
-  background-color: #16a34a;
+.btn-primary {
+  background-color: #1976d2;
+  border-color: #1976d2;
   color: white;
-  border-radius: 50px;
-  transition:
-    background-color 0.25s ease,
-    transform 0.25s ease;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
-.btn-cta:hover {
-  background-color: #15803d;
+.btn-primary:hover {
+  background-color: #1565c0;
   transform: translateY(-1px);
 }
 
-/* Mobile adjustments */
-@media (max-width: 992px) {
-  .navbar-collapse {
-    background-color: #f8fff9; /* very light green tint */
-    padding: 1rem 0;
-  }
+.btn-outline-primary {
+  border-color: #1976d2;
+  color: #1976d2;
+  transition: all 0.25s;
+}
 
-  .nav-item {
+.btn-outline-primary:hover {
+  background-color: #1976d2;
+  color: white;
+}
+
+.navbar-toggler {
+  border: none;
+}
+
+.navbar-toggler-icon {
+  filter: invert(30%);
+}
+
+@media (max-width: 991px) {
+  .navbar-nav {
     text-align: center;
+    padding-top: 1rem;
   }
 
-  .btn-cta {
-    display: inline-block;
-    margin-top: 1rem;
+  .nav-link {
+    padding: 0.75rem 0;
   }
 }
