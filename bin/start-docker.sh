@@ -60,8 +60,8 @@ step "Applying Alembic migrations (alembic upgrade head)..."
 step "Starting backend and frontend (attached)..."
 echo "Press Ctrl+C to stop containers."
 echo
-echo "   Frontend: http://localhost:3090"
-echo "   Backend:  http://localhost:8090/"
+echo "   Frontend: http://localhost:3050"
+echo "   Backend:  http://localhost:8050/"
 echo
 
 exec "${COMPOSE[@]}" up "$BACKEND_SERVICE" "$FRONTEND_SERVICE"

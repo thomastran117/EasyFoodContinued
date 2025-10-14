@@ -45,8 +45,8 @@ docker compose -f $ComposeFile run --rm $BackendService alembic upgrade head
 Invoke-Step "Starting backend and frontend (attached)..."
 Write-Host "Press Ctrl+C to stop containers."
 Write-Host ""
-Write-Host "   Frontend: http://localhost:3090"
-Write-Host "   Backend:  http://localhost:8090/"
+Write-Host "   Frontend: http://localhost:3050"
+Write-Host "   Backend:  http://localhost:8050/"
 Write-Host ""
 
 docker compose -f $ComposeFile up $BackendService $FrontendService

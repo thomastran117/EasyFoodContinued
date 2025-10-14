@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements_linux.txt .
 RUN pip install -r requirements_linux.txt
 
 COPY . .
 
-EXPOSE 8090
+EXPOSE 8050
