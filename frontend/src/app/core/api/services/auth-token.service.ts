@@ -11,7 +11,7 @@ export class AuthTokenService {
   accessToken: string | null = null;
 
   constructor(private http: HttpClient, private store: Store<{ user: UserState }>) {
-    this.store.select((state) => state.user.user?.accessToken).subscribe((token) => {
+    this.store.select((state) => state.user.user?.token).subscribe((token) => {
       this.accessToken = token || null;
     });
   }

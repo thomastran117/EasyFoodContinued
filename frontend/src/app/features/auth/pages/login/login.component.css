@@ -1,0 +1,104 @@
+:host {
+  display: block;
+  height: 100vh;
+  background: linear-gradient(135deg, #e8f0ff 0%, #d6e4ff 50%, #ffffff 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+:host::before,
+:host::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(0, 123, 255, 0.12);
+  filter: blur(60px);
+  z-index: 0;
+  animation: float 10s ease-in-out infinite;
+}
+
+:host::before {
+  width: 220px;
+  height: 220px;
+  top: 10%;
+  left: 15%;
+}
+
+:host::after {
+  width: 280px;
+  height: 280px;
+  bottom: 5%;
+  right: 10%;
+  animation-delay: 3s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.05);
+  }
+}
+
+.auth-container {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  border: none;
+  backdrop-filter: blur(10px);
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s;
+}
+
+.auth-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(13, 110, 253, 0.15);
+}
+
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #cfd8ef, transparent);
+}
+
+.divider-text {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+}
+
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+}
+
+.btn-outline-primary {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.input-group-text {
+  border: 1px solid #dee2e6;
+}
+
+.text-primary {
+  color: #0d6efd !important;
+}

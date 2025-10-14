@@ -7,7 +7,6 @@ import { NavbarComponent } from './shared/navbar/navbar.component';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent],
   templateUrl: './app.html',
-  styleUrls: ['./app.css']
 })
 export class App {
   protected readonly title = signal('frontend');

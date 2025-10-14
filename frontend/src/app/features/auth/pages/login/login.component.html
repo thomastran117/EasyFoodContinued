@@ -1,0 +1,90 @@
+<div class="auth-container d-flex align-items-center justify-content-center vh-100">
+  <div class="auth-card shadow-lg p-4 bg-white rounded-4" style="width: 100%; max-width: 420px;">
+    <div class="card-body">
+      <div class="text-center mb-4">
+        <h3 class="fw-bold text-primary mb-1">Welcome Back</h3>
+        <p class="text-muted">Log in to continue your journey</p>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger text-center py-2 mb-3 rounded-pill" role="alert">
+        {{ error }}
+      </div>
+
+      <form (ngSubmit)="onSubmit()" [formGroup]="form">
+        <div class="mb-3">
+          <label for="email" class="form-label fw-semibold text-secondary">Email address</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-primary">
+              <i class="bi bi-envelope-fill"></i>
+            </span>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="form-control form-control-lg rounded-end-3"
+              placeholder="name@example.com"
+              [class.is-invalid]="submitted && form.controls['email'].invalid"
+            />
+            <div class="invalid-feedback">Please enter a valid email.</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label fw-semibold text-secondary">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light text-primary">
+              <i class="bi bi-lock-fill"></i>
+            </span>
+            <input
+              [type]="showPw ? 'text' : 'password'"
+              id="password"
+              formControlName="password"
+              class="form-control form-control-lg"
+              placeholder="Enter password"
+              [class.is-invalid]="submitted && form.controls['password'].invalid"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              (click)="togglePassword()"
+            >
+              <i class="bi" [ngClass]="showPw ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
+            <div class="invalid-feedback">Password must be at least 6 characters.</div>
+          </div>
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="remember" formControlName="remember" />
+          <label class="form-check-label text-muted" for="remember">Remember me</label>
+        </div>
+
+        <button class="btn btn-primary w-100 py-2 mt-2 rounded-3" type="submit" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          Log In
+        </button>
+      </form>
+
+      <div class="text-center my-4 position-relative">
+        <hr class="divider" />
+        <small class="divider-text text-muted bg-white px-2">or continue with</small>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <button class="btn btn-outline-danger w-100 rounded-3" (click)="loginWithGoogle()">
+          <i class="bi bi-google me-2"></i> Sign in with Google
+        </button>
+        <button class="btn btn-outline-primary w-100 rounded-3" (click)="loginWithMicrosoft()">
+          <i class="bi bi-microsoft me-2"></i> Sign in with Microsoft
+        </button>
+      </div>
+
+      <div class="text-center mt-4">
+        <span class="text-muted">Don’t have an account?</span>
+        <a routerLink="/auth/signup" class="fw-semibold text-primary text-decoration-none ms-1">
+          Sign up
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
