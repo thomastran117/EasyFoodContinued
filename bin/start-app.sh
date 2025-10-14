@@ -10,7 +10,7 @@ BACKEND="$REPO_ROOT/backend"
 echo "🚀 Starting frontend..."
 (
   cd "$FRONTEND"
-  npm run dev
+  npm run start
 ) &
 FRONTEND_PID=$!
 

@@ -8,7 +8,7 @@ $backend   = Join-Path $repoRoot "backend"
 Write-Host "🚀 Starting frontend..." -ForegroundColor Cyan
 $frontendProc = Start-Process `
   -FilePath "cmd.exe" `
-  -ArgumentList "/c","npm run dev" `
+  -ArgumentList "/c","npm run start" `
   -WorkingDirectory $frontend `
   -NoNewWindow `
   -PassThru
