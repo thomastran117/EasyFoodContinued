@@ -4,12 +4,15 @@ from pydantic import BaseModel, EmailStr
 class LoginRequestDto(BaseModel):
     email: EmailStr
     password: str
-    remember: bool
+    remember: bool = False
+    captcha: str
 
 
 class SignupRequestDto(BaseModel):
     email: EmailStr
     password: str
+    captcha: str
+    role: str = "hello"
 
 
 class AuthResponseDto(BaseModel):

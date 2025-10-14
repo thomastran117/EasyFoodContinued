@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from service.authService import (
     loginUser,
     signupUser,
-    createUser,
     verifyUser,
     exchangeTokens,
     logoutTokens,
@@ -23,7 +22,7 @@ from dtos.authDtos import (
 from utilities.errorRaiser import (
     raise_error,
     ServiceUnavaliableException,
-    UnauthorizedException
+    UnauthorizedException,
 )
 from config.envConfig import settings
 from utilities.logger import logger
@@ -31,7 +30,9 @@ from utilities.logger import logger
 
 async def login(request: LoginRequestDto):
     try:
-        access, refresh, user = await loginUser(request.email, request.password, request.remember)
+        access, refresh, user = await loginUser(
+            request.email, request.password, request.remember, request.captcha
+        )
 
         response = JSONResponse(
             content={
@@ -48,15 +49,8 @@ async def login(request: LoginRequestDto):
 
 async def signup(request: SignupRequestDto):
     try:
-        if not settings.email_enabled:
-            logger.warn(
-                "Email service is not avaliable. Proceeding with signing up the user w/o verification"
-            )
-            await createUser(request.email, request.password)
-            return {"message": "Signup completed without verification. Please login"}
-        else:
-            await signupUser(request.email, request.password)
-            return {"message": "Verification sent. Check your email"}
+        await signupUser(request.email, request.password, request.role, request.captcha)
+        return {"message": "Verification sent. Check your email"}
     except Exception as e:
         raise_error(e)
 

@@ -29,13 +29,14 @@ class Settings(BaseSettings):
 
     google_client_id: Optional[str] = None
     google_secret_key: Optional[str] = None
-    
+
     ms_tenant_id: Optional[str] = None
     ms_client_id: Optional[str] = None
 
     google_oauth_enabled: bool = False
     ms_oauth_enabled: bool = False
     email_enabled: bool = False
+    recaptcha_enabled: bool = False
 
     @field_validator("database_url", "redis_url")
     def must_not_be_empty(cls, v, field):
@@ -52,6 +53,8 @@ class Settings(BaseSettings):
         self.ms_oauth_enabled = all([self.ms_tenant_id, self.ms_client_id])
 
         self.email_enabled = all([self.email, self.password])
+
+        self.recaptcha_enabled = all([self.google_secret_key])
 
     class Config:
         env_file = os.path.join(os.path.dirname(__file__), "..", ".env")

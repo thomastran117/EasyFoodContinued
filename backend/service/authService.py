@@ -14,14 +14,23 @@ from service.tokenService import (
     invalidate_refresh_token,
 )
 from service.emailService import send_verification_email, send_forgot_password_email
+from service.webService import google_verify_captcha
 from config.envConfig import settings
 from jose import jwt as jose_jwt
 import httpx
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from utilities.logger import logger
 
 
-async def loginUser(email: str, password: str, remember: bool):
+async def loginUser(email: str, password: str, remember: bool, captcha: str):
+    if settings.recaptcha_enabled:
+        is_valid_captcha = await google_verify_captcha(captcha)
+        if not is_valid_captcha:
+            raise UnauthorizedException("Captcha verification failed.")
+    else:
+        logger.warn("Captcha is not enabled")
+
     with get_db() as db:
         user = db.query(User).filter(User.email == email).first()
         if not user or not verify_password(password, user.password):
@@ -30,7 +39,14 @@ async def loginUser(email: str, password: str, remember: bool):
         return access, refresh, user
 
 
-async def signupUser(email: str, password: str):
+async def signupUser(email: str, password: str, role: str, captcha: str):
+    if settings.recaptcha_enabled:
+        is_valid_captcha = await google_verify_captcha(captcha)
+        if not is_valid_captcha:
+            raise UnauthorizedException("Captcha verification failed.")
+    else:
+        logger.warn("Captcha is not enabled")
+
     with get_db() as db:
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
@@ -39,8 +55,14 @@ async def signupUser(email: str, password: str):
         hashed_pw = hash_password(password)
         token = create_verification_token(email, hashed_pw)
 
-        await send_verification_email(email, token)
-
+        if settings.email_enabled:
+            await send_verification_email(email, token)
+        else:
+            logger.warn("Email verification is not emailed.")
+            new_user = User(email=email, password=hashed_pw)
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
         return True
 
 
@@ -54,21 +76,6 @@ async def verifyUser(token: str):
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        return new_user
-
-
-def createUser(email: str, password: str):
-    with get_db() as db:
-        existing_user = db.query(User).filter(User.email == email).first()
-        if existing_user:
-            raise ConflictException("Email already registered.")
-        hashed_pw = hash_password(password)
-        new_user = User(email=email, password=hashed_pw)
-
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-
         return new_user
 
 

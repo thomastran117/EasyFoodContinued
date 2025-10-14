@@ -131,7 +131,9 @@ def invalidate_verification_token(token: str):
     _delete_token(_verify_key(token))
 
 
-def generate_tokens(user_id: str, email: str, role: str = "user", remember: bool = False):
+def generate_tokens(
+    user_id: str, email: str, role: str = "user", remember: bool = False
+):
     user_data = {"id": user_id, "email": email, "role": role, "remember": remember}
     return create_access_token(user_data), create_refresh_token(user_data, remember)
 
