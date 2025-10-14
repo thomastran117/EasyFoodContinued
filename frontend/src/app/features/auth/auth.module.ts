@@ -10,9 +10,7 @@ import { LoginComponent } from './pages/login/login.component';
     CommonModule,
     ReactiveFormsModule,
     LoginComponent,
-    RouterModule.forChild([
-      { path: 'login', component: LoginComponent },
-    ]),
+    RouterModule.forChild([{ path: 'login', component: LoginComponent }]),
   ],
 })
 export class AuthModule {}

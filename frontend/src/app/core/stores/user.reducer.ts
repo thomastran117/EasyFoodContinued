@@ -17,5 +17,5 @@ export const userReducer = createReducer(
   on(updateAccessToken, (state, { accessToken }) => ({
     ...state,
     user: state.user ? { ...state.user, accessToken } : null,
-  }))
+  })),
 );

@@ -38,12 +38,12 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
               this.refreshing = false;
               this.auth.logout();
               return throwError(() => innerErr);
-            })
+            }),
           );
         }
 
         return throwError(() => err);
-      })
+      }),
     );
   }
 }

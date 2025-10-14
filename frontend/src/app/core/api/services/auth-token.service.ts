@@ -10,10 +10,15 @@ import { UserState } from '../../stores/user.reducer';
 export class AuthTokenService {
   accessToken: string | null = null;
 
-  constructor(private http: HttpClient, private store: Store<{ user: UserState }>) {
-    this.store.select((state) => state.user.user?.token).subscribe((token) => {
-      this.accessToken = token || null;
-    });
+  constructor(
+    private http: HttpClient,
+    private store: Store<{ user: UserState }>,
+  ) {
+    this.store
+      .select((state) => state.user.user?.token)
+      .subscribe((token) => {
+        this.accessToken = token || null;
+      });
   }
 
   async refreshAccessToken(): Promise<void> {
@@ -21,8 +26,8 @@ export class AuthTokenService {
       this.http.post<{ accessToken: string }>(
         `${environment.backendUrl}/auth/refresh`,
         {},
-        { withCredentials: true }
-      )
+        { withCredentials: true },
+      ),
     );
     this.store.dispatch(updateAccessToken({ accessToken: res.accessToken }));
     this.accessToken = res.accessToken;

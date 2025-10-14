@@ -7,7 +7,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  styleUrls: ['./navbar.component.css'],
 })
 export class NavbarComponent {
   @Input() brand = { name: 'EduSpace', href: '/' };
@@ -16,7 +16,7 @@ export class NavbarComponent {
     { label: 'Home', to: '/' },
     { label: 'Features', to: '/features' },
     { label: 'Pricing', to: '/pricing' },
-    { label: 'About', to: '/about' }
+    { label: 'About', to: '/about' },
   ];
 
   @Input() cta = { label: 'Get Started', to: '/auth' };

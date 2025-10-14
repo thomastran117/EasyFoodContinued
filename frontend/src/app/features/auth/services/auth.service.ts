@@ -23,7 +23,6 @@ export interface AuthResponse {
   id: number;
 }
 
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly baseUrl = `${environment.backendUrl}/auth`;
