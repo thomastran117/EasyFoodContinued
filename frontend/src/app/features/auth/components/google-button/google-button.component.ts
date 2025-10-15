@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../../../../environments/environment'; // adjust path if needed
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -14,7 +15,26 @@ export class GoogleButtonComponent {
 
   constructor(private auth: AuthService) {}
 
-  loginWithGoogle() {
-    window.location.href = this.auth.googleOAuthUrl;
+  loginWithGoogle(): void {
+    try {
+      this.loading = true;
+
+      const scope = 'openid email profile';
+      const params = new URLSearchParams({
+        client_id: environment.googleClientId,
+        redirect_uri: `${environment.frontendUrl}/auth/google`,
+        response_type: 'id_token',
+        scope,
+        nonce: crypto.randomUUID(),
+        prompt: 'select_account',
+      });
+
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      console.error('Failed to start Google OAuth flow:', error);
+    } finally {
+      this.loading = false;
+    }
   }
 }

@@ -34,9 +34,7 @@
 
     <div *ngIf="user$ | async as user; else guest" class="d-flex align-items-center gap-3">
       <span class="fw-semibold text-primary">Hi, {{ user.username }}</span>
-      <button class="btn btn-outline-primary btn-sm fw-semibold" (click)="logout()">
-        Logout
-      </button>
+      <button class="btn btn-outline-primary btn-sm fw-semibold" (click)="logout()">Logout</button>
     </div>
 
     <ng-template #guest>

@@ -47,16 +47,20 @@ export class AuthService {
     });
   }
 
-  googleCallback(code: string): Observable<AuthResponse> {
-    return this.http.get<AuthResponse>(`${this.baseUrl}/google?code=${code}`, {
-      withCredentials: true,
-    });
+  googleVerify(idToken: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(
+      `${this.baseUrl}/google`,
+      { id_token: idToken },
+      { withCredentials: true },
+    );
   }
 
-  microsoftCallback(code: string): Observable<AuthResponse> {
-    return this.http.get<AuthResponse>(`${this.baseUrl}/microsoft?code=${code}`, {
-      withCredentials: true,
-    });
+  microsoftVerify(idToken: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(
+      `${this.baseUrl}/microsoft`,
+      { id_token: idToken },
+      { withCredentials: true },
+    );
   }
 
   logout(): Observable<void> {

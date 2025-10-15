@@ -1,7 +1,9 @@
 .custom-navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e0e0e0;
-  transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  transition:
+    box-shadow 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
 }
 
 .custom-navbar:hover {
@@ -21,7 +23,9 @@
 .nav-link {
   color: #0d47a1 !important;
   border-bottom: 2px solid transparent;
-  transition: color 0.25s, border-color 0.25s;
+  transition:
+    color 0.25s,
+    border-color 0.25s;
 }
 
 .nav-link:hover {
@@ -39,7 +43,9 @@
   background-color: #1976d2;
   border-color: #1976d2;
   color: white;
-  transition: background-color 0.3s, transform 0.2s;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
 }
 
 .btn-primary:hover {

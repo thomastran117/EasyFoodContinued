@@ -40,7 +40,7 @@ export class LoginComponent {
     private auth: AuthService,
     private store: Store<{ user: UserState }>,
     private router: Router,
-    private reCaptchaV3Service: ReCaptchaV3Service
+    private reCaptchaV3Service: ReCaptchaV3Service,
   ) {}
 
   ngOnInit() {

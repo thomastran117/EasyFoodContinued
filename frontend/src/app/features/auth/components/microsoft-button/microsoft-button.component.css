@@ -1,19 +1,35 @@
-button {
-  font-weight: 500;
-  padding: 0.6rem 0;
+.ms-btn {
+  background-color: #ffffff;
+  border: 1.5px solid #000000;
+  color: #000000;
+  font-size: 0.95rem;
+  padding: 0.6rem 1rem;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-button:hover {
+.ms-btn:hover {
+  background-color: #f8f8f8;
   transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-.btn-outline-danger {
-  border-color: #dc3545;
-  color: #dc3545;
+.ms-btn:active {
+  background-color: #ebebeb;
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: #fff;
+.ms-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.ms-btn svg {
+  flex-shrink: 0;
+}
+
+.ms-btn:focus-visible {
+  outline: 3px solid rgba(0, 0, 0, 0.3);
+  outline-offset: 2px;
 }
