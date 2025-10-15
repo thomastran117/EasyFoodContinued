@@ -1,4 +1,4 @@
-from resources.alchemy import Restaurant
+from resources.schema import Restaurant
 from utilities.errorRaiser import (
     ConflictException,
     ForbiddenException,

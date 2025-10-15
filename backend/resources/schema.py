@@ -1,49 +1,11 @@
-from contextlib import contextmanager
-from config.envConfig import settings
-from utilities.logger import get_logger
-
 import enum
 from sqlalchemy import (
-    create_engine,
-    Column,
-    Integer,
-    String,
-    ForeignKey,
-    Table,
-    DateTime,
-    Float,
-    Text,
-    Enum,
-    text,
+    Column, Integer, String, ForeignKey, Text, Float, DateTime, Enum
 )
 from sqlalchemy.sql import func
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy.orm import relationship
 from datetime import datetime
-
-logger = get_logger(__name__)
-DATABASE_URL = settings.database_url
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-try:
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    logger.info("PSQL Database connected successfully")
-except Exception as e:
-    logger.error("PSQL Database connection failed")
-    raise
-
-
-@contextmanager
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+from resources.database import Base
 
 class OccasionEnum(enum.Enum):
     BIRTHDAY = "birthday"

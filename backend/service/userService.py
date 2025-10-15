@@ -1,4 +1,4 @@
-from resources.alchemy import User
+from resources.schema import User
 from utilities.errorRaiser import NotFoundException, BadRequestException
 from utilities.imageValidator import is_valid_image_url
 

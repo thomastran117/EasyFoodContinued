@@ -1,4 +1,4 @@
-from resources.alchemy import Order, OrderFood
+from resources.schema import Order, OrderFood
 from sqlalchemy.orm import joinedload
 from datetime import datetime
 from utilities.errorRaiser import (

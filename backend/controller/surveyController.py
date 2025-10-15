@@ -5,7 +5,7 @@ from utilities.errorRaiser import (
     BadRequestException,
     NotImplementedException,
 )
-from resources.alchemy import SessionLocal
+from resources.database import SessionLocal
 from service.tokenService import oauth2_scheme, get_current_user
 from service.surveyService import (
     create_survey,

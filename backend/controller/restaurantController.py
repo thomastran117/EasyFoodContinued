@@ -11,7 +11,7 @@ from service.restaurantService import (
 from service.tokenService import oauth2_scheme, get_current_user
 from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
 from utilities.errorRaiser import raise_error, BadRequestException
-from resources.alchemy import SessionLocal
+from resources.database import SessionLocal
 
 
 async def getRestaurant(id: int):

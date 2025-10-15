@@ -1,4 +1,5 @@
-from resources.alchemy import User, get_db
+from resources.database import get_db
+from resources.schema import User
 import bcrypt
 from utilities.errorRaiser import (
     ConflictException,

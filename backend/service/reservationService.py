@@ -1,4 +1,4 @@
-from resources.alchemy import Reservation
+from resources.schema import Reservation
 from utilities.errorRaiser import ForbiddenException, NotFoundException
 from service.restaurantService import find_restaurant_by_id
 

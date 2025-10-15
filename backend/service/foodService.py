@@ -1,4 +1,4 @@
-from resources.alchemy import Food
+from resources.schema import Food
 from utilities.errorRaiser import (
     ForbiddenException,
     NotFoundException,

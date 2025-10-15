@@ -1,4 +1,4 @@
-from resources.alchemy import Survey
+from resources.schema import Survey
 from utilities.errorRaiser import ForbiddenException, NotFoundException
 
 
