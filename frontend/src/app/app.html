@@ -1,5 +1,16 @@
-<app-navbar></app-navbar>
-
-<main class="container mt-4">
+<ng-container *ngIf="!loading; else loadingScreen">
+  <app-navbar></app-navbar>
   <router-outlet></router-outlet>
-</main>
+</ng-container>
+
+<ng-template #loadingScreen>
+  <div
+    class="vh-100 d-flex flex-column align-items-center justify-content-center bg-gradient"
+  >
+    <div class="loading-card text-center p-4 rounded-4 shadow-sm">
+      <div class="spinner-grow text-primary mb-3" style="width: 3rem; height: 3rem"></div>
+      <h5 class="fw-bold mb-1 text-dark">EasyFood</h5>
+      <p class="text-muted mb-0">Restoring your session...</p>
+    </div>
+  </div>
+</ng-template>

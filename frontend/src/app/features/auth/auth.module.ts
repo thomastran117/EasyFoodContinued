@@ -13,6 +13,7 @@ import { MicrosoftCallbackComponent } from './pages/microsoft-callback/microsoft
     ReactiveFormsModule,
     LoginComponent,
     RouterModule.forChild([
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
       { path: 'google', component: GoogleCallbackComponent },
       { path: 'microsoft', component: MicrosoftCallbackComponent },
