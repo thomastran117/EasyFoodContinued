@@ -79,6 +79,9 @@ async def renew(request: Request):
             content={
                 "token": access,
                 "email": email,
+                "username": "hello",
+                "role": "me",
+                "avatar": "hi"
             }
         )
 
