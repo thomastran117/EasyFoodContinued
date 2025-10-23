@@ -54,7 +54,9 @@ async def getSurveys():
         db.close()
 
 
-async def createSurvey(create: SurveyCreateDto, token: str = Depends(require_auth_token)):
+async def createSurvey(
+    create: SurveyCreateDto, token: str = Depends(require_auth_token)
+):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)

@@ -6,6 +6,7 @@ from utilities.errorRaiser import (
 )
 from service.restaurantService import find_restaurant_by_id, find_restaurant_by_userid
 
+
 def find_food_by_id(db, food_id: int):
 
     food = db.query(Food).filter(Food.id == food_id).first()

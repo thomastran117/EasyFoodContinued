@@ -36,11 +36,14 @@ def require_role(*roles: str):
     def role_dependency(user: dict = Depends(get_current_user)):
         role = user.get("role")
         if role not in roles:
-            raise ForbiddenException(f"Insufficient privileges: requires {roles}, found '{role}'")
-        
+            raise ForbiddenException(
+                f"Insufficient privileges: requires {roles}, found '{role}'"
+            )
+
         return user
 
     return role_dependency
+
 
 def _refresh_key(token: str) -> str:
     return f"refresh:{token}"

@@ -11,9 +11,8 @@ from middleware.securityMiddleware import (
     SecurityHeadersMiddleware,
     RequestIDMiddleware,
 )
-from middleware.exceptionMiddleware import setup_exception_handlers
+from middleware.errorHandlerMiddleware import setup_exception_handlers
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware
-from middleware.errorResponseMiddleware import validation_exception_handler
 from config.envConfig import settings
 from utilities.logger import logger
 import os
@@ -28,7 +27,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
+setup_exception_handlers(app)
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 if os.path.isdir(PUBLIC_DIR):

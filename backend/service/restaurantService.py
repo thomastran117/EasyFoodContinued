@@ -6,6 +6,7 @@ from utilities.errorRaiser import (
     BadRequestException,
 )
 
+
 def find_restaurant_by_id(db, restaurant_id: int):
     restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
     if not restaurant:

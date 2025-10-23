@@ -6,6 +6,7 @@ from fastapi import UploadFile, HTTPException
 from PIL import Image, UnidentifiedImageError
 import pyclamd
 
+
 async def validate_image(file: UploadFile):
     data = await file.read()
     if len(data) > 10 * 1024 * 1024:
