@@ -1,9 +1,9 @@
 from schema.template import Restaurant
 from utilities.errorRaiser import (
+    BadRequestException,
     ConflictException,
     ForbiddenException,
     NotFoundException,
-    BadRequestException,
 )
 
 

@@ -1,6 +1,6 @@
 from schema.template import Reservation
-from utilities.errorRaiser import ForbiddenException, NotFoundException
 from service.restaurantService import find_restaurant_by_id
+from utilities.errorRaiser import ForbiddenException, NotFoundException
 
 
 def find_reservation_by_id(db, food_id: int):

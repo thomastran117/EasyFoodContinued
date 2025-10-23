@@ -1,13 +1,14 @@
 import json
 import secrets
 from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from resources.redis_client import redis_client
-from config.envConfig import settings
-from utilities.errorRaiser import UnauthorizedException, ForbiddenException
+from jose import JWTError, jwt
 
+from config.envConfig import settings
+from resources.redis_client import redis_client
+from utilities.errorRaiser import ForbiddenException, UnauthorizedException
 
 JWT_SECRET_ACCESS = settings.jwt_secret_access
 JWT_SECRET_REFRESH = settings.jwt_secret_refresh + "_refresh"

@@ -1,12 +1,13 @@
+from fastapi import UploadFile
+
 from resources.database_client import get_db
 from schema.template import User
-from utilities.errorRaiser import NotFoundException, BadRequestException
 from service.fileService import (
+    delete_uploaded_file,
     get_uploaded_file,
     save_upload_file,
-    delete_uploaded_file,
 )
-from fastapi import UploadFile
+from utilities.errorRaiser import BadRequestException, NotFoundException
 
 
 def get_user_by_id(user_id: int):

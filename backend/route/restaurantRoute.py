@@ -1,11 +1,12 @@
 from fastapi import APIRouter
+
 from controller.restaurantController import (
+    addRestaurant,
+    deleteRestaurant,
     getRestaurant,
     getRestaurants,
     getUserRestaurant,
-    addRestaurant,
     updateRestaurant,
-    deleteRestaurant,
 )
 
 restaurantRouter = APIRouter()

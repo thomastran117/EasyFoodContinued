@@ -1,5 +1,6 @@
-from fastapi import Request, HTTPException
+from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from resources.redis_client import redis_client
 
 

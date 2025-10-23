@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import Annotated
 import enum
+from typing import Annotated
+
+from pydantic import BaseModel, Field
 
 
 class OccasionEnum(str, enum.Enum):

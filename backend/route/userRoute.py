@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from controller.userController import get_me, get_user, update_me, delete_me
+
+from controller.userController import delete_me, get_me, get_user, update_me
 
 userRouter = APIRouter()
 userRouter.add_api_route("/", get_me, methods=["GET"])

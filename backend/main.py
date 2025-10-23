@@ -1,21 +1,23 @@
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from fastapi.exceptions import RequestValidationError
-import uvicorn
-from route.route import serverRouter
-from authlib.integrations.starlette_client import OAuth
-from middleware.httpLogger import HTTPLoggerMiddleware
-from middleware.securityMiddleware import (
-    setup_cors,
-    SecurityHeadersMiddleware,
-    RequestIDMiddleware,
-)
-from middleware.errorHandlerMiddleware import setup_exception_handlers
-from middleware.rateLimiterMiddleware import RateLimiterMiddleware
-from config.envConfig import settings
-from utilities.logger import logger
 import os
+
+import uvicorn
+from authlib.integrations.starlette_client import OAuth
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from config.envConfig import settings
+from middleware.errorHandlerMiddleware import setup_exception_handlers
+from middleware.httpLogger import HTTPLoggerMiddleware
+from middleware.rateLimiterMiddleware import RateLimiterMiddleware
+from middleware.securityMiddleware import (
+    RequestIDMiddleware,
+    SecurityHeadersMiddleware,
+    setup_cors,
+)
+from route.route import serverRouter
+from utilities.logger import logger
 
 app = FastAPI()
 

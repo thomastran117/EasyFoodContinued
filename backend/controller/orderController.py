@@ -1,16 +1,17 @@
 from fastapi import APIRouter, Depends
-from service.tokenService import require_auth_token, get_current_user
+
+from dtos.orderDtos import CreateOrderRequest, FoodRequest
+from resources.database_client import SessionLocal
 from service.orderService import (
     create_order,
-    update_order,
     delete_order,
     find_order_by_id,
     find_orders_by_restaurant,
     find_orders_by_user,
+    update_order,
 )
-from dtos.orderDtos import CreateOrderRequest, FoodRequest
-from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database_client import SessionLocal
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 def serialize_order(order):

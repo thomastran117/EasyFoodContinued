@@ -1,17 +1,19 @@
-from fastapi import APIRouter, Query, Depends
 from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
+
+from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
+from resources.database_client import SessionLocal
 from service.restaurantService import (
     create_restaurant,
-    update_restaurant,
     delete_restaurant,
     find_all_restaurants,
     find_restaurant_by_id,
     find_restaurant_by_userid,
+    update_restaurant,
 )
-from service.tokenService import require_auth_token, get_current_user
-from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
-from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database_client import SessionLocal
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 async def getRestaurant(id: int):

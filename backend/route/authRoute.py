@@ -1,14 +1,15 @@
 from fastapi import APIRouter
+
 from controller.authController import (
+    change_password,
+    forgot_password,
+    google,
     login,
+    logout,
+    microsoft,
+    renew,
     signup,
     verify_email,
-    renew,
-    logout,
-    google,
-    microsoft,
-    forgot_password,
-    change_password,
 )
 
 authRouter = APIRouter()

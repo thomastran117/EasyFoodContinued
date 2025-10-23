@@ -1,13 +1,13 @@
 from fastapi import APIRouter
 
 from route.authRoute import authRouter
-from route.userRoute import userRouter
-from route.restaurantRoute import restaurantRouter
 from route.foodRoute import foodRouter
-from route.reservationRoute import reservationRouter
-from route.reviewRoute import reviewRouter
 from route.orderRoute import orderRouter
+from route.reservationRoute import reservationRouter
+from route.restaurantRoute import restaurantRouter
+from route.reviewRoute import reviewRouter
 from route.surveyRoute import surveyRouter
+from route.userRoute import userRouter
 
 serverRouter = APIRouter()
 serverRouter.include_router(authRouter, prefix="/auth")

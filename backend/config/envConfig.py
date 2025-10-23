@@ -1,7 +1,9 @@
-from pydantic_settings import BaseSettings
-from typing import List, Optional
-from pydantic import field_validator
 import os
+from typing import List, Optional
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings
+
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)

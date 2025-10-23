@@ -1,6 +1,7 @@
 import httpx
-from utilities.logger import logger
+
 from config.envConfig import settings
+from utilities.logger import logger
 
 RECAPTCHA_SECRET = settings.google_secret_key
 

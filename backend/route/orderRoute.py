@@ -1,11 +1,12 @@
 from fastapi import APIRouter
+
 from controller.orderController import (
-    getOrderById,
-    getOrdersByUser,
-    getOrdersByRestaurant,
     createOrder,
-    updateOrder,
     deleteOrder,
+    getOrderById,
+    getOrdersByRestaurant,
+    getOrdersByUser,
+    updateOrder,
 )
 
 orderRouter = APIRouter()

@@ -1,30 +1,31 @@
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
+
+from config.envConfig import settings
+from dtos.authDtos import (
+    ChangePasswordDto,
+    ForgotPasswordDto,
+    GoogleAuthRequest,
+    LoginRequestDto,
+    MicrosoftAuthRequest,
+    SignupRequestDto,
+)
 from service.authService import (
-    loginUser,
-    signupUser,
-    verifyUser,
+    changePassword,
     exchangeTokens,
+    forgotPassword,
+    google_login,
+    loginUser,
     logoutTokens,
     microsoft_login,
-    google_login,
-    forgotPassword,
-    changePassword,
-)
-from dtos.authDtos import (
-    LoginRequestDto,
-    SignupRequestDto,
-    ForgotPasswordDto,
-    ChangePasswordDto,
-    MicrosoftAuthRequest,
-    GoogleAuthRequest,
+    signupUser,
+    verifyUser,
 )
 from utilities.errorRaiser import (
-    raise_error,
     ServiceUnavaliableException,
     UnauthorizedException,
+    raise_error,
 )
-from config.envConfig import settings
 from utilities.logger import logger
 
 

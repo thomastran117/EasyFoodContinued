@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
+
+from dtos.reservationDtos import ReservationCreateDto, ReservationUpdateDto
+from resources.database_client import SessionLocal
 from service.reservationService import (
     create_reservation,
-    update_reservation,
     delete_reservation,
     find_reservation_by_id,
     find_reservations_by_restaurant,
     find_reservations_by_user,
+    update_reservation,
 )
-from resources.database_client import SessionLocal
-from utilities.errorRaiser import raise_error, BadRequestException
-from service.tokenService import require_auth_token, get_current_user
-from dtos.reservationDtos import ReservationCreateDto, ReservationUpdateDto
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 async def getReservationsByUser(token: str = Depends(require_auth_token)):

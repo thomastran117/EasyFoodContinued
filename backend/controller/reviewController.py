@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
+
+from dtos.reviewDtos import ReviewCreateDto, ReviewUpdateDto
+from resources.database_client import SessionLocal
 from service.reviewService import (
     create_review,
-    update_review,
     delete_review,
     find_review_by_id,
     find_reviews_by_restaurant,
     find_reviews_by_user,
+    update_review,
 )
-from resources.database_client import SessionLocal
-from utilities.errorRaiser import raise_error, BadRequestException
-from service.tokenService import require_auth_token, get_current_user
-from dtos.reviewDtos import ReviewCreateDto, ReviewUpdateDto
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 async def getReviewsByUser(token: str = Depends(require_auth_token)):

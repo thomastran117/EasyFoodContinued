@@ -1,8 +1,9 @@
-from fastapi import Request, FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_400_BAD_REQUEST
+
 from utilities.errorRaiser import raise_error
 from utilities.logger import get_logger
 
@@ -39,5 +40,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 def setup_exception_handlers(app: FastAPI):
-    app.add_middleware(GlobalErrorMiddleware)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)

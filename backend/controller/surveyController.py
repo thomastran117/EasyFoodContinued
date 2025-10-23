@@ -1,21 +1,23 @@
 from typing import Optional
-from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import (
-    raise_error,
-    BadRequestException,
-    NotImplementedException,
-)
+
+from fastapi import APIRouter, Depends, Query
+
+from dtos.surveyDtos import SurveyCreateDto, SurveyUpdateDto
 from resources.database_client import SessionLocal
-from service.tokenService import require_auth_token, get_current_user
 from service.surveyService import (
     create_survey,
-    update_survey,
     delete_survey,
+    find_all_surveys,
     find_survey_by_id,
     find_surveys_by_user,
-    find_all_surveys,
+    update_survey,
 )
-from dtos.surveyDtos import SurveyCreateDto, SurveyUpdateDto
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import (
+    BadRequestException,
+    NotImplementedException,
+    raise_error,
+)
 
 
 async def getSurvey(id: int, token: str = Depends(require_auth_token)):

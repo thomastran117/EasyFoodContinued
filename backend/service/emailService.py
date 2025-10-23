@@ -1,4 +1,5 @@
 from fastapi_mail import FastMail, MessageSchema, MessageType
+
 from config.emailConfig import conf
 
 frontend_url = "http://localhost:3050"

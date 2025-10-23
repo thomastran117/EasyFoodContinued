@@ -1,9 +1,10 @@
 import logging
 import time
 from datetime import datetime
+
+from colorama import Fore, Style
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from colorama import Fore, Style
 
 logger = logging.getLogger("http_logger")
 logger.setLevel(logging.INFO)

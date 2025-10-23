@@ -1,4 +1,5 @@
 import redis
+
 from config.envConfig import settings
 from utilities.logger import get_logger
 

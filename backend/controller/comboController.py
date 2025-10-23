@@ -1,8 +1,10 @@
 from typing import Optional
-from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error, BadRequestException
+
+from fastapi import APIRouter, Depends, Query
+
 from resources.database_client import SessionLocal
-from service.tokenService import require_auth_token, get_current_user
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 async def createCombo(token: str = Depends(require_auth_token)):

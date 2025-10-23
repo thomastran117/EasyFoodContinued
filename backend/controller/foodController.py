@@ -1,18 +1,20 @@
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
+
+from dtos.foodDtos import FoodCreateDto, FoodUpdateDto
+from resources.database_client import SessionLocal
 from service.foodService import (
     create_food,
-    update_food,
     delete_food,
     find_all_foods,
-    find_foods_by_restaurant,
     find_food_by_id,
+    find_foods_by_restaurant,
     find_foods_by_user_restaurant,
+    update_food,
 )
-from typing import Optional
-from fastapi import APIRouter, Query, Depends
-from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database_client import SessionLocal
-from dtos.foodDtos import FoodCreateDto, FoodUpdateDto
-from service.tokenService import require_auth_token, get_current_user
+from service.tokenService import get_current_user, require_auth_token
+from utilities.errorRaiser import BadRequestException, raise_error
 
 
 async def getFood(id: int):

@@ -1,11 +1,12 @@
 from fastapi import APIRouter
+
 from controller.reservationController import (
+    createReservation,
+    deleteReservation,
+    getReservationById,
     getReservationsByRestaurant,
     getReservationsByUser,
-    getReservationById,
-    createReservation,
     updateReservation,
-    deleteReservation,
 )
 
 reservationRouter = APIRouter()

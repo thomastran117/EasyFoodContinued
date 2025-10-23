@@ -1,10 +1,11 @@
-import motor.motor_asyncio
-from beanie import init_beanie
-from config.envConfig import settings
-from typing import Optional
-from beanie import Document, Indexed
-from pydantic import EmailStr
 import asyncio
+from typing import Optional
+
+import motor.motor_asyncio
+from beanie import Document, Indexed, init_beanie
+from pydantic import EmailStr
+
+from config.envConfig import settings
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)

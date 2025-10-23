@@ -1,10 +1,12 @@
-import requests
-from PIL import Image
+import hashlib
+import io
 from io import BytesIO
-import io, hashlib, filetype
-from fastapi import UploadFile, HTTPException
-from PIL import Image, UnidentifiedImageError
+
+import filetype
 import pyclamd
+import requests
+from fastapi import HTTPException, UploadFile
+from PIL import Image, UnidentifiedImageError
 
 
 async def validate_image(file: UploadFile):

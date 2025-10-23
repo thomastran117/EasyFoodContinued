@@ -1,9 +1,13 @@
-import filetype, secrets, io
+import io
+import secrets
 from pathlib import Path
-from PIL import Image
-from fastapi import UploadFile, File, Depends, HTTPException, status
+
+import filetype
+from fastapi import Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
-from service.tokenService import require_auth_token, get_current_user
+from PIL import Image
+
+from service.tokenService import get_current_user, require_auth_token
 
 UPLOAD_DIR = Path("uploads/users")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

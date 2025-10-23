@@ -1,7 +1,9 @@
 import uuid
+
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
-from fastapi.middleware.cors import CORSMiddleware
+
 from config.envConfig import settings
 
 

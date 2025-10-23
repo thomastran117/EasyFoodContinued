@@ -1,10 +1,10 @@
 from schema.template import Food
+from service.restaurantService import find_restaurant_by_id, find_restaurant_by_userid
 from utilities.errorRaiser import (
+    BadRequestException,
     ForbiddenException,
     NotFoundException,
-    BadRequestException,
 )
-from service.restaurantService import find_restaurant_by_id, find_restaurant_by_userid
 
 
 def find_food_by_id(db, food_id: int):

@@ -1,5 +1,6 @@
 from fastapi_mail import ConnectionConfig
 from pydantic import BaseModel
+
 from config.envConfig import settings
 
 EMAIL = settings.email
