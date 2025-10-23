@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 from fastapi import UploadFile, File, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 
 UPLOAD_DIR = Path("uploads/users")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -12,7 +12,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 
 async def upload_user_avatar(
     file: UploadFile = File(...),
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(require_auth_token),
 ):
     user = get_current_user(token)
     if not user:

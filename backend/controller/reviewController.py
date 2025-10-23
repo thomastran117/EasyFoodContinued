@@ -9,11 +9,11 @@ from service.reviewService import (
 )
 from resources.database import SessionLocal
 from utilities.errorRaiser import raise_error, BadRequestException
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 from dtos.reviewDtos import ReviewCreateDto, ReviewUpdateDto
 
 
-async def getReviewsByUser(token: str = Depends(oauth2_scheme)):
+async def getReviewsByUser(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -52,7 +52,7 @@ async def getReviewsByRestaurant(id: int):
 
 
 async def createReview(
-    id: int, create: ReviewCreateDto, token: str = Depends(oauth2_scheme)
+    id: int, create: ReviewCreateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -78,7 +78,7 @@ async def createReview(
 
 
 async def updateReview(
-    id: int, update: ReviewUpdateDto, token: str = Depends(oauth2_scheme)
+    id: int, update: ReviewUpdateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -103,7 +103,7 @@ async def updateReview(
         db.close()
 
 
-async def deleteReview(id: int, token: str = Depends(oauth2_scheme)):
+async def deleteReview(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:

@@ -6,7 +6,7 @@ from utilities.errorRaiser import (
     NotImplementedException,
 )
 from resources.database import SessionLocal
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 from service.surveyService import (
     create_survey,
     update_survey,
@@ -18,7 +18,7 @@ from service.surveyService import (
 from dtos.surveyDtos import SurveyCreateDto, SurveyUpdateDto
 
 
-async def getSurvey(id: int, token: str = Depends(oauth2_scheme)):
+async def getSurvey(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:
@@ -32,7 +32,7 @@ async def getSurvey(id: int, token: str = Depends(oauth2_scheme)):
         db.close()
 
 
-async def getSurveysByUser(token: str = Depends(oauth2_scheme)):
+async def getSurveysByUser(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -54,7 +54,7 @@ async def getSurveys():
         db.close()
 
 
-async def createSurvey(create: SurveyCreateDto, token: str = Depends(oauth2_scheme)):
+async def createSurvey(create: SurveyCreateDto, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -75,7 +75,7 @@ async def createSurvey(create: SurveyCreateDto, token: str = Depends(oauth2_sche
 
 
 async def updateSurvey(
-    id: int, update: SurveyUpdateDto, token: str = Depends(oauth2_scheme)
+    id: int, update: SurveyUpdateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -99,7 +99,7 @@ async def updateSurvey(
         db.close()
 
 
-async def deleteSurvey(id: int, token: str = Depends(oauth2_scheme)):
+async def deleteSurvey(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:

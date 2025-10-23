@@ -12,7 +12,7 @@ from fastapi import APIRouter, Query, Depends
 from utilities.errorRaiser import raise_error, BadRequestException
 from resources.database import SessionLocal
 from dtos.foodDtos import FoodCreateDto, FoodUpdateDto
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 
 
 async def getFood(id: int):
@@ -66,7 +66,7 @@ async def getFoods(
 async def getFoodsByUserRestaurant(
     skip: int = Query(0),
     limit: int = Query(5),
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(require_auth_token),
     name: Optional[str] = Query(None),
     description: Optional[str] = Query(None),
     priceMin: Optional[float] = Query(None, gt=0),
@@ -141,7 +141,7 @@ async def getFoodsByRestaurant(
         db.close()
 
 
-async def addFood(create: FoodCreateDto, token: str = Depends(oauth2_scheme)):
+async def addFood(create: FoodCreateDto, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -168,7 +168,7 @@ async def addFood(create: FoodCreateDto, token: str = Depends(oauth2_scheme)):
 
 
 async def updateFood(
-    id: int, update: FoodUpdateDto, token: str = Depends(oauth2_scheme)
+    id: int, update: FoodUpdateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -195,7 +195,7 @@ async def updateFood(
         db.close()
 
 
-async def deleteFood(id: int, token: str = Depends(oauth2_scheme)):
+async def deleteFood(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:

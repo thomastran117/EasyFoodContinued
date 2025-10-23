@@ -9,11 +9,11 @@ from service.reservationService import (
 )
 from resources.database import SessionLocal
 from utilities.errorRaiser import raise_error, BadRequestException
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 from dtos.reservationDtos import ReservationCreateDto, ReservationUpdateDto
 
 
-async def getReservationsByUser(token: str = Depends(oauth2_scheme)):
+async def getReservationsByUser(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -58,7 +58,7 @@ async def getReservationsByRestaurant():
 
 
 async def createReservation(
-    id: int, create: ReservationCreateDto, token: str = Depends(oauth2_scheme)
+    id: int, create: ReservationCreateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -84,7 +84,7 @@ async def createReservation(
 
 
 async def updateReservation(
-    id: int, update: ReservationUpdateDto, token: str = Depends(oauth2_scheme)
+    id: int, update: ReservationUpdateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -109,7 +109,7 @@ async def updateReservation(
         db.close()
 
 
-async def deleteReservation(id: int, token: str = Depends(oauth2_scheme)):
+async def deleteReservation(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:

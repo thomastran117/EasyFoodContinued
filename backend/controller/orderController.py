@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 from service.orderService import (
     create_order,
     update_order,
@@ -34,7 +34,7 @@ def serialize_order(order):
     }
 
 
-async def getOrdersByUser(token: str = Depends(oauth2_scheme)):
+async def getOrdersByUser(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -47,7 +47,7 @@ async def getOrdersByUser(token: str = Depends(oauth2_scheme)):
         db.close()
 
 
-async def getOrdersByRestaurant(token: str = Depends(oauth2_scheme)):
+async def getOrdersByRestaurant(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -63,7 +63,7 @@ async def getOrdersByRestaurant(token: str = Depends(oauth2_scheme)):
         db.close()
 
 
-async def getOrderById(id: int, token: str = Depends(oauth2_scheme)):
+async def getOrderById(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -83,7 +83,7 @@ async def getOrderById(id: int, token: str = Depends(oauth2_scheme)):
 
 async def createOrder(
     data: CreateOrderRequest,
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(require_auth_token),
 ):
     db = SessionLocal()
     try:
@@ -115,7 +115,7 @@ async def createOrder(
         raise_error(e)
 
 
-async def updateOrder(id: int, token: str = Depends(oauth2_scheme)):
+async def updateOrder(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:
@@ -128,7 +128,7 @@ async def updateOrder(id: int, token: str = Depends(oauth2_scheme)):
         db.close()
 
 
-async def deleteOrder(id: int, token: str = Depends(oauth2_scheme)):
+async def deleteOrder(id: int, token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         if id <= 0:

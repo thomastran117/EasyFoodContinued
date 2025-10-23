@@ -8,7 +8,7 @@ from resources.redisDb import redis_client
 from config.envConfig import settings
 from utilities.errorRaiser import UnauthorizedException
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
 
 JWT_SECRET_ACCESS = settings.jwt_secret_access
 JWT_SECRET_REFRESH = settings.jwt_secret_refresh + "_refresh"
@@ -63,7 +63,7 @@ def decode_access_token(token: str) -> dict:
         raise UnauthorizedException("Invalid access token")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
+def get_current_user(token: str = Depends(require_auth_token)) -> dict:
     payload = decode_access_token(token)
     required = ("id", "email", "role")
     if not all(payload.get(f) for f in required):

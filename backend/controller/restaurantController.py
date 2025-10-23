@@ -8,7 +8,7 @@ from service.restaurantService import (
     find_restaurant_by_id,
     find_restaurant_by_userid,
 )
-from service.tokenService import oauth2_scheme, get_current_user
+from service.tokenService import require_auth_token, get_current_user
 from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
 from utilities.errorRaiser import raise_error, BadRequestException
 from resources.database import SessionLocal
@@ -45,7 +45,7 @@ async def getRestaurants(
         db.close()
 
 
-async def getUserRestaurant(token: str = Depends(oauth2_scheme)):
+async def getUserRestaurant(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
@@ -58,7 +58,7 @@ async def getUserRestaurant(token: str = Depends(oauth2_scheme)):
 
 
 async def addRestaurant(
-    create: RestaurantCreateDto, token: str = Depends(oauth2_scheme)
+    create: RestaurantCreateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -82,7 +82,7 @@ async def addRestaurant(
 
 
 async def updateRestaurant(
-    update: RestaurantUpdateDto, token: str = Depends(oauth2_scheme)
+    update: RestaurantUpdateDto, token: str = Depends(require_auth_token)
 ):
     db = SessionLocal()
     try:
@@ -105,7 +105,7 @@ async def updateRestaurant(
         db.close()
 
 
-async def deleteRestaurant(token: str = Depends(oauth2_scheme)):
+async def deleteRestaurant(token: str = Depends(require_auth_token)):
     db = SessionLocal()
     try:
         user_payload = get_current_user(token)
