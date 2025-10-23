@@ -5,26 +5,25 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 from route.route import serverRouter
 from authlib.integrations.starlette_client import OAuth
-from starlette.middleware.sessions import SessionMiddleware
 from middleware.httpLogger import HTTPLoggerMiddleware
-from middleware.corsMiddleware import setup_cors
+from middleware.securityMiddleware import setup_cors, SecurityHeadersMiddleware, RequestIDMiddleware
 from middleware.exceptionMiddleware import setup_exception_handlers
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware
 from middleware.errorResponseMiddleware import validation_exception_handler  
 from config.envConfig import settings
-from utilities.logger import get_logger
+from utilities.logger import logger
 import os
-
-logger = get_logger(__name__)
 
 app = FastAPI()
 
 setup_cors(app)
 setup_exception_handlers(app)
 
-app.add_middleware(SessionMiddleware, secret_key="dev-session-secret")
-app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RateLimiterMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(HTTPLoggerMiddleware)
+app.add_middleware(RequestIDMiddleware)
+
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
@@ -34,7 +33,6 @@ else:
     logger.warning("Static directory %s not found; skipping mount.", PUBLIC_DIR)
 
 app.include_router(serverRouter, prefix="/api")
-
 
 @app.get("/")
 def read_root():

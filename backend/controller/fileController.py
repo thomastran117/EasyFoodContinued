@@ -1,16 +1,42 @@
-from fastapi import APIRouter, File, UploadFile, Depends, Form, HTTPException
-from service.fileService import save_upload_file
-from service.userService import update_user_avatar
+import filetype, secrets, io
+from pathlib import Path
+from PIL import Image
+from fastapi import UploadFile, File, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from service.tokenService import oauth2_scheme, get_current_user
 
-router = APIRouter(prefix="/files", tags=["Files"])
-
+UPLOAD_DIR = Path("uploads/users")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 async def upload_user_avatar(
     file: UploadFile = File(...),
-    image_type: str = Form(...),
     token: str = Depends(oauth2_scheme),
 ):
-    path = await save_upload_file(file, category="user", image_type=image_type)
+    user = get_current_user(token)
+    if not user:
+        raise HTTPException(401, "Invalid user token")
 
-    return {"message": "Avatar updated successfully", "avatar_path": path}
+    data = await file.read()
+    if len(data) > MAX_FILE_SIZE:
+        raise HTTPException(413, f"File exceeds {MAX_FILE_SIZE / (1024**2)} MB limit")
+
+    kind = filetype.guess(data)
+    if not kind or kind.mime not in ["image/jpeg", "image/png"]:
+        raise HTTPException(400, "Only JPG and PNG files are allowed")
+
+    try:
+        img = Image.open(io.BytesIO(data))
+        img.verify()
+    except Exception:
+        raise HTTPException(400, "Corrupted or invalid image file")
+
+    filename = f"{secrets.token_hex(16)}.{kind.extension}"
+    path = UPLOAD_DIR / filename
+    with open(path, "wb") as f:
+        f.write(data)
+
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content={"message": "Avatar uploaded successfully", "path": str(path)},
+    )

@@ -1,5 +1,6 @@
 import secrets
 import shutil
+import hashlib
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from fastapi.responses import FileResponse
@@ -11,10 +12,20 @@ ALLOWED_CATEGORIES = {"foods", "restaurants", "users"}
 ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "webp"}
 
 
+def compute_file_hash(upload_file: UploadFile) -> str:
+    """Compute SHA-256 hash of the uploaded file content."""
+    hasher = hashlib.sha256()
+    upload_file.file.seek(0)
+    while chunk := upload_file.file.read(8192):
+        hasher.update(chunk)
+    upload_file.file.seek(0)
+    return hasher.hexdigest()
+
+
 async def save_upload_file(
     upload_file: UploadFile, category: str, image_type: str
 ) -> str:
-    """Save uploaded file to category folder with secure random name."""
+    """Save uploaded file to category folder with duplicate detection."""
     category = category.lower().strip()
     if category not in ALLOWED_CATEGORIES:
         raise HTTPException(status_code=400, detail=f"Invalid category: {category}")
@@ -26,8 +37,13 @@ async def save_upload_file(
     category_dir = BASE_UPLOAD_DIR / category
     category_dir.mkdir(parents=True, exist_ok=True)
 
-    random_hex = secrets.token_hex(64)
-    filename = f"{category}_{random_hex}.{image_type}"
+    file_hash = compute_file_hash(upload_file)
+    existing = next(category_dir.glob(f"*_{file_hash}.{image_type}"), None)
+
+    if existing:
+        return str(existing.relative_to(BASE_UPLOAD_DIR.parent))
+
+    filename = f"{category}_{file_hash}.{image_type}"
     file_path = category_dir / filename
 
     try:
@@ -40,6 +56,7 @@ async def save_upload_file(
 
 
 def get_uploaded_file(category: str, filename: str):
+    """Retrieve a file safely from uploads."""
     category_dir = BASE_UPLOAD_DIR / category
     if category not in ALLOWED_CATEGORIES or not category_dir.exists():
         raise HTTPException(status_code=404, detail="Invalid category")
@@ -52,6 +69,7 @@ def get_uploaded_file(category: str, filename: str):
 
 
 def delete_uploaded_file(category: str, filename: str):
+    """Delete uploaded file from disk."""
     category_dir = BASE_UPLOAD_DIR / category
     if category not in ALLOWED_CATEGORIES or not category_dir.exists():
         raise HTTPException(status_code=404, detail="Invalid category")

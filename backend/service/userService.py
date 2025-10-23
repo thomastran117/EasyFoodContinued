@@ -1,14 +1,22 @@
+from resources.database import get_db
 from resources.schema import User
 from utilities.errorRaiser import NotFoundException, BadRequestException
+from service.fileService import get_uploaded_file, save_upload_file, delete_uploaded_file
 from utilities.imageValidator import is_valid_image_url
+from fastapi import UploadFile
 
 
-def get_user_by_id(db, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise NotFoundException("User not found.")
-    return user
+def get_user_by_id(user_id: int):
+    with get_db() as db:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise NotFoundException("User not found.")
+        return user
 
+
+def update_avatar(image: UploadFile):
+    with get_db() as db:
+        pass
 
 def update_user(
     db,
@@ -17,35 +25,31 @@ def update_user(
     phone: str = None,
     address: str = None,
     description: str = None,
-    profileUrl: str = None,
 ):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise NotFoundException("User not found.")
+    with get_db() as db:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise NotFoundException("User not found.")
 
-    if not is_valid_image_url(profileUrl):
-        raise BadRequestException("Invalid profile URL")
+        if username is not None:
+            user.username = username
+        if phone is not None:
+            user.phone = phone
+        if address is not None:
+            user.address = address
+        if description is not None:
+            user.description = description
 
-    if username is not None:
-        user.username = username
-    if phone is not None:
-        user.phone = phone
-    if address is not None:
-        user.address = address
-    if description is not None:
-        user.description = description
-    if profileUrl is not None:
-        user.profileUrl = profileUrl
-
-    db.commit()
-    db.refresh(user)
-    return user
+        db.commit()
+        db.refresh(user)
+        return user
 
 
 def delete_user(db, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise NotFoundException("User not found.")
+    with get_db() as db:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise NotFoundException("User not found.")
 
-    db.delete(user)
-    db.commit()
+        db.delete(user)
+        db.commit()
