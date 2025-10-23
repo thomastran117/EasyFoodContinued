@@ -6,9 +6,8 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from resources.redisDb import redis_client
 from config.envConfig import settings
-from utilities.errorRaiser import UnauthorizedException
+from utilities.errorRaiser import UnauthorizedException, ForbiddenException
 
-require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
 
 JWT_SECRET_ACCESS = settings.jwt_secret_access
 JWT_SECRET_REFRESH = settings.jwt_secret_refresh + "_refresh"
@@ -21,6 +20,29 @@ REFRESH_EXPIRE_DAYS_SHORT = 1
 REFRESH_EXPIRE_DAYS_LONG = 7
 VERIFY_EXPIRE_MINUTES = 60
 
+
+require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def get_current_user(token: str = Depends(require_auth_token)) -> dict:
+    payload = decode_access_token(token)
+    required = ("id", "email", "role")
+    if not all(payload.get(f) for f in required):
+        raise UnauthorizedException("Invalid token payload")
+    return {f: payload[f] for f in required}
+
+
+def require_role(*roles: str):
+    """Factory that returns a dependency checking if user.role is in allowed roles."""
+
+    def role_dependency(user: dict = Depends(get_current_user)):
+        role = user.get("role")
+        if role not in roles:
+            raise ForbiddenException(f"Insufficient privileges: requires {roles}, found '{role}'")
+        
+        return user
+
+    return role_dependency
 
 def _refresh_key(token: str) -> str:
     return f"refresh:{token}"
@@ -61,14 +83,6 @@ def decode_access_token(token: str) -> dict:
         return jwt.decode(token, JWT_SECRET_ACCESS, algorithms=[ALGORITHM])
     except JWTError:
         raise UnauthorizedException("Invalid access token")
-
-
-def get_current_user(token: str = Depends(require_auth_token)) -> dict:
-    payload = decode_access_token(token)
-    required = ("id", "email", "role")
-    if not all(payload.get(f) for f in required):
-        raise UnauthorizedException("Invalid token payload")
-    return {f: payload[f] for f in required}
 
 
 def create_refresh_token(data: dict, remember: bool) -> str:
