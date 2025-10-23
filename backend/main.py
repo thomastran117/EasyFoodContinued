@@ -6,10 +6,14 @@ import uvicorn
 from route.route import serverRouter
 from authlib.integrations.starlette_client import OAuth
 from middleware.httpLogger import HTTPLoggerMiddleware
-from middleware.securityMiddleware import setup_cors, SecurityHeadersMiddleware, RequestIDMiddleware
+from middleware.securityMiddleware import (
+    setup_cors,
+    SecurityHeadersMiddleware,
+    RequestIDMiddleware,
+)
 from middleware.exceptionMiddleware import setup_exception_handlers
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware
-from middleware.errorResponseMiddleware import validation_exception_handler  
+from middleware.errorResponseMiddleware import validation_exception_handler
 from config.envConfig import settings
 from utilities.logger import logger
 import os
@@ -33,6 +37,7 @@ else:
     logger.warning("Static directory %s not found; skipping mount.", PUBLIC_DIR)
 
 app.include_router(serverRouter, prefix="/api")
+
 
 @app.get("/")
 def read_root():

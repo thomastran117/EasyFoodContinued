@@ -81,7 +81,7 @@ async def renew(request: Request):
                 "email": email,
                 "username": "hello",
                 "role": "me",
-                "avatar": "hi"
+                "avatar": "hi",
             }
         )
 
@@ -172,7 +172,7 @@ async def microsoft(auth_req: MicrosoftAuthRequest):
                 "role": user.role,
             }
         )
-        
+
         return set_refresh_cookie(response, refresh)
 
     except Exception as e:

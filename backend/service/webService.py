@@ -4,6 +4,7 @@ from config.envConfig import settings
 
 RECAPTCHA_SECRET = settings.google_secret_key
 
+
 async def google_verify_captcha(token: str) -> bool:
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:

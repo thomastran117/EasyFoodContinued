@@ -6,6 +6,7 @@ from fastapi import UploadFile, HTTPException
 from PIL import Image, UnidentifiedImageError
 import pyclamd
 
+
 def is_valid_image_url(url: str) -> bool:
 
     return True
@@ -26,6 +27,7 @@ def is_valid_image_url(url: str) -> bool:
     except Exception as e:
         print(f"Validation failed: {e}")
         return False
+
 
 async def validate_image(file: UploadFile):
     data = await file.read()

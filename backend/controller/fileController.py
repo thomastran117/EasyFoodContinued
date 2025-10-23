@@ -9,6 +9,7 @@ UPLOAD_DIR = Path("uploads/users")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
+
 async def upload_user_avatar(
     file: UploadFile = File(...),
     token: str = Depends(oauth2_scheme),

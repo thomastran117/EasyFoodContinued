@@ -1,7 +1,11 @@
 from resources.database import get_db
 from resources.schema import User
 from utilities.errorRaiser import NotFoundException, BadRequestException
-from service.fileService import get_uploaded_file, save_upload_file, delete_uploaded_file
+from service.fileService import (
+    get_uploaded_file,
+    save_upload_file,
+    delete_uploaded_file,
+)
 from utilities.imageValidator import is_valid_image_url
 from fastapi import UploadFile
 
@@ -17,6 +21,7 @@ def get_user_by_id(user_id: int):
 def update_avatar(image: UploadFile):
     with get_db() as db:
         pass
+
 
 def update_user(
     db,
