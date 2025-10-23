@@ -5,7 +5,7 @@ from utilities.errorRaiser import (
     BadRequestException,
     NotImplementedException,
 )
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 from service.tokenService import require_auth_token, get_current_user
 from service.surveyService import (
     create_survey,

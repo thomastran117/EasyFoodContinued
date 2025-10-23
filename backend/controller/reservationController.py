@@ -7,7 +7,7 @@ from service.reservationService import (
     find_reservations_by_restaurant,
     find_reservations_by_user,
 )
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 from utilities.errorRaiser import raise_error, BadRequestException
 from service.tokenService import require_auth_token, get_current_user
 from dtos.reservationDtos import ReservationCreateDto, ReservationUpdateDto

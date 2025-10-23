@@ -1,12 +1,10 @@
-from resources.schema import Restaurant
+from schema.template import Restaurant
 from utilities.errorRaiser import (
     ConflictException,
     ForbiddenException,
     NotFoundException,
     BadRequestException,
 )
-from utilities.imageValidator import is_valid_image_url
-
 
 def find_restaurant_by_id(db, restaurant_id: int):
     restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
@@ -41,9 +39,6 @@ def find_all_restaurants(
 def create_restaurant(
     db, owner_id: int, name: str, description: str, location: str, logoUrl: str
 ):
-    if not is_valid_image_url(logoUrl):
-        raise BadRequestException("Invalid image URL")
-
     existing_restaurant = (
         db.query(Restaurant).filter(Restaurant.owner_id == owner_id).first()
     )
@@ -72,9 +67,6 @@ def update_restaurant(
     location: str = None,
     logoUrl: str = None,
 ):
-    if not is_valid_image_url(logoUrl):
-        raise BadRequestException("Invalid image URL")
-
     restaurant = find_restaurant_by_userid(db, owner_id)
 
     if name is not None:

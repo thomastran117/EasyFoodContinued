@@ -1,12 +1,10 @@
-from resources.schema import Food
+from schema.template import Food
 from utilities.errorRaiser import (
     ForbiddenException,
     NotFoundException,
     BadRequestException,
 )
 from service.restaurantService import find_restaurant_by_id, find_restaurant_by_userid
-from utilities.imageValidator import is_valid_image_url
-
 
 def find_food_by_id(db, food_id: int):
 
@@ -119,9 +117,6 @@ def create_food(
     tags: str = None,
     ingredients: str = None,
 ):
-    if not is_valid_image_url(foodUrl):
-        raise BadRequestException("Invalid image URL")
-
     restaurant = find_restaurant_by_userid(db, user_id)
 
     new_food = Food(
@@ -157,9 +152,6 @@ def update_food(
     tags: str = None,
     ingredients: str = None,
 ):
-    if not is_valid_image_url(foodUrl):
-        raise BadRequestException("Invalid image URL")
-
     restaurant = find_restaurant_by_userid(db, owner_id=user_id)
     food = find_food_by_id(db, food_id)
 

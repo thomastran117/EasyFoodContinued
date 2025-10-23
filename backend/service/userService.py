@@ -1,12 +1,11 @@
-from resources.database import get_db
-from resources.schema import User
+from resources.database_client import get_db
+from schema.template import User
 from utilities.errorRaiser import NotFoundException, BadRequestException
 from service.fileService import (
     get_uploaded_file,
     save_upload_file,
     delete_uploaded_file,
 )
-from utilities.imageValidator import is_valid_image_url
 from fastapi import UploadFile
 
 

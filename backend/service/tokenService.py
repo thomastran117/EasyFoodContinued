@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from resources.redisDb import redis_client
+from resources.redis_client import redis_client
 from config.envConfig import settings
 from utilities.errorRaiser import UnauthorizedException, ForbiddenException
 
@@ -33,8 +33,6 @@ def get_current_user(token: str = Depends(require_auth_token)) -> dict:
 
 
 def require_role(*roles: str):
-    """Factory that returns a dependency checking if user.role is in allowed roles."""
-
     def role_dependency(user: dict = Depends(get_current_user)):
         role = user.get("role")
         if role not in roles:

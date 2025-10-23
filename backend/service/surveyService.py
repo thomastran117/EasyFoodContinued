@@ -1,4 +1,4 @@
-from resources.schema import Survey
+from schema.template import Survey
 from utilities.errorRaiser import ForbiddenException, NotFoundException
 
 

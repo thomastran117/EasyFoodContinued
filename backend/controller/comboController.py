@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
 from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 from service.tokenService import require_auth_token, get_current_user
 
 

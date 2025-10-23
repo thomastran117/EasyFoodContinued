@@ -1,5 +1,5 @@
-from resources.database import get_db
-from resources.schema import User
+from resources.database_client import get_db
+from schema.template import User
 import bcrypt
 from utilities.errorRaiser import (
     ConflictException,

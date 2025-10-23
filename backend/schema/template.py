@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Text, Float, DateTim
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from resources.database import Base
+from resources.database_client import Base
 
 
 class OccasionEnum(enum.Enum):

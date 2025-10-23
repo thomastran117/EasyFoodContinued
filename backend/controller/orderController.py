@@ -10,7 +10,7 @@ from service.orderService import (
 )
 from dtos.orderDtos import CreateOrderRequest, FoodRequest
 from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 
 
 def serialize_order(order):

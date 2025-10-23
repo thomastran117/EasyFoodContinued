@@ -3,7 +3,7 @@ from service.tokenService import require_auth_token, get_current_user
 from service.userService import get_user_by_id, update_user, delete_user
 from dtos.userDtos import UpdateUserDto
 from utilities.errorRaiser import raise_error
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 
 
 async def get_user(id: int):

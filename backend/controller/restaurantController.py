@@ -11,7 +11,7 @@ from service.restaurantService import (
 from service.tokenService import require_auth_token, get_current_user
 from dtos.restaurantDtos import RestaurantCreateDto, RestaurantUpdateDto
 from utilities.errorRaiser import raise_error, BadRequestException
-from resources.database import SessionLocal
+from resources.database_client import SessionLocal
 
 
 async def getRestaurant(id: int):

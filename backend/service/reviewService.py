@@ -1,4 +1,4 @@
-from resources.schema import Review
+from schema.template import Review
 from utilities.errorRaiser import ForbiddenException, NotFoundException
 from service.restaurantService import find_restaurant_by_id
 
