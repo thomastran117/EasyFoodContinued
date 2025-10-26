@@ -7,7 +7,8 @@ from jose import jwt as jose_jwt
 from config.envConfig import settings
 from resources.database_client import get_db
 from schema.template import User
-from service.emailService import send_forgot_password_email, send_verification_email
+from service.tokenService import TokenService
+from service.emailService import EmailService
 from service.webService import google_verify_captcha
 from utilities.errorRaiser import (
     BadRequestException,
@@ -20,11 +21,18 @@ from utilities.logger import logger
 
 
 class AuthService:
-    def __init__(self, token_service):
+    def __init__(
+        self,
+        token_service: TokenService,
+        email_service: EmailService,
+        db_factory=get_db,
+    ):
         """
         token_service: instance of TokenService
         """
         self.token_service = token_service
+        self.email_service = email_service
+        self.db_factory = db_factory
 
     async def login_user(
         self, email: str, password: str, captcha: str, remember: bool = False
@@ -38,7 +46,7 @@ class AuthService:
                 "Bot detection can't be served due to unavailable captcha configuration"
             )
 
-        with get_db() as db:
+        with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
 
         if not user or not self.verify_password(password, user.password):
@@ -57,7 +65,7 @@ class AuthService:
         else:
             logger.warn("Bot detection can't be served due to captcha misconfiguration")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             existing_user = db.query(User).filter(User.email == email).first()
             if existing_user:
                 raise ConflictException(f"The email '{email}' is already registered.")
@@ -76,7 +84,7 @@ class AuthService:
 
         if settings.email_enabled:
             token = self.token_service.create_verification_token(email, hashed_pw)
-            await send_verification_email(email, token)
+            await self.email_service.send_verification_email(email, token)
 
         return True
 
@@ -87,7 +95,7 @@ class AuthService:
             )
             raise ServiceUnavaliableException("Email verification is not available")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             data = self.token_service.verify_verification_token(token)
             if not data:
                 raise BadRequestException("Invalid token")
@@ -129,7 +137,7 @@ class AuthService:
         if not email:
             raise UnauthorizedException("No email claim in Microsoft token")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
             if not user:
                 user = User(
@@ -167,7 +175,7 @@ class AuthService:
         picture = idinfo.get("picture")
         user_id = idinfo.get("sub")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
             if not user:
                 user = User(
@@ -193,7 +201,7 @@ class AuthService:
             )
             raise ServiceUnavaliableException("Forgot password service is unavailable")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
             if not user:
                 return
@@ -201,7 +209,7 @@ class AuthService:
                 return
 
         token = self.token_service.create_verification_token(email, "empty")
-        await send_forgot_password_email(email, token)
+        await self.email_service.send_forgot_password_email(email, token)
         return
 
     async def change_password(self, password: str, token: str):
@@ -215,7 +223,7 @@ class AuthService:
         if not data:
             raise BadRequestException("Invalid or expired token")
 
-        with get_db() as db:
+        with self.db_factory() as db:
             email = data["email"]
             user = db.query(User).filter(User.email == email).first()
             if not user:

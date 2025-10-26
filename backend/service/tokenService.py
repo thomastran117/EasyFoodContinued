@@ -144,23 +144,3 @@ class TokenService:
         self._delete_token(self._refresh_key(old_refresh))
         new_refresh = self.create_refresh_token(user_data, user_data["remember"])
         return access_token, new_refresh, payload["email"]
-
-    def get_current_user(
-        self, token: str = Depends(OAuth2PasswordBearer(tokenUrl="token"))
-    ):
-        payload = self.decode_access_token(token)
-        required = ("id", "email", "role")
-        if not all(payload.get(f) for f in required):
-            raise UnauthorizedException("Invalid token payload")
-        return {f: payload[f] for f in required}
-
-    def require_role(self, *roles: str):
-        def role_dependency(user: dict = Depends(self.get_current_user)):
-            role = user.get("role")
-            if role not in roles:
-                raise ForbiddenException(
-                    f"Insufficient privileges: requires {roles}, found '{role}'"
-                )
-            return user
-
-        return role_dependency
