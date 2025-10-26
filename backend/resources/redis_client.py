@@ -1,11 +1,10 @@
 import redis
 
 from config.envConfig import settings
-from utilities.logger import get_logger
+from utilities.logger import logger
 
 REDIS_URL = settings.redis_url
 
-logger = get_logger(__name__)
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 try:

@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import UploadFile
 
 from resources.database_client import get_db
@@ -60,3 +61,27 @@ class UserService:
 
             db.delete(user)
             db.commit()
+
+    async def update_avatar(self, user_id: int, file: UploadFile) -> str:
+        """Upload avatar, update DB record, and remove old one if exists."""
+
+        with self.db_factory() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                raise NotFoundException("User not found")
+
+            if user.avatar:
+                try:
+                    old_filename = Path(user.avatar).name
+                    self.file_service.delete_uploaded_file("users", old_filename)
+                except Exception:
+                    pass
+
+            avatar_path = await self.file_service.save_upload_file(file, "users")
+
+            user.avatar = avatar_path
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+            return avatar_path

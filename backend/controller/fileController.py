@@ -1,4 +1,3 @@
-"""
 import io
 import secrets
 from pathlib import Path
@@ -46,5 +45,3 @@ async def upload_user_avatar(
         status_code=status.HTTP_201_CREATED,
         content={"message": "Avatar uploaded successfully", "path": str(path)},
     )
-*/
-"""
