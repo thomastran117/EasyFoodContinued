@@ -2,6 +2,9 @@ from fastapi_mail import FastMail, MessageSchema, MessageType
 
 from config.emailConfig import conf
 from config.envConfig import settings
+from utilities.logger import logger
+from fastapi_mail.errors import ConnectionErrors
+
 frontend_url = settings.cors_allowed_region[0]
 
 
@@ -253,3 +256,49 @@ async def send_forgot_password_email(email: str, token: str):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
+
+async def email_smoke_test():
+    subject = "EasyFood Email Smoke Test"
+
+    body = """
+    <!doctype html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Email Smoke Test</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#f0f4f8;">
+        <div style="padding: 20px; font-family: sans-serif;">
+            <h2 style="color:#333;">Email Smoke Test</h2>
+            <p>This is a test email from your EasyFood backend configuration.</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    message = MessageSchema(
+        subject=subject,
+        recipients=[settings.email],
+        body=body,
+        subtype=MessageType.html,
+    )
+
+    fm = FastMail(conf)
+
+    try:
+        await fm.send_message(message)
+        settings.email_enabled = True
+        return
+
+    except ConnectionErrors as e:
+        logger.error(f"Email smoke test failed: {e}")
+        settings.email_enabled = False
+        return
+
+    except Exception as e:
+        logger.error(f"❌ Unexpected email error: {e}")
+        settings.email_enabled = False
+        return
