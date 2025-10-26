@@ -1,8 +1,8 @@
 from fastapi_mail import FastMail, MessageSchema, MessageType
 
 from config.emailConfig import conf
-
-frontend_url = "http://localhost:3050"
+from config.envConfig import settings
+frontend_url = settings.cors_allowed_region[0]
 
 
 async def send_reservation_email(email: str, details):

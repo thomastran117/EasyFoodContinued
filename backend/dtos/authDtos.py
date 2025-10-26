@@ -1,17 +1,17 @@
 from pydantic import BaseModel, EmailStr
 
 
-class LoginRequestDto(BaseModel):
+class AuthRequestDto(BaseModel):
     email: EmailStr
     password: str
+    captcha: str
+
+
+class LoginRequestDto(AuthRequestDto):
     remember: bool = False
-    captcha: str
 
 
-class SignupRequestDto(BaseModel):
-    email: EmailStr
-    password: str
-    captcha: str
+class SignupRequestDto(AuthRequestDto):
     role: str = "hello"
 
 

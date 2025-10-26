@@ -32,7 +32,7 @@ from utilities.logger import logger
 async def login(request: LoginRequestDto):
     try:
         access, refresh, user = await loginUser(
-            request.email, request.password, request.remember, request.captcha
+            request.email, request.password, request.captcha, request.remember
         )
 
         response = JSONResponse(
@@ -181,14 +181,6 @@ async def microsoft(auth_req: MicrosoftAuthRequest):
 
 
 def set_refresh_cookie(response: Response, refresh_token: str):
-    """
-    Sets a refresh_token cookie on the response with consistent settings.
-
-    Args:
-        response (Response): The FastAPI response object.
-        refresh_token (str): The token value to set.
-    """
-
     secure_flag = not getattr(settings, "debug", False)
 
     response.set_cookie(

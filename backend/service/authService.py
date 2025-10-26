@@ -26,7 +26,7 @@ from utilities.errorRaiser import (
 from utilities.logger import logger
 
 
-async def loginUser(email: str, password: str, remember: bool, captcha: str):
+async def loginUser(email: str, password: str, captcha: str, remember: bool = False):
     if settings.recaptcha_enabled:
         is_valid_captcha = await google_verify_captcha(captcha)
         if not is_valid_captcha:
@@ -94,7 +94,7 @@ async def verifyUser(token: str):
         return new_user
 
 
-async def microsoft_login(id_token: str, remember: bool):
+async def microsoft_login(id_token: str, remember: bool = False):
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             "https://login.microsoftonline.com/common/discovery/v2.0/keys"
@@ -149,7 +149,7 @@ async def microsoft_login(id_token: str, remember: bool):
     return access, refresh, user
 
 
-async def google_login(token: str, remember: bool):
+async def google_login(token: str, remember: bool = False):
     idinfo = id_token.verify_oauth2_token(
         token, requests.Request(), settings.google_client_id
     )

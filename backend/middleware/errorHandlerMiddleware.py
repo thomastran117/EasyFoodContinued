@@ -28,8 +28,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         msg = err.get("msg", "Invalid value")
         errors.append(f"{field}: {msg}" if field else msg)
 
-    logger.warning(f"Validation error: {errors}")
-
     return JSONResponse(
         status_code=HTTP_400_BAD_REQUEST,
         content={
