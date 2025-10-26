@@ -3,6 +3,7 @@ from service.authService import AuthService
 from service.emailService import EmailService
 from service.fileService import FileService
 from service.userService import UserService
+from service.cacheService import CacheService
 from controller.authController import AuthController
 from controller.userController import UserController
 
@@ -17,13 +18,16 @@ class Container:
         return cls._instance
 
     def __init__(self):
-        self.token_service = TokenService()
+        self.cache_service = CacheService()
         self.email_service = EmailService()
         self.file_service = FileService()
+
+        self.token_service = TokenService()
         self.auth_service = AuthService(
             token_service=self.token_service, email_service=self.email_service
         )
         self.user_service = UserService(self.file_service)
+
         self.auth_controller = AuthController(self.auth_service)
         self.user_controller = UserController(self.user_service)
 

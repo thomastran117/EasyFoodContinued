@@ -6,13 +6,13 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
 from config.envConfig import settings
-from resources.redis_client import redis_client
+from service.cacheService import CacheService
 from utilities.errorRaiser import ForbiddenException, UnauthorizedException
 
 
 class TokenService:
-    def __init__(self, redis=redis_client):
-        self.redis = redis
+    def __init__(self, cache_service: CacheService):
+        self.cache_service = cache_service
         self.algorithm = settings.algorithm
 
         self.JWT_SECRET_ACCESS = settings.jwt_secret_access
@@ -33,19 +33,13 @@ class TokenService:
         return f"verify:{token}"
 
     def _store_token(self, key: str, token: str, expire: timedelta, payload: dict):
-        self.redis.setex(key, expire, json.dumps(payload))
+        self.cache_service.set(key, payload, expire)
 
     def _load_token(self, key: str):
-        raw = self.redis.get(key)
-        if not raw:
-            return None
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            return None
+        return self.cache_service.get(key)
 
     def _delete_token(self, key: str):
-        self.redis.delete(key)
+        self.cache_service.delete(key)
 
     def create_access_token(self, data: dict) -> str:
         expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_EXPIRE_MINUTES)
