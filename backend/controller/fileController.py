@@ -1,47 +1,16 @@
-import io
-import secrets
-from pathlib import Path
-
-import filetype
-from fastapi import Depends, File, HTTPException, UploadFile, status
-from fastapi.responses import JSONResponse
-from PIL import Image
-
-from service.tokenService import get_current_user, require_auth_token
-
-UPLOAD_DIR = Path("uploads/users")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-MAX_FILE_SIZE = 10 * 1024 * 1024
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from service.fileService import FileService
+from utilities.errorRaiser import raise_error
 
 
-async def upload_user_avatar(
-    file: UploadFile = File(...),
-    token: str = Depends(require_auth_token),
-):
-    user = get_current_user(token)
-    if not user:
-        raise HTTPException(401, "Invalid user token")
+class FileController:
+    def __init__(self, file_service: FileService):
+        self.file_service = file_service
 
-    data = await file.read()
-    if len(data) > MAX_FILE_SIZE:
-        raise HTTPException(413, f"File exceeds {MAX_FILE_SIZE / (1024**2)} MB limit")
-
-    kind = filetype.guess(data)
-    if not kind or kind.mime not in ["image/jpeg", "image/png"]:
-        raise HTTPException(400, "Only JPG and PNG files are allowed")
-
-    try:
-        img = Image.open(io.BytesIO(data))
-        img.verify()
-    except Exception:
-        raise HTTPException(400, "Corrupted or invalid image file")
-
-    filename = f"{secrets.token_hex(16)}.{kind.extension}"
-    path = UPLOAD_DIR / filename
-    with open(path, "wb") as f:
-        f.write(data)
-
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content={"message": "Avatar uploaded successfully", "path": str(path)},
-    )
+    async def get_file(self, category: str, filename: str):
+        """Fetch a file by category and filename."""
+        try:
+            return self.file_service.get_uploaded_file(category, filename)
+        except Exception as e:
+            raise_error(e)

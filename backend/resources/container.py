@@ -6,6 +6,7 @@ from service.userService import UserService
 from service.cacheService import CacheService
 from controller.authController import AuthController
 from controller.userController import UserController
+from controller.fileController import FileController
 
 
 class Container:
@@ -30,6 +31,7 @@ class Container:
 
         self.auth_controller = AuthController(self.auth_service)
         self.user_controller = UserController(self.user_service)
+        self.file_controller = FileController(self.file_service)
 
     def get_token_service(self) -> TokenService:
         return self.token_service
@@ -42,6 +44,9 @@ class Container:
 
     def get_user_controller(self) -> UserController:
         return self.user_controller
+
+    def get_file_controller(self) -> FileController:
+        return self.file_controller
 
     def get_email_service(self) -> EmailService:
         return self.email_service
