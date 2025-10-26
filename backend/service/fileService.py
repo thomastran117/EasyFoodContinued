@@ -51,7 +51,7 @@ class FileService:
         except Exception as e:
             raise HTTPException(500, f"Failed to save file: {e}")
 
-        return str(file_path.relative_to(self.base_dir.parent))
+        return str(file_path.relative_to(self.base_dir.parent)).replace("\\", "/")
 
     def get_uploaded_file(self, category: str, filename: str):
         """Return FileResponse if file exists."""

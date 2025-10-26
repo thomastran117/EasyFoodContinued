@@ -22,7 +22,7 @@ class Container:
         self.email_service = EmailService()
         self.file_service = FileService()
 
-        self.token_service = TokenService()
+        self.token_service = TokenService(self.cache_service)
         self.auth_service = AuthService(
             token_service=self.token_service, email_service=self.email_service
         )
@@ -48,6 +48,9 @@ class Container:
 
     def get_file_service(self) -> FileService:
         return self.file_service
+
+    def get_cache_service(self) -> CacheService:
+        return self.cache_service
 
 
 class_container = Container()

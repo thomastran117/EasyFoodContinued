@@ -1,16 +1,28 @@
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from utilities.errorRaiser import UnauthorizedException, ForbiddenException
-from service.tokenService import TokenService
+from config.envConfig import settings
+from jose import JWTError, jwt
 
 require_auth_token = OAuth2PasswordBearer(tokenUrl="/auth/login")
-local_token_service = TokenService()
+
+JWT_SECRET_ACCESS = settings.jwt_secret_access
+ALGORITHM = settings.algorithm
+
+
+def decode_access_token(token: str) -> dict:
+    if not token:
+        raise UnauthorizedException("Missing access token")
+    try:
+        return jwt.decode(token, JWT_SECRET_ACCESS, algorithms=[ALGORITHM])
+    except JWTError:
+        raise UnauthorizedException("Invalid access token")
 
 
 def get_current_user(token: str = Depends(require_auth_token)):
     """Extract and validate current user from the JWT access token."""
 
-    payload = local_token_service.decode_access_token(token)
+    payload = decode_access_token(token)
     required = ("id", "email", "role")
     if not all(payload.get(f) for f in required):
         raise UnauthorizedException("Invalid token payload")
