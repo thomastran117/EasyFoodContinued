@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
 from controller.userController import UserController
-from resources.container import class_container
+from resources.container import container
 
-userController: UserController = class_container.get_user_controller()
+userController: UserController = container.user_controller
 
 userRouter = APIRouter()
 userRouter.add_api_route("/{id}", userController.get_user, methods=["GET"])

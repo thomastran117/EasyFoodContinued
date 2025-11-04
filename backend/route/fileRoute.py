@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from controller.fileController import FileController
-from resources.container import class_container
+from resources.container import container
 
-fileController: FileController = class_container.get_file_controller()
+fileController: FileController = container.file_controller
 
 fileRouter = APIRouter()
 fileRouter.add_api_route(

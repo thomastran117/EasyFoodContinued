@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from controller.authController import AuthController
-from resources.container import class_container
+from resources.container import container
 
-authController: AuthController = class_container.get_auth_controller()
+authController: AuthController = container.auth_controller
 
 authRouter = APIRouter()
 authRouter.add_api_route("/login", authController.login, methods=["POST"])
