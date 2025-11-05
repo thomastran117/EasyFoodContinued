@@ -1,12 +1,31 @@
-from fastapi import APIRouter
-
+from fastapi import APIRouter, Depends
 from controller.userController import UserController
 from resources.container import container
 
-userController: UserController = container.user_controller
+userRouter = APIRouter(tags=["User"])
 
-userRouter = APIRouter()
-userRouter.add_api_route("/{id}", userController.get_user, methods=["GET"])
-userRouter.add_api_route("/{id}", userController.update_user, methods=["PUT"])
-userRouter.add_api_route("/{id}", userController.delete_user, methods=["DELETE"])
-userRouter.add_api_route("/avatar", userController.update_avatar, methods=["POST"])
+
+def get_user_controller() -> UserController:
+    """Resolves an UserController with lifetimes managed by the container."""
+    with container.create_scope() as scope:
+        return container.resolve("UserController", scope)
+
+
+@userRouter.get("/{id}")
+async def login(user_controller: UserController = Depends(get_user_controller)):
+    return await user_controller.get_user()
+
+
+@userRouter.put("/{id}")
+async def signup(user_controller: UserController = Depends(get_user_controller)):
+    return await user_controller.update_user()
+
+
+@userRouter.delete("/{id}")
+async def verify(user_controller: UserController = Depends(get_user_controller)):
+    return await user_controller.delete_user()
+
+
+@userRouter.post("/avatar")
+async def refresh(user_controller: UserController = Depends(get_user_controller)):
+    return await user_controller.update_avatar()

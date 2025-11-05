@@ -5,7 +5,7 @@ from datetime import timedelta
 from resources.redis_client import redis_client
 
 
-class CacheService():
+class CacheService:
     def __init__(self, client: Optional[redis.Redis] = redis_client):
         self.client = client
 

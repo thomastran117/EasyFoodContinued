@@ -1,158 +1,216 @@
-from typing import Optional
-from service.tokenService import TokenService
-from service.authService import AuthService
+from typing import Callable, Dict, Optional, Any, Literal
+from contextlib import contextmanager
+from utilities.logger import logger
+
+from service.cacheService import CacheService
 from service.emailService import EmailService
 from service.fileService import FileService
+from service.tokenService import TokenService
+from service.authService import AuthService
 from service.userService import UserService
-from service.cacheService import CacheService
 from controller.authController import AuthController
 from controller.userController import UserController
 from controller.fileController import FileController
-from utilities.logger import logger
+
+Lifetime = Literal["singleton", "transient", "scoped"]
+
 
 class Container:
-    """A lightweight IoC container managing application-wide singletons."""
+    """Advanced IoC container with configurable lifetimes and factory-based dependency resolution."""
 
     _instance: Optional["Container"] = None
 
     def __new__(cls) -> "Container":
-        """Ensure only one instance of the container exists (singleton)."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
         return cls._instance
 
     def __init__(self) -> None:
-        if hasattr(self, "_initialized") and self._initialized:
+        if self._initialized:
             return
 
-        # Initialize placeholders for lazy singletons
-        self._cache_service: Optional[CacheService] = None
-        self._email_service: Optional[EmailService] = None
-        self._file_service: Optional[FileService] = None
-        self._token_service: Optional[TokenService] = None
-        self._auth_service: Optional[AuthService] = None
-        self._user_service: Optional[UserService] = None
-
-        self._auth_controller: Optional[AuthController] = None
-        self._user_controller: Optional[UserController] = None
-        self._file_controller: Optional[FileController] = None
-
+        self._factories: Dict[str, Callable[["Container"], Any]] = {}
+        self._lifetimes: Dict[str, Lifetime] = {}
+        self._instances: Dict[str, Any] = {}
         self._initialized = True
 
-    # ---------------------
-    # Service Getters (lazy singletons)
-    # ---------------------
+    def register(
+        self,
+        name: str,
+        factory: Callable[["Container"], Any],
+        lifetime: Lifetime = "singleton",
+    ) -> None:
+        """Registers a dependency with a specified lifetime."""
+        self._factories[name] = factory
+        self._lifetimes[name] = lifetime
+        logger.debug(f"Registered {name} [{lifetime}]")
 
-    @property
-    def cache_service(self) -> CacheService:
-        if self._cache_service is None:
-            self._cache_service = CacheService()
-        return self._cache_service
+    def resolve(self, name: str, scope: Optional[dict] = None) -> Any:
+        lifetime = self._lifetimes.get(name, "singleton")
 
-    @property
-    def email_service(self) -> EmailService:
-        if self._email_service is None:
-            self._email_service = EmailService()
-        return self._email_service
+        if lifetime == "singleton":
+            if name not in self._instances:
+                self._instances[name] = self._factories[name](self)
+            return self._instances[name]
 
-    @property
-    def file_service(self) -> FileService:
-        if self._file_service is None:
-            self._file_service = FileService()
-        return self._file_service
+        elif lifetime == "transient":
+            return self._factories[name](self)
 
-    @property
-    def token_service(self) -> TokenService:
-        if self._token_service is None:
-            self._token_service = TokenService(self.cache_service)
-        return self._token_service
+        elif lifetime == "scoped":
+            if scope is None:
+                raise RuntimeError(
+                    f"Scope required to resolve scoped dependency '{name}'"
+                )
+            if name not in scope:
+                scope[name] = self._factories[name](self)
+            return scope[name]
 
-    @property
-    def auth_service(self) -> AuthService:
-        if self._auth_service is None:
-            self._auth_service = AuthService(
-                token_service=self.token_service,
-                email_service=self.email_service,
-            )
-        return self._auth_service
+        raise KeyError(f"Unknown lifetime '{lifetime}' for dependency '{name}'")
 
-    @property
-    def user_service(self) -> UserService:
-        if self._user_service is None:
-            self._user_service = UserService(self.file_service)
-        return self._user_service
+    @contextmanager
+    def create_scope(self):
+        """Creates a new dependency scope (e.g. per-request)."""
+        scope: dict[str, Any] = {}
+        try:
+            yield scope
+        finally:
+            for instance in scope.values():
+                close_fn = getattr(instance, "close", None)
+                if callable(close_fn):
+                    close_fn()
+            scope.clear()
 
-    @property
-    def auth_controller(self) -> AuthController:
-        if self._auth_controller is None:
-            self._auth_controller = AuthController(self.auth_service)
-        return self._auth_controller
+    def add_core_services(
+        self,
+        cache_lifetime: Lifetime = "singleton",
+        email_lifetime: Lifetime = "singleton",
+        file_lifetime: Lifetime = "singleton",
+        token_lifetime: Lifetime = "transient",
+    ) -> "Container":
+        """Registers fundamental services with overridable lifetimes."""
+        self.register("CacheService", lambda c: CacheService(), cache_lifetime)
+        self.register("EmailService", lambda c: EmailService(), email_lifetime)
+        self.register("FileService", lambda c: FileService(), file_lifetime)
+        self.register(
+            "TokenService",
+            lambda c: TokenService(c.resolve("CacheService")),
+            token_lifetime,
+        )
+        return self
 
-    @property
-    def user_controller(self) -> UserController:
-        if self._user_controller is None:
-            self._user_controller = UserController(self.user_service)
-        return self._user_controller
+    def add_app_services(
+        self,
+        auth_service_lifetime: Lifetime = "transient",
+        user_service_lifetime: Lifetime = "scoped",
+    ) -> "Container":
+        """Registers application-level services with configurable lifetimes."""
+        self.register(
+            "AuthService",
+            lambda c: AuthService(
+                token_service=c.resolve("TokenService"),
+                email_service=c.resolve("EmailService"),
+            ),
+            auth_service_lifetime,
+        )
+        self.register(
+            "UserService",
+            lambda c: UserService(c.resolve("FileService")),
+            user_service_lifetime,
+        )
+        return self
 
-    @property
-    def file_controller(self) -> FileController:
-        if self._file_controller is None:
-            self._file_controller = FileController(self.file_service)
-        return self._file_controller
-
+    def add_controllers(
+        self,
+        auth_controller_lifetime: Lifetime = "scoped",
+        user_controller_lifetime: Lifetime = "scoped",
+        file_controller_lifetime: Lifetime = "scoped",
+    ) -> "Container":
+        """Registers controllers with configurable lifetimes."""
+        self.register(
+            "AuthController",
+            lambda c: AuthController(c.resolve("AuthService")),
+            auth_controller_lifetime,
+        )
+        self.register(
+            "UserController",
+            lambda c: UserController(c.resolve("UserService")),
+            user_controller_lifetime,
+        )
+        self.register(
+            "FileController",
+            lambda c: FileController(c.resolve("FileService")),
+            file_controller_lifetime,
+        )
+        return self
 
     def summary(self) -> None:
-        """Prints out all active singletons for debugging."""
-        active = {
-            "CacheService": self._cache_service is not None,
-            "EmailService": self._email_service is not None,
-            "FileService": self._file_service is not None,
-            "TokenService": self._token_service is not None,
-            "AuthService": self._auth_service is not None,
-            "UserService": self._user_service is not None,
-            "AuthController": self._auth_controller is not None,
-            "UserController": self._user_controller is not None,
-            "FileController": self._file_controller is not None,
-        }
-        print("[Container Summary]")
-        for k, v in active.items():
-            print(f" - {k}: {'Loaded' if v else 'Lazy'}")
+        """Logs dependency registration summary."""
+        logger.info("[Container Summary]")
+        for name, lifetime in self._lifetimes.items():
+            state = "Loaded" if name in self._instances else "Lazy"
+            logger.info(f" - {name:<18} [{lifetime:<9}] : {state}")
 
-
-def bootstrap() -> Container:
-    """
-    Initializes core dependencies, ensuring required services are ready.
-
-    - Eagerly initializes critical infrastructure (cache, DB, email).
-    - Runs readiness checks.
-    - Logs initialization summary.
-
-    Returns:
-        Container: The initialized application container.
-    """
-    container = Container()
-
-    logger.info("Bootstrapping application container...")
-
-    try:
-        # Eagerly load essential services
-        _ = container.cache_service
-        _ = container.email_service
-        _ = container.file_service
-        _ = container.token_service
-
-        # Example readiness checks
+    def build(self) -> "Container":
+        """Eagerly initializes singletons and checks service health."""
         try:
-            ping = container.cache_service.client.ping()
+            cache = self.resolve("CacheService")
+            try:
+                cache.client.ping()
+                logger.info("CacheService passed health check.")
+            except Exception as e:
+                logger.warning(f"CacheService health check failed: {e}")
+
+            self.resolve("EmailService")
+            self.resolve("FileService")
+
+            logger.info("Core services initialized successfully.")
         except Exception as e:
-            logger.warn(f"CacheService failed health check: {e}")
+            logger.error(f"Bootstrap failed: {e}", exc_info=True)
+            raise SystemExit(1)
+        return self
 
-        logger.info("Core services initialized successfully.")
 
-    except Exception as e:
-        logger.error(f"Bootstrap failed: {e}", exc_info=True)
-        raise SystemExit(1)
+# ------------------------------------------------------------------
+# Bootstrap Function
+# ------------------------------------------------------------------
+def bootstrap(
+    *,
+    cache_lifetime: Lifetime = "singleton",
+    email_lifetime: Lifetime = "singleton",
+    file_lifetime: Lifetime = "singleton",
+    token_lifetime: Lifetime = "transient",
+    auth_service_lifetime: Lifetime = "transient",
+    user_service_lifetime: Lifetime = "scoped",
+    auth_controller_lifetime: Lifetime = "scoped",
+    user_controller_lifetime: Lifetime = "scoped",
+    file_controller_lifetime: Lifetime = "scoped",
+) -> Container:
+    """Bootstraps the container with optional lifetime overrides."""
+    logger.info("Bootstrapping IoC container with configurable lifetimes...")
 
+    container = (
+        Container()
+        .add_core_services(
+            cache_lifetime=cache_lifetime,
+            email_lifetime=email_lifetime,
+            file_lifetime=file_lifetime,
+            token_lifetime=token_lifetime,
+        )
+        .add_app_services(
+            auth_service_lifetime=auth_service_lifetime,
+            user_service_lifetime=user_service_lifetime,
+        )
+        .add_controllers(
+            auth_controller_lifetime=auth_controller_lifetime,
+            user_controller_lifetime=user_controller_lifetime,
+            file_controller_lifetime=file_controller_lifetime,
+        )
+        .build()
+    )
+
+    container.summary()
     return container
+
 
 container = bootstrap()

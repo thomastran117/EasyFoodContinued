@@ -1,10 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from controller.fileController import FileController
 from resources.container import container
 
-fileController: FileController = container.file_controller
+fileRouter = APIRouter(tags=["File"])
 
-fileRouter = APIRouter()
-fileRouter.add_api_route(
-    "/{category}/{filename}", fileController.get_file, methods=["GET"]
-)
+
+def get_file_controller() -> FileController:
+    """Resolves an FileController with lifetimes managed by the container."""
+    with container.create_scope() as scope:
+        return container.resolve("FileController", scope)
+
+
+@fileRouter.get("/{category}/{filename}")
+async def login(file_controller: FileController = Depends(get_file_controller)):
+    return await file_controller.get_file()
