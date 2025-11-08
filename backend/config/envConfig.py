@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from pydantic import field_validator
+from pydantic import field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 from utilities.logger import get_logger
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     redis_url: str
     mongo_url: str
     port: int = 8090
-
+    model_config = ConfigDict(extra="ignore")
     cors_allowed_region: List[str] = [
         "http://localhost:3050",
         "http://127.0.0.1:3050",
