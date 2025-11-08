@@ -7,15 +7,42 @@ from resources.container import Container, bootstrap
 def mocked_services():
     """Patch all real service constructors to avoid network/disk use."""
     with (
-        patch("service.cacheService.CacheService", return_value=MagicMock(name="CacheService")),
-        patch("service.emailService.EmailService", return_value=MagicMock(name="EmailService")),
-        patch("service.fileService.FileService", return_value=MagicMock(name="FileService")),
-        patch("service.tokenService.TokenService", return_value=MagicMock(name="TokenService")),
-        patch("service.authService.AuthService", return_value=MagicMock(name="AuthService")),
-        patch("service.userService.UserService", return_value=MagicMock(name="UserService")),
-        patch("controller.authController.AuthController", return_value=MagicMock(name="AuthController")),
-        patch("controller.userController.UserController", return_value=MagicMock(name="UserController")),
-        patch("controller.fileController.FileController", return_value=MagicMock(name="FileController")),
+        patch(
+            "service.cacheService.CacheService",
+            return_value=MagicMock(name="CacheService"),
+        ),
+        patch(
+            "service.emailService.EmailService",
+            return_value=MagicMock(name="EmailService"),
+        ),
+        patch(
+            "service.fileService.FileService",
+            return_value=MagicMock(name="FileService"),
+        ),
+        patch(
+            "service.tokenService.TokenService",
+            return_value=MagicMock(name="TokenService"),
+        ),
+        patch(
+            "service.authService.AuthService",
+            return_value=MagicMock(name="AuthService"),
+        ),
+        patch(
+            "service.userService.UserService",
+            return_value=MagicMock(name="UserService"),
+        ),
+        patch(
+            "controller.authController.AuthController",
+            return_value=MagicMock(name="AuthController"),
+        ),
+        patch(
+            "controller.userController.UserController",
+            return_value=MagicMock(name="UserController"),
+        ),
+        patch(
+            "controller.fileController.FileController",
+            return_value=MagicMock(name="FileController"),
+        ),
     ):
         yield
 

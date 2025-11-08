@@ -25,7 +25,7 @@ class AuthController:
         auth_service: instance of AuthService (which uses TokenService internally)
         """
         self.auth_service = auth_service
-        self.request: Request | None = None 
+        self.request: Request | None = None
 
     async def login(self, request: LoginRequestDto):
         try:

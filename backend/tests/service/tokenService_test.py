@@ -1,4 +1,5 @@
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import pytest
@@ -13,6 +14,7 @@ from utilities.errorRaiser import UnauthorizedException
 # ---------------------------------------------------------------------------
 class MockCacheService:
     """Simple in-memory cache mock that mimics CacheService API."""
+
     def __init__(self):
         self.store = {}
 
@@ -59,7 +61,7 @@ def test_create_access_token_and_decode(token_service):
         token,
         token_service.JWT_SECRET_ACCESS,
         algorithms=[token_service.algorithm],
-        options={"verify_exp": False}
+        options={"verify_exp": False},
     )
     assert decoded["email"] == "test@example.com"
     assert decoded["id"] == "123"
@@ -114,13 +116,13 @@ def test_generate_tokens_returns_valid_pair(token_service):
         access,
         token_service.JWT_SECRET_ACCESS,
         algorithms=[token_service.algorithm],
-        options={"verify_exp": False}
+        options={"verify_exp": False},
     )
     decoded_refresh = jose_jwt.decode(
         refresh,
         token_service.JWT_SECRET_REFRESH,
         algorithms=[token_service.algorithm],
-        options={"verify_exp": False}
+        options={"verify_exp": False},
     )
 
     assert decoded_access["email"] == "e@e.com"
