@@ -102,7 +102,7 @@ class Container:
     def add_app_services(
         self,
         auth_service_lifetime: Lifetime = "transient",
-        user_service_lifetime: Lifetime = "scoped",
+        user_service_lifetime: Lifetime = "transient",
     ) -> "Container":
         """Registers application-level services with configurable lifetimes."""
         self.register(
@@ -171,9 +171,6 @@ class Container:
         return self
 
 
-# ------------------------------------------------------------------
-# Bootstrap Function
-# ------------------------------------------------------------------
 def bootstrap(
     *,
     cache_lifetime: Lifetime = "singleton",
@@ -181,7 +178,7 @@ def bootstrap(
     file_lifetime: Lifetime = "singleton",
     token_lifetime: Lifetime = "transient",
     auth_service_lifetime: Lifetime = "transient",
-    user_service_lifetime: Lifetime = "scoped",
+    user_service_lifetime: Lifetime = "transient",
     auth_controller_lifetime: Lifetime = "scoped",
     user_controller_lifetime: Lifetime = "scoped",
     file_controller_lifetime: Lifetime = "scoped",
@@ -209,7 +206,8 @@ def bootstrap(
         .build()
     )
 
-    container.summary()
+    # container.summary()
+    logger.info("IoC container Bootstrap completed")
     return container
 
 

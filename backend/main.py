@@ -50,6 +50,11 @@ def api_check():
     return "EasyFood API is running"
 
 
+@app.get("/ping")
+def api_check():
+    return "pong"
+
+
 @app.get("/health")
 def api_check():
     return "Health check is ok!"

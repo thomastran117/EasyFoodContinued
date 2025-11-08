@@ -25,6 +25,7 @@ class AuthController:
         auth_service: instance of AuthService (which uses TokenService internally)
         """
         self.auth_service = auth_service
+        self.request: Request | None = None 
 
     async def login(self, request: LoginRequestDto):
         try:
@@ -65,9 +66,9 @@ class AuthController:
         except Exception as e:
             raise_error(e)
 
-    async def renew(self, request: Request):
+    async def renew(self):
         try:
-            refresh_token = request.cookies.get("refresh_token")
+            refresh_token = self.request.cookies.get("refresh_token")
             if not refresh_token:
                 raise UnauthorizedException("Missing refresh token cookie")
 
@@ -88,9 +89,9 @@ class AuthController:
         except Exception as e:
             raise_error(e)
 
-    async def logout(self, request: Request):
+    async def logout(self):
         try:
-            refresh_token = request.cookies.get("refresh_token")
+            refresh_token = self.request.cookies.get("refresh_token")
             if not refresh_token:
                 raise UnauthorizedException("No refresh token cookie found")
 
