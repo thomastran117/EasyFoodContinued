@@ -4,17 +4,19 @@ from typing import List, Optional
 from pydantic import field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
-from utilities.logger import get_logger
-
-logger = get_logger(__name__)
-
+from utilities.logger import logger
 
 class Settings(BaseSettings):
     database_url: str
     redis_url: str
     mongo_url: str
     port: int = 8090
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(
+        extra="ignore",
+        env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )    
     cors_allowed_region: List[str] = [
         "http://localhost:3050",
         "http://127.0.0.1:3050",
@@ -57,11 +59,5 @@ class Settings(BaseSettings):
         self.email_enabled = all([self.email, self.password])
 
         self.recaptcha_enabled = all([self.google_secret_key])
-
-    class Config:
-        env_file = os.path.join(os.path.dirname(__file__), "..", ".env")
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-
 
 settings = Settings()
