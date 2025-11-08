@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from resources.container import Container, bootstrap
+
+with patch("resources.redis_client.redis_client", autospec=True):
+    from resources.container import Container, bootstrap
 
 
 @pytest.fixture
@@ -61,9 +63,9 @@ def test_resolve_registered_services(mocked_services):
     email = c.resolve("EmailService")
     file = c.resolve("FileService")
     token = c.resolve("TokenService")
-
     auth_service = c.resolve("AuthService")
     user_service = c.resolve("UserService")
+
     with c.create_scope() as scope:
         auth_controller = c.resolve("AuthController", scope=scope)
         user_controller = c.resolve("UserController", scope=scope)
@@ -73,7 +75,7 @@ def test_resolve_registered_services(mocked_services):
         assert user_controller
         assert file_controller
 
-    assert cache and email and file and token and auth_service and user_service
+    assert all([cache, email, file, token, auth_service, user_service])
 
 
 def test_singleton_and_transient_lifetimes(mocked_services):
