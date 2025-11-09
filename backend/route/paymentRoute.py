@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, Request
 from controller.paymentController import PaymentController
-from dtos.paymentDtos import PaymentRequest, PaymentSuccessDto, PaymentCancelDto
 from resources.container import container
 
 
-def get_payment_controller(request: Request) -> PaymentController:
+def get_payment_contorller(request: Request) -> PaymentController:
     """
-    Resolve a new scoped PaymentController per request and
+    Resolve a new scoped AuthController per request and
     automatically attach the FastAPI Request to it.
     """
     with container.create_scope() as scope:
@@ -15,13 +14,18 @@ def get_payment_controller(request: Request) -> PaymentController:
         return controller
 
 
-paymentRouter = APIRouter()
+paymentRouter = APIRouter(tags=["Payment"])
 
 
-@paymentRouter.post("/queue")
-async def queue_payment(dto: PaymentRequest, ctrl: PaymentController = Depends(get_payment_controller)):
-    return await ctrl.create_payment(dto)
+@paymentRouter.get("/success")
+def handle_payment_success(
+    paymentId: str,
+    PayerID: str,
+    ctrl: PaymentController = Depends(get_payment_contorller),
+):
+    return ctrl.payment_success(paymentId, PayerID)
 
-@paymentRouter.delete("/queue/{task_id}")
-async def cancel_payment(task_id: str, ctrl: PaymentController = Depends(get_payment_controller)):
-    return await ctrl.cancel_payment(task_id)
+
+@paymentRouter.get("/cancel")
+def handle_payment_cancel(ctrl: PaymentController = Depends(get_payment_contorller)):
+    return ctrl.payment_cancel()

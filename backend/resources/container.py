@@ -9,10 +9,12 @@ from service.tokenService import TokenService
 from service.authService import AuthService
 from service.userService import UserService
 from service.paymentService import PaymentService
+from service.orderService import OrderService
 from controller.authController import AuthController
 from controller.userController import UserController
 from controller.fileController import FileController
 from controller.paymentController import PaymentController
+from controller.orderController import OrderController
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
@@ -105,6 +107,7 @@ class Container:
         auth_service_lifetime: Lifetime = "transient",
         user_service_lifetime: Lifetime = "transient",
         payment_service_lifetime: Lifetime = "transient",
+        order_service_lifetime: Lifetime = "transient",
     ) -> "Container":
         """Registers application-level services with configurable lifetimes."""
         self.register(
@@ -125,6 +128,11 @@ class Container:
             lambda c: PaymentService(),
             payment_service_lifetime,
         )
+        self.register(
+            "OrderService",
+            lambda c: OrderService(c.resolve("PaymentService")),
+            user_service_lifetime,
+        )
         return self
 
     def add_controllers(
@@ -133,6 +141,7 @@ class Container:
         user_controller_lifetime: Lifetime = "scoped",
         file_controller_lifetime: Lifetime = "scoped",
         payment_controller_lifetime: Lifetime = "scoped",
+        order_controller_lifetime: Lifetime = "scoped",
     ) -> "Container":
         """Registers controllers with configurable lifetimes."""
         self.register(
@@ -154,6 +163,11 @@ class Container:
             "PaymentController",
             lambda c: PaymentController(c.resolve("PaymentService")),
             payment_controller_lifetime,
+        )
+        self.register(
+            "OrderController",
+            lambda c: OrderController(c.resolve("OrderService")),
+            order_controller_lifetime,
         )
         return self
 

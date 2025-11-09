@@ -16,6 +16,21 @@ class OccasionEnum(enum.Enum):
     OTHER = "other"
 
 
+class OrderStatus(enum.Enum):
+    PENDING = "pending"
+    QUEUE = "queued"
+    PAID = "paid"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+    CANCELLED = "cancelled"
+
+
+class PaymentMethod(enum.Enum):
+    PAYPAL = "paypal"
+    STRIPE = "stripe"
+    MOCK = "mock"
+
+
 class Restaurant(Base):
     __tablename__ = "restaurants"
 
@@ -48,40 +63,43 @@ class Food(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"))
     restaurant = relationship("Restaurant", back_populates="food_items")
 
-    order_foods = relationship("OrderFood", back_populates="food")
-
 
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    notes = Column(Text, nullable=False)
-    payment_name = Column(Text, nullable=False)
-    payment_type = Column(Text, nullable=False)
-    payment_number = Column(Text, nullable=False)
-    payment_cvv = Column(Text, nullable=False)
-    payment_expiry = Column(Text, nullable=False)
-    fulfillment_type = Column(Text, nullable=False)
-    address = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+    notes = Column(Text, nullable=True)
+    fulfillment_type = Column(String(50), nullable=False)
+    address = Column(Text, nullable=True)
+    total = Column(Float, nullable=False)
+
+    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING, nullable=False)
+    task_id = Column(String(128), nullable=True)
+    payment_id = Column(String(128), nullable=True)
+    transaction_id = Column(String(128), nullable=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="orders")
-
-    order_foods = relationship(
-        "OrderFood", back_populates="order", cascade="all, delete-orphan"
-    )
+    payment = relationship("Payment", back_populates="order", uselist=False)
 
 
-class OrderFood(Base):
-    __tablename__ = "order_food"
+class Payment(Base):
+    __tablename__ = "payments"
 
-    order_id = Column(Integer, ForeignKey("orders.id"), primary_key=True)
-    food_id = Column(Integer, ForeignKey("food.id"), primary_key=True)
-    quantity = Column(Integer, nullable=False, default=1)
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    method = Column(Enum(PaymentMethod), nullable=False, default=PaymentMethod.PAYPAL)
 
-    order = relationship("Order", back_populates="order_foods")
-    food = relationship("Food", back_populates="order_foods")
+    paypal_order_id = Column(String(128), nullable=True)
+    paypal_capture_id = Column(String(128), nullable=True)
+    paypal_status = Column(String(64), nullable=True)
+
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"))
+    order = relationship("Order", back_populates="payment")
 
 
 class User(Base):

@@ -1,5 +1,9 @@
-$ErrorActionPreference = "Stop"
+# =============================================================
+# EasyFood Startup Script (Frontend + Backend + Celery)
+# Compatible with PowerShell 5.1
+# =============================================================
 
+$ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot  = Join-Path $scriptDir ".."
 $frontend  = Join-Path $repoRoot "frontend"
@@ -25,10 +29,10 @@ elseif (Test-Path $activateBat2) { $activateBat = $activateBat2 }
 
 if ($activateBat) {
   $backendCmd = "call `"$activateBat`" && python main.py"
-  Write-Host "[2/3] 🐍 Using virtual environment: $activateBat" -ForegroundColor DarkCyan
+  Write-Host "`n[2/3] 🐍 Using virtual environment: $activateBat" -ForegroundColor DarkCyan
 } else {
   $backendCmd = "python main.py"
-  Write-Host "[2/3] ⚠️ No venv found in backend. Using system Python." -ForegroundColor Yellow
+  Write-Host "`n[2/3] ⚠️ No venv found in backend. Using system Python." -ForegroundColor Yellow
 }
 
 Write-Host "[2/3] Starting Backend..." -ForegroundColor Cyan
@@ -39,7 +43,31 @@ $backendProc = Start-Process `
   -NoNewWindow `
   -PassThru
 
-Write-Host "[3/3] Starting Celery Worker..." -ForegroundColor Cyan
+Write-Host "`n[⏳] Waiting for backend to be ready on port 8000..." -ForegroundColor Yellow
+
+$maxRetries = 30
+$waitSeconds = 2
+$backendReady = $false
+$backendUrl = "http://localhost:8050/health"
+
+for ($i = 1; $i -le $maxRetries; $i++) {
+  try {
+    $response = Invoke-WebRequest -Uri $backendUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    if ($response.StatusCode -eq 200) {
+      Write-Host "✅ Backend is ready (HTTP 200) after $($i*$waitSeconds)s" -ForegroundColor Green
+      $backendReady = $true
+      break
+    }
+  } catch {
+    Start-Sleep -Seconds $waitSeconds
+  }
+}
+
+if (-not $backendReady) {
+  Write-Host "❌ Backend did not become ready within $($maxRetries*$waitSeconds)s. Starting Celery anyway." -ForegroundColor Red
+}
+
+Write-Host "`n[3/3] Starting Celery Worker..." -ForegroundColor Cyan
 
 $celeryCmd = if ($activateBat) {
   "call `"$activateBat`" && celery -A config.celeryConfig.celery_app worker -l info --pool=solo"

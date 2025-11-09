@@ -1,6 +1,7 @@
 import paypalrestsdk
 from config.envConfig import settings
 
+
 def init_paypal():
     paypalrestsdk.configure(
         {

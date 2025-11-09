@@ -52,19 +52,13 @@ CELERY_RESULT_BACKEND="redis://127.0.0.1:6379/1"
 ##############################################
 # CORS Configuration
 ##############################################
-# Allowed origins for cross-origin requests (JSON array as string)
-# Typical dev front-end address:
-#   ["http://localhost:3090"]
-CORS_ALLOWED_REGION=["http://localhost:3090"]
+CORS_ALLOWED_REGION=["http://localhost:3050"]
 
 ##############################################
 # Security / JWT
 ##############################################
-# Secret key for signing tokens (use a strong random value in production)
 SECRET_KEY="$secret"
-# JWT signing algorithm
 ALGORITHM="HS256"
-# Token expiration in minutes
 EXPIRE_MINUTES="30"
 
 ##############################################

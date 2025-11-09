@@ -1,35 +1,17 @@
-from typing import List, Literal, Optional
-
-from pydantic import BaseModel
-
-
-class FoodRequest(BaseModel):
-    food_id: int
-    quantity: int = 1
+from pydantic import BaseModel, Field
+from typing import Optional, List
 
 
-class FulfillmentRequest(BaseModel):
-    type: Literal["delivery", "pickup"]
-    address: str
+class CreateOrderDto(BaseModel):
+    user_id: int = Field(..., description="ID of the user creating the order")
+    content: str = Field(..., description="Items or content of the order")
+    total: float = Field(..., gt=0, description="Total price of the order")
+    fulfillment_type: str = Field(
+        ..., description="Type of fulfillment (pickup, delivery, etc.)"
+    )
+    address: Optional[str] = Field(None, description="Delivery address if applicable")
+    notes: Optional[str] = Field(None, description="Optional notes for the order")
 
 
-class PaymentRequest(BaseModel):
-    type: Literal["credit", "debit"]
-    name: str
-    cardNumber: str
-    expiry: str
-    cvv: str
-
-
-class CreateOrderRequest(BaseModel):
-    items: List[FoodRequest]
-    fulfillment: FulfillmentRequest
-    notes: Optional[str] = ""
-    payment: PaymentRequest
-
-
-class UpdateOrderRequest(BaseModel):
-    items: List[FoodRequest]
-    fulfillment: Optional[FulfillmentRequest]
-    notes: Optional[str] = ""
-    payment: Optional[PaymentRequest]
+class CancelOrderDto(BaseModel):
+    order_id: int = Field(..., description="Order ID to cancel")

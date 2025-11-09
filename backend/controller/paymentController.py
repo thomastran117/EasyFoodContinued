@@ -1,18 +1,40 @@
-from fastapi import Request
-from dtos.paymentDtos import PaymentRequest
+from fastapi import HTTPException
+from utilities.logger import logger
 from service.paymentService import PaymentService
 
 
 class PaymentController:
-    def __init__(self, payment_service: PaymentService):
-        """
-        payment_service: instance of PaymentService (resolved by container)
-        """
-        self.payment_service = payment_service
-        self.request: Request | None = None
+    """
+    Controller responsible for handling PayPal success/cancel routes.
+    Delegates business logic to PaymentService.
+    """
 
-    async def create_payment(self, dto: PaymentRequest):
-        return self.payment_service.enqueue_payment(order_id="ORD-123", total=dto.total)
+    def __init__(self):
+        self.payment_service = PaymentService()
 
-    async def cancel_payment(self, task_id: str):
-        return self.payment_service.cancel_queued_payment(task_id)
+    def payment_success(self, paymentId: str, PayerID: str):
+        """
+        Called by PayPal after user approves payment.
+        Completes the transaction and updates DB.
+        """
+        try:
+            logger.info(
+                f"[PayPalController] Processing success for paymentId={paymentId}"
+            )
+            result = self.payment_service.execute_payment(paymentId, PayerID)
+
+            if result.get("status") != "success":
+                raise HTTPException(status_code=400, detail=result)
+
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[PayPalController] Exception: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    def payment_cancel(self):
+        """
+        Called when user cancels the PayPal payment.
+        """
+        return {"status": "cancelled", "message": "Payment was cancelled by the user"}

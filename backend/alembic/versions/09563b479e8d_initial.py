@@ -1,19 +1,19 @@
-"""init db
+"""initial
 
-Revision ID: 6ed46d8d3057
+Revision ID: 09563b479e8d
 Revises:
-Create Date: 2025-09-13 23:48:36.717968
+Create Date: 2025-11-09 11:58:37.905420
 
 """
 
 from typing import Sequence, Union
 
+from alembic import op
 import sqlalchemy as sa
 
-from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "6ed46d8d3057"
+revision: str = "09563b479e8d"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,13 +26,14 @@ def upgrade() -> None:
         "users",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
+        sa.Column("username", sa.String(), nullable=True),
         sa.Column("password", sa.String(), nullable=True),
         sa.Column("role", sa.String(), nullable=False),
         sa.Column("provider", sa.String(), nullable=False),
         sa.Column("google_id", sa.String(), nullable=True),
         sa.Column("microsoft_id", sa.String(), nullable=True),
         sa.Column("name", sa.String(), nullable=True),
-        sa.Column("profileUrl", sa.String(), nullable=True),
+        sa.Column("avatar", sa.String(), nullable=True),
         sa.Column("phone", sa.String(), nullable=True),
         sa.Column("address", sa.String(), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
@@ -46,6 +47,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("google_id"),
         sa.UniqueConstraint("microsoft_id"),
+        sa.UniqueConstraint("username"),
     )
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
     op.create_index(op.f("ix_users_id"), "users", ["id"], unique=False)
@@ -53,15 +55,29 @@ def upgrade() -> None:
         "orders",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
-        sa.Column("notes", sa.Text(), nullable=False),
-        sa.Column("payment_name", sa.Text(), nullable=False),
-        sa.Column("payment_type", sa.Text(), nullable=False),
-        sa.Column("payment_number", sa.Text(), nullable=False),
-        sa.Column("payment_cvv", sa.Text(), nullable=False),
-        sa.Column("payment_expiry", sa.Text(), nullable=False),
-        sa.Column("fulfillment_type", sa.Text(), nullable=False),
-        sa.Column("address", sa.Text(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.Column("content", sa.Text(), nullable=False),
+        sa.Column("notes", sa.Text(), nullable=True),
+        sa.Column("fulfillment_type", sa.String(length=50), nullable=False),
+        sa.Column("address", sa.Text(), nullable=True),
+        sa.Column("total", sa.Float(), nullable=False),
+        sa.Column(
+            "status",
+            sa.Enum(
+                "PENDING",
+                "QUEUE",
+                "PAID",
+                "FAILED",
+                "REFUNDED",
+                "CANCELLED",
+                name="orderstatus",
+            ),
+            nullable=False,
+        ),
+        sa.Column("task_id", sa.String(length=128), nullable=True),
+        sa.Column("payment_id", sa.String(length=128), nullable=True),
+        sa.Column("transaction_id", sa.String(length=128), nullable=True),
+        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["users.id"],
@@ -120,6 +136,23 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_food_id"), "food", ["id"], unique=False)
     op.create_table(
+        "payments",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column(
+            "method",
+            sa.Enum("PAYPAL", "STRIPE", "MOCK", name="paymentmethod"),
+            nullable=False,
+        ),
+        sa.Column("paypal_order_id", sa.String(length=128), nullable=True),
+        sa.Column("paypal_capture_id", sa.String(length=128), nullable=True),
+        sa.Column("paypal_status", sa.String(length=64), nullable=True),
+        sa.Column("order_id", sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(["order_id"], ["orders.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index(op.f("ix_payments_id"), "payments", ["id"], unique=False)
+    op.create_table(
         "reservations",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("seats", sa.Integer(), nullable=True),
@@ -168,32 +201,18 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_reviews_id"), "reviews", ["id"], unique=False)
-    op.create_table(
-        "order_food",
-        sa.Column("order_id", sa.Integer(), nullable=False),
-        sa.Column("food_id", sa.Integer(), nullable=False),
-        sa.Column("quantity", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["food_id"],
-            ["food.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["order_id"],
-            ["orders.id"],
-        ),
-        sa.PrimaryKeyConstraint("order_id", "food_id"),
-    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table("order_food")
     op.drop_index(op.f("ix_reviews_id"), table_name="reviews")
     op.drop_table("reviews")
     op.drop_index(op.f("ix_reservations_id"), table_name="reservations")
     op.drop_table("reservations")
+    op.drop_index(op.f("ix_payments_id"), table_name="payments")
+    op.drop_table("payments")
     op.drop_index(op.f("ix_food_id"), table_name="food")
     op.drop_table("food")
     op.drop_index(op.f("ix_surveys_id"), table_name="surveys")

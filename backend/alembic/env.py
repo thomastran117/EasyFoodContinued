@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from config.envConfig import settings
 from resources.database_client import Base
+from schema import template
 
 load_dotenv()
 
