@@ -37,7 +37,7 @@ cat > "$env_file" <<EOF
 ##############################################
 
 FRONTEND_CLIENT="http://localhost:3090"
-PORT=8090
+PORT=8050
 
 ##############################################
 # Databases
@@ -76,7 +76,7 @@ PASSWORD="your_email_password_here"
 ##############################################
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
-GOOGLE_REDIRECT_URI="http://localhost:8090/api/auth/google/callback"
+GOOGLE_REDIRECT_URI="http://localhost:8050/api/auth/google/callback"
 
 ##############################################
 # Microsoft OAuth2
@@ -84,7 +84,7 @@ GOOGLE_REDIRECT_URI="http://localhost:8090/api/auth/google/callback"
 MS_TENANT_ID="your-microsoft-tenant-id"
 MS_CLIENT_ID="your-microsoft-client-id"
 MS_CLIENT_SECRET="your-microsoft-client-secret"
-MS_REDIRECT_URI="http://localhost:8090/api/auth/microsoft/callback"
+MS_REDIRECT_URI="http://localhost:8050/api/auth/microsoft/callback"
 EOF
 
 echo "Created .env at $env_file"

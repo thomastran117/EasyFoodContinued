@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str
     mongo_url: str
-    port: int = 8090
+    port: int = 8050
     model_config = ConfigDict(
         extra="ignore",
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
