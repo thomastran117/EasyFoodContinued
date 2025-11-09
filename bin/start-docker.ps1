@@ -4,6 +4,7 @@ param(
   [string]$DbService = "db",
   [string]$BackendService = "backend",
   [string]$FrontendService = "frontend",
+  [string]$CeleryService = "celery",
   [string]$PgUser = "postgres",
   [string]$PgDb   = "postgres"
 )
@@ -17,16 +18,18 @@ function Invoke-Step($msg) {
 
 $buildArgs = @("compose","-f",$ComposeFile,"build")
 if ($Rebuild) { $buildArgs += "--no-cache" }
-Invoke-Step "Building images..."
+
+Invoke-Step "Building Docker images..."
 docker @buildArgs
 
-Invoke-Step "Starting database and redis..."
+Invoke-Step "Starting Postgres and Redis..."
 docker compose -f $ComposeFile up -d $DbService redis
 
 Invoke-Step "Waiting for Postgres ($DbService) to be ready..."
 $maxAttempts = 60
 $attempt = 0
 $pgReady = $false
+
 while (-not $pgReady -and $attempt -lt $maxAttempts) {
   $attempt++
   try {
@@ -37,16 +40,18 @@ while (-not $pgReady -and $attempt -lt $maxAttempts) {
     Start-Sleep -Seconds 2
   }
 }
-if (-not $pgReady) { throw "Postgres did not become ready in time." }
+if (-not $pgReady) { throw "❌ Postgres did not become ready in time." }
 
-Invoke-Step "Applying Alembic migrations (alembic upgrade head)..."
+Invoke-Step "Applying Alembic migrations..."
 docker compose -f $ComposeFile run --rm $BackendService alembic upgrade head
 
-Invoke-Step "Starting backend and frontend (attached)..."
-Write-Host "Press Ctrl+C to stop containers."
+Invoke-Step "Starting application stack..."
 Write-Host ""
-Write-Host "   Frontend: http://localhost:3050"
-Write-Host "   Backend:  http://localhost:8050/"
+Write-Host "Press Ctrl+C to stop containers." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "   🌐 Frontend: http://localhost:3050"
+Write-Host "   🐍 Backend:  http://localhost:8050"
+Write-Host "   ⚙️  Celery Worker: docker logs -f easyfood-celery"
 Write-Host ""
 
-docker compose -f $ComposeFile up $BackendService $FrontendService
+docker compose -f $ComposeFile up $BackendService $FrontendService $CeleryService

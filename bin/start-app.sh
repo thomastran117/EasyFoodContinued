@@ -1,43 +1,48 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+REPO_ROOT="$(realpath "$SCRIPT_DIR/..")"
 FRONTEND="$REPO_ROOT/frontend"
 BACKEND="$REPO_ROOT/backend"
 
-echo "🚀 Starting frontend..."
-(
-  cd "$FRONTEND"
-  npm run start
-) &
-FRONTEND_PID=$!
-
-VENV_ACTIVATE1="$BACKEND/venv/bin/activate"
-VENV_ACTIVATE2="$BACKEND/.venv/bin/activate"
-BACKEND_CMD="python main.py"
-
-if [[ -f "$VENV_ACTIVATE1" ]]; then
-  BACKEND_CMD="source \"$VENV_ACTIVATE1\" && python main.py"
-  echo "🐍 Using virtual environment: $VENV_ACTIVATE1"
-elif [[ -f "$VENV_ACTIVATE2" ]]; then
-  BACKEND_CMD="source \"$VENV_ACTIVATE2\" && python main.py"
-  echo "🐍 Using virtual environment: $VENV_ACTIVATE2"
-else
-  echo "⚠️ No venv found in backend. Using system Python."
+VENV_ACTIVATE=""
+if [[ -f "$BACKEND/venv/bin/activate" ]]; then
+  VENV_ACTIVATE="$BACKEND/venv/bin/activate"
+elif [[ -f "$BACKEND/.venv/bin/activate" ]]; then
+  VENV_ACTIVATE="$BACKEND/.venv/bin/activate"
 fi
 
-echo "🚀 Starting backend..."
-(
-  cd "$BACKEND"
-  bash -c "$BACKEND_CMD"
-) &
+echo -e "\033[36m[1/3] Starting frontend...\033[0m"
+(cd "$FRONTEND" && npm run start -- --host 0.0.0.0 --port 3050) &
+FRONTEND_PID=$!
+
+echo -e "\033[36m[2/3] Starting backend...\033[0m"
+if [[ -n "$VENV_ACTIVATE" ]]; then
+  echo -e "🐍 Using virtualenv: $VENV_ACTIVATE"
+  bash -c "source '$VENV_ACTIVATE' && cd '$BACKEND' && python main.py" &
+else
+  echo -e "⚠️ No venv found, using system Python"
+  (cd "$BACKEND" && python main.py) &
+fi
 BACKEND_PID=$!
 
-echo
-echo "Both servers are running. Press Ctrl+C to stop them."
+echo -e "\033[36m[3/3] Starting Celery worker...\033[0m"
+if [[ -n "$VENV_ACTIVATE" ]]; then
+  bash -c "source '$VENV_ACTIVATE' && cd '$BACKEND' && celery -A config.celeryConfig.celery_app worker -l info --pool=solo" &
+else
+  (cd "$BACKEND" && celery -A config.celeryConfig.celery_app worker -l info --pool=solo) &
+fi
+CELERY_PID=$!
 
-trap 'echo; echo "Stopping servers..."; kill $FRONTEND_PID $BACKEND_PID 2>/dev/null || true; wait $FRONTEND_PID $BACKEND_PID 2>/dev/null || true; echo "✅ All stopped."; exit 0' INT
+echo ""
+echo -e "\033[32m✅ All services running:\033[0m"
+echo "   Frontend: http://localhost:3050"
+echo "   Backend:  http://localhost:8050"
+echo "   Celery worker active"
+echo ""
+echo "Press Ctrl+C to stop all processes."
 
-wait $FRONTEND_PID $BACKEND_PID
+trap 'echo -e "\n🛑 Stopping services..."; kill $FRONTEND_PID $BACKEND_PID $CELERY_PID 2>/dev/null; wait; echo "✅ All stopped."; exit 0' SIGINT SIGTERM
+
+wait

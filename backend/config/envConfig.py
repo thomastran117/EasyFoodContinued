@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     mode: str = "development"
     database_url: str
     redis_url: str
+    celery_broker_url: str
+    celery_result_backend: str
     mongo_url: str
     port: int = 8050
     model_config = ConfigDict(
@@ -18,6 +20,7 @@ class Settings(BaseSettings):
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
+        dotenv_override=False,
     )
     cors_allowed_region: List[str] = [
         "http://localhost:3050",
@@ -43,6 +46,10 @@ class Settings(BaseSettings):
     ms_oauth_enabled: bool = False
     email_enabled: bool = False
     recaptcha_enabled: bool = False
+
+    paypal_mode: str = "sandbox"
+    paypal_client_id: Optional[str] = None
+    paypal_secret_key: Optional[str] = None
 
     @field_validator("database_url", "redis_url")
     def must_not_be_empty(cls, v, field):

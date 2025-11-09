@@ -8,9 +8,11 @@ from service.fileService import FileService
 from service.tokenService import TokenService
 from service.authService import AuthService
 from service.userService import UserService
+from service.paymentService import PaymentService
 from controller.authController import AuthController
 from controller.userController import UserController
 from controller.fileController import FileController
+from controller.paymentController import PaymentController
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
@@ -102,6 +104,7 @@ class Container:
         self,
         auth_service_lifetime: Lifetime = "transient",
         user_service_lifetime: Lifetime = "transient",
+        payment_service_lifetime: Lifetime = "transient",
     ) -> "Container":
         """Registers application-level services with configurable lifetimes."""
         self.register(
@@ -117,6 +120,11 @@ class Container:
             lambda c: UserService(c.resolve("FileService")),
             user_service_lifetime,
         )
+        self.register(
+            "PaymentService",
+            lambda c: PaymentService(),
+            payment_service_lifetime,
+        )
         return self
 
     def add_controllers(
@@ -124,6 +132,7 @@ class Container:
         auth_controller_lifetime: Lifetime = "scoped",
         user_controller_lifetime: Lifetime = "scoped",
         file_controller_lifetime: Lifetime = "scoped",
+        payment_controller_lifetime: Lifetime = "scoped",
     ) -> "Container":
         """Registers controllers with configurable lifetimes."""
         self.register(
@@ -140,6 +149,11 @@ class Container:
             "FileController",
             lambda c: FileController(c.resolve("FileService")),
             file_controller_lifetime,
+        )
+        self.register(
+            "PaymentController",
+            lambda c: PaymentController(c.resolve("PaymentService")),
+            payment_controller_lifetime,
         )
         return self
 
@@ -178,9 +192,11 @@ def bootstrap(
     token_lifetime: Lifetime = "transient",
     auth_service_lifetime: Lifetime = "transient",
     user_service_lifetime: Lifetime = "transient",
+    payment_service_lifetime: Lifetime = "transient",
     auth_controller_lifetime: Lifetime = "scoped",
     user_controller_lifetime: Lifetime = "scoped",
     file_controller_lifetime: Lifetime = "scoped",
+    payment_controller_lifetime: Lifetime = "scoped",
 ) -> Container:
     """Bootstraps the container with optional lifetime overrides."""
     logger.info("Bootstrapping IoC container with configurable lifetimes...")
@@ -196,11 +212,13 @@ def bootstrap(
         .add_app_services(
             auth_service_lifetime=auth_service_lifetime,
             user_service_lifetime=user_service_lifetime,
+            payment_service_lifetime=payment_service_lifetime,
         )
         .add_controllers(
             auth_controller_lifetime=auth_controller_lifetime,
             user_controller_lifetime=user_controller_lifetime,
             file_controller_lifetime=file_controller_lifetime,
+            payment_controller_lifetime=payment_controller_lifetime,
         )
         .build()
     )

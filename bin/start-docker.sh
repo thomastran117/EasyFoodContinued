@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 set -euo pipefail
 
 REBUILD=false
@@ -7,61 +6,56 @@ COMPOSE_FILE="docker-compose.yml"
 DB_SERVICE="db"
 BACKEND_SERVICE="backend"
 FRONTEND_SERVICE="frontend"
+CELERY_SERVICE="celery"
 PG_USER="postgres"
 PG_DB="postgres"
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --rebuild) REBUILD=true; shift ;;
-    --file) COMPOSE_FILE="$2"; shift 2 ;;
-    --db) DB_SERVICE="$2"; shift 2 ;;
-    --backend) BACKEND_SERVICE="$2"; shift 2 ;;
-    --frontend) FRONTEND_SERVICE="$2"; shift 2 ;;
-    --pg-user) PG_USER="$2"; shift 2 ;;
-    --pg-db) PG_DB="$2"; shift 2 ;;
-    *) echo "Unknown option: $1" >&2; exit 1 ;;
+for arg in "$@"; do
+  case $arg in
+    --rebuild|-r)
+      REBUILD=true
+      shift
+      ;;
+    --file=*)
+      COMPOSE_FILE="${arg#*=}"
+      shift
+      ;;
   esac
 done
 
-if docker compose version >/dev/null 2>&1; then
-  COMPOSE=("docker" "compose" "-f" "$COMPOSE_FILE")
-elif command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE=("docker-compose" "-f" "$COMPOSE_FILE")
-else
-  echo "Error: neither 'docker compose' nor 'docker-compose' found on PATH." >&2
-  exit 1
-fi
+function step() {
+  echo -e "\033[36m==> $1\033[0m"
+}
 
-step() { printf '\n==> %s\n' "$*"; }
-
-BUILD_CMD=("${COMPOSE[@]}" build)
-$REBUILD && BUILD_CMD+=("--no-cache")
+BUILD_CMD=(docker compose -f "$COMPOSE_FILE" build)
+if $REBUILD; then BUILD_CMD+=("--no-cache"); fi
 step "Building images..."
 "${BUILD_CMD[@]}"
 
 step "Starting database and redis..."
-"${COMPOSE[@]}" up -d "$DB_SERVICE" redis
+docker compose -f "$COMPOSE_FILE" up -d "$DB_SERVICE" redis
 
 step "Waiting for Postgres ($DB_SERVICE) to be ready..."
-max_attempts=60
-attempt=0
-until "${COMPOSE[@]}" exec -T "$DB_SERVICE" pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; do
-  attempt=$((attempt+1))
-  if (( attempt >= max_attempts )); then
-    echo "Postgres did not become ready in time." >&2
+MAX_ATTEMPTS=60
+ATTEMPT=0
+until docker compose -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; do
+  ATTEMPT=$((ATTEMPT+1))
+  if (( ATTEMPT >= MAX_ATTEMPTS )); then
+    echo "❌ Postgres did not become ready in time."
     exit 1
   fi
   sleep 2
 done
 
-step "Applying Alembic migrations (alembic upgrade head)..."
-"${COMPOSE[@]}" run --rm "$BACKEND_SERVICE" alembic upgrade head
+step "Applying Alembic migrations..."
+docker compose -f "$COMPOSE_FILE" run --rm "$BACKEND_SERVICE" alembic upgrade head
 
-step "Starting backend and frontend (attached)..."
-echo "Press Ctrl+C to stop containers."
-echo
-echo "   Frontend: http://localhost:3050"
-echo "   Backend:  http://localhost:8050/"
-echo
+step "Starting backend, frontend, and celery (attached)..."
+echo ""
+echo "   🌐 Frontend: http://localhost:3050"
+echo "   🐍 Backend:  http://localhost:8050"
+echo "   ⚙️  Celery logs: docker logs -f easyfood-celery"
+echo ""
+echo "Press Ctrl+C to stop all containers."
 
-exec "${COMPOSE[@]}" up "$BACKEND_SERVICE" "$FRONTEND_SERVICE"
+docker compose -f "$COMPOSE_FILE" up "$BACKEND_SERVICE" "$FRONTEND_SERVICE" "$CELERY_SERVICE"
