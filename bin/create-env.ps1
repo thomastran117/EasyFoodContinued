@@ -39,6 +39,8 @@ PORT=8050
 DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/postgres"
 REDIS_URL="redis://localhost:6379/0"
 MONGO_URL="mongodb://localhost:27017/app"
+CELERY_BROKER_URL="redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND="redis://127.0.0.1:6379/1"
 
 ##############################################
 # CORS Configuration
@@ -68,16 +70,20 @@ PASSWORD="your_email_password_here"
 # Google OAuth2
 ##############################################
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-GOOGLE_REDIRECT_URI="http://localhost:8040/api/auth/google/callback"
+GOOGLE_SECRET_KEY="your-google-client-secret"
 
 ##############################################
 # Microsoft OAuth2
 ##############################################
 MS_TENANT_ID="your-microsoft-tenant-id"
 MS_CLIENT_ID="your-microsoft-client-id"
-MS_CLIENT_SECRET="your-microsoft-client-secret"
-MS_REDIRECT_URI="http://localhost:8040/api/auth/microsoft/callback"
+
+##############################################
+# Paypal
+##############################################
+PAYPAL_MODE="sandbox"
+PAYPAL_CLIENT_ID="paypal_client_id"
+PAYPAL_SECRET_KEY="paypal_secret_key"
 "@
 
 $envContent | Set-Content -Path $envPath -Encoding UTF8 -NoNewline
