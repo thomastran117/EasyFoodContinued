@@ -68,7 +68,7 @@ jobs:
         run: ./app.sh env
 
       - name: 🐳 Build and start containers
-        run: ./app.sh docker ci
+        run: ./app.sh docker
 
       - name: Wait for backend & verify health
         run: |
