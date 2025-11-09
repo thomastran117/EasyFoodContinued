@@ -16,11 +16,11 @@ Base = declarative_base()
 try:
     if MODE == "CI" or MODE == "TESTING":
         logger.info("Skipping datqabase connection")
-        pass
-
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    logger.info("Database connected successfully")
+    else:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("Database connected successfully")
+        
 except Exception as e:
     logger.error(f"Database connection failed: {e}")
     raise

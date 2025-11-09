@@ -10,12 +10,12 @@ redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 try:
 
-    if MODE == "CI" or MODE == "TESTING":
-        logger.info("Skipping redis connection")
-        pass
+    if MODE in {"ci", "testing", "test"}:
+        logger.info(f"Skipping Redis connection (mode={MODE})")
+    else:
+        redis_client.ping()
+        logger.info("Redis connected successfully")
 
-    redis_client.ping()
-    logger.info("Redis connected successfully")
 except:
     logger.error("Redis connection failed")
     raise
