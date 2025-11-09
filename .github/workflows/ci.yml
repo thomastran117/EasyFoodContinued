@@ -69,7 +69,6 @@ jobs:
 
       - name: Build and start Docker services (detached)
         run: |
-          # Run containers in detached mode so CI can continue
           docker compose up -d --build
           echo "Containers are starting in detached mode."
 
@@ -77,9 +76,9 @@ jobs:
         run: |
           echo "==> Waiting for backend health endpoint..."
           for i in {1..15}; do
-            if curl -s -f http://localhost:8040/health > /dev/null 2>&1 || \
-               curl -s -f http://localhost:8040/ping > /dev/null 2>&1 || \
-               curl -s -f http://localhost:8040/api > /dev/null 2>&1; then
+            if curl -s -f http://localhost:8050/health > /dev/null 2>&1 || \
+               curl -s -f http://localhost:8050/ping > /dev/null 2>&1 || \
+               curl -s -f http://localhost:8050/api > /dev/null 2>&1; then
               echo "Backend is responding!"
               exit 0
             fi
