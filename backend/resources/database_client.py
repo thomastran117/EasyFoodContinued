@@ -14,13 +14,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 try:
-    if MODE == "CI" or MODE == "TESTING":
-        logger.info("Skipping datqabase connection")
+    if MODE == "ci" or MODE == "testing":
+        logger.info("Skipping database connection")
     else:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         logger.info("Database connected successfully")
-        
+
 except Exception as e:
     logger.error(f"Database connection failed: {e}")
     raise
