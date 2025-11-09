@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 
 from utilities.logger import logger
 
+
 class Settings(BaseSettings):
     mode: str = "development"
     database_url: str
@@ -17,7 +18,7 @@ class Settings(BaseSettings):
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
-    )    
+    )
     cors_allowed_region: List[str] = [
         "http://localhost:3050",
         "http://127.0.0.1:3050",
@@ -60,5 +61,6 @@ class Settings(BaseSettings):
         self.email_enabled = all([self.email, self.password])
 
         self.recaptcha_enabled = all([self.google_secret_key])
+
 
 settings = Settings()

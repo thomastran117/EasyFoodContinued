@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
+
 with patch("resources.redis_client.redis_client", autospec=True):
     from resources.container import Container, bootstrap
 
