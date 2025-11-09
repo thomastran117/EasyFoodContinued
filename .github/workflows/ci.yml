@@ -39,9 +39,6 @@ jobs:
 
       - name: Run unit tests with pytest
         working-directory: backend
-        env:
-          PYTHONPATH: .
-          NODE_ENV: test
         run: |
           source venv/bin/activate
           pytest -v --maxfail=1 --disable-warnings --cov=. --cov-report=term-missing

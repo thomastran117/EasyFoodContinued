@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings
 from utilities.logger import logger
 
 class Settings(BaseSettings):
+    mode: str = "development"
     database_url: str
     redis_url: str
     mongo_url: str

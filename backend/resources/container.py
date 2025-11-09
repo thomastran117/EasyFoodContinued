@@ -44,7 +44,6 @@ class Container:
         """Registers a dependency with a specified lifetime."""
         self._factories[name] = factory
         self._lifetimes[name] = lifetime
-        logger.debug(f"Registered {name} [{lifetime}]")
 
     def resolve(self, name: str, scope: Optional[dict] = None) -> Any:
         lifetime = self._lifetimes.get(name, "singleton")

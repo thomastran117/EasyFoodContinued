@@ -7,12 +7,17 @@ from config.envConfig import settings
 from utilities.logger import logger
 
 DATABASE_URL = settings.database_url
+MODE = settings.mode
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 try:
+    if MODE == "CI" or MODE == "TESTING":
+        logger.info("Skipping datqabase connection")
+        pass
+
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     logger.info("Database connected successfully")

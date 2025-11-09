@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-
 with patch("resources.redis_client.redis_client", autospec=True):
     from resources.container import Container, bootstrap
 
@@ -66,6 +65,7 @@ def test_resolve_registered_services(mocked_services):
     auth_service = c.resolve("AuthService")
     user_service = c.resolve("UserService")
 
+    # Scoped resolution
     with c.create_scope() as scope:
         auth_controller = c.resolve("AuthController", scope=scope)
         user_controller = c.resolve("UserController", scope=scope)
