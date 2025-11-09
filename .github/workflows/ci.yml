@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: 🧪 Python Unit Tests
+    name: Python Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
           chmod +x ./app.sh
           chmod -R +x ./bin
 
-      - name: ⚙️ Generate environment file
+      - name: Generate environment file
         run: ./app.sh env
 
       - name: Set up Python
@@ -46,7 +46,7 @@ jobs:
           pytest -v --maxfail=1 --disable-warnings --cov=. --cov-report=term-missing
 
   integration:
-    name: 🧩 Build & Integration Test
+    name: Build & Integration Test
     runs-on: ubuntu-latest
     needs: [test]
 
@@ -67,26 +67,32 @@ jobs:
       - name: Generate environment file
         run: ./app.sh env
 
-      - name: 🐳 Build and start containers
-        run: ./app.sh docker
+      - name: Build and start Docker services (detached)
+        run: |
+          # Run containers in detached mode so CI can continue
+          docker compose up -d --build
+          echo "Containers are starting in detached mode."
 
       - name: Wait for backend & verify health
         run: |
-          echo "Waiting for backend health endpoint..."
-          for i in {1..10}; do
+          echo "==> Waiting for backend health endpoint..."
+          for i in {1..15}; do
             if curl -s -f http://localhost:8040/health > /dev/null 2>&1 || \
                curl -s -f http://localhost:8040/ping > /dev/null 2>&1 || \
                curl -s -f http://localhost:8040/api > /dev/null 2>&1; then
-              echo "✅ Backend is responding!"
+              echo "Backend is responding!"
               exit 0
             fi
-            echo "⏳ Backend not ready yet... retrying ($i/10)"
+            echo "⏳ Backend not ready yet... retrying ($i/15)"
             sleep 5
           done
-          echo "❌ Backend did not respond!"
+
+          echo "Backend did not respond after waiting!"
           docker compose logs backend
           exit 1
 
-      - name: Stop containers
+      - name: 🧹 Stop and clean up containers
         if: always()
-        run: docker compose down
+        run: |
+          echo "🧹 Stopping all containers..."
+          docker compose down -v
