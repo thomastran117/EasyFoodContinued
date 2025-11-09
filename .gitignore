@@ -48,7 +48,6 @@ htmlcov/
 .ipynb_checkpoints
 
 # Alembic migration cache (optional)
-alembic.ini
 migrations/__pycache__/
 
 # Mac/Linux/Windows system files
