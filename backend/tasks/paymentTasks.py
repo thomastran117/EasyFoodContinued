@@ -50,8 +50,14 @@ def cancel_payment_task(self, paypal_order_id: str, order_id: int):
             order.updated_at = datetime.utcnow()
             order_id_val = order.id
 
-        logger.info(f"[Celery] Cancelled PayPal order {paypal_order_id} (Order {order_id_val})")
-        return {"status": "cancelled", "paypal_order_id": paypal_order_id, "result": result}
+        logger.info(
+            f"[Celery] Cancelled PayPal order {paypal_order_id} (Order {order_id_val})"
+        )
+        return {
+            "status": "cancelled",
+            "paypal_order_id": paypal_order_id,
+            "result": result,
+        }
 
     except Exception as e:
         return _retry_with_backoff(self, e)
@@ -66,7 +72,9 @@ def finalize_payment_task(self, paypal_order_id: str, order_id: int):
         capture = paypal_api.capture_order(paypal_order_id)
 
         if capture.get("status") == "COMPLETED":
-            logger.info(f"[Celery] PayPal order {paypal_order_id} captured successfully.")
+            logger.info(
+                f"[Celery] PayPal order {paypal_order_id} captured successfully."
+            )
             process_payment_task.apply_async(args=[order_id])
             return {"status": "captured"}
 

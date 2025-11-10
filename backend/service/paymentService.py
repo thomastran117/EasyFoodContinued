@@ -83,7 +83,7 @@ class PaymentService:
         self.db_factory = db_factory
         self.paypal = PayPalAPI()
         self.health = CeleryHealth()
-        
+
     def create_payment(self, order_id: int, total: float, currency="CAD"):
         try:
             if not self.health.check():
@@ -136,7 +136,7 @@ class PaymentService:
         try:
             if not self.health.check():
                 return
-            
+
             logger.info(f"[PayPal] Capturing order {paypal_order_id}")
             capture_data = self.paypal.capture_order(paypal_order_id)
 
@@ -171,7 +171,7 @@ class PaymentService:
         try:
             if not self.health.check():
                 return
-            
+
             logger.info(f"[PayPal] User requested cancel for {paypal_order_id}")
             token = self.paypal._get_access_token()
             result = self.paypal.cancel_order(paypal_order_id, token)
