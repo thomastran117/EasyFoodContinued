@@ -5,6 +5,7 @@ from config.celeryConfig import celery_app
 from resources.database_client import get_db
 from schema.template import Order, OrderStatus, Payment, PaymentMethod
 from utilities.logger import logger
+from utilities.celeryHealthCheck import CeleryHealth
 
 
 class PayPalAPI:
@@ -81,9 +82,12 @@ class PaymentService:
     def __init__(self, db_factory=get_db):
         self.db_factory = db_factory
         self.paypal = PayPalAPI()
-
+        self.health = CeleryHealth()
+        
     def create_payment(self, order_id: int, total: float, currency="CAD"):
         try:
+            if not self.health.check():
+                return
             order_data = self.paypal.create_order(total, currency)
             paypal_order_id = order_data["id"]
 
@@ -130,6 +134,9 @@ class PaymentService:
 
     def capture_payment(self, paypal_order_id: str):
         try:
+            if not self.health.check():
+                return
+            
             logger.info(f"[PayPal] Capturing order {paypal_order_id}")
             capture_data = self.paypal.capture_order(paypal_order_id)
 
@@ -162,6 +169,9 @@ class PaymentService:
 
     def cancel_user_payment(self, paypal_order_id: str):
         try:
+            if not self.health.check():
+                return
+            
             logger.info(f"[PayPal] User requested cancel for {paypal_order_id}")
             token = self.paypal._get_access_token()
             result = self.paypal.cancel_order(paypal_order_id, token)
@@ -193,6 +203,8 @@ class PaymentService:
             return {"status": "error", "message": str(e)}
 
     def view_queue(self):
+        if not self.health.check():
+            return
         insp = celery_app.control.inspect()
         try:
             snapshot = {
@@ -233,6 +245,8 @@ class PaymentService:
         Use with caution — this deletes all pending tasks immediately.
         """
         try:
+            if not self.health.check():
+                return
             purged = celery_app.control.purge()
             logger.warning(f"[Celery] Purged {purged} tasks from all queues.")
             return {"status": "success", "purged": purged}
