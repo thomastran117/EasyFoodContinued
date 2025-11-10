@@ -90,18 +90,13 @@ fi
 info "Upgrading pip in venv..."
 "$VENV_PY" -m pip install --upgrade pip
 
-REQ_TXT="$BACKEND/requirements_linux.txt"
-REQ_DEV="$BACKEND/requirements_linux-dev.txt"
+REQ_TXT="$BACKEND/requirements.txt"
 PYPROJ="$BACKEND/pyproject.toml"
 SETUP_PY="$BACKEND/setup.py"
 
 if [[ -f "$REQ_TXT" ]]; then
-  info "Installing dependencies from requirements_linux.txt ..."
+  info "Installing dependencies from requirements.txt ..."
   "$VENV_PY" -m pip install -r "$REQ_TXT"
-  if [[ -f "$REQ_DEV" ]]; then
-    info "Installing dev dependencies from requirements_linux-dev.txt ..."
-    "$VENV_PY" -m pip install -r "$REQ_DEV"
-  fi
 elif [[ -f "$PYPROJ" ]]; then
   info "pyproject.toml found; installing package in editable mode ..."
   "$VENV_PY" -m pip install -e "$BACKEND"
@@ -109,7 +104,7 @@ elif [[ -f "$SETUP_PY" ]]; then
   info "setup.py found; installing package ..."
   "$VENV_PY" -m pip install -e "$BACKEND"
 else
-  warn "No requirements_linux.txt / pyproject.toml / setup.py found in $BACKEND. Skipping dependency install."
+  warn "No requirements.txt / pyproject.toml / setup.py found in $BACKEND. Skipping dependency install."
 fi
 ok "Backend dependencies installed."
 

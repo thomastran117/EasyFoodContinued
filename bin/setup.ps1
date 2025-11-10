@@ -95,20 +95,14 @@ if (-not (Test-Path $venvPy)) { throw "Virtual environment python not found at $
 Info "Upgrading pip in venv..."
 & $venvPy -m pip install --upgrade pip | Out-Host
 
-$reqTxt  = Join-Path $backend "requirements_window.txt"
-$reqDev  = Join-Path $backend "requirements_window-dev.txt"
+$reqTxt  = Join-Path $backend "requirements.txt"
 $pyproj  = Join-Path $backend "pyproject.toml"
 $setupPy = Join-Path $backend "setup.py"
 
 if (Test-Path $reqTxt) {
-  Info "Installing dependencies from requirements_window.txt ..."
+  Info "Installing dependencies from requirements.txt ..."
   & $venvPy -m pip install -r $reqTxt | Out-Host
-  if ($LASTEXITCODE -ne 0) { throw "pip install -r requirements_window.txt failed." }
-  if (Test-Path $reqDev) {
-    Info "Installing dev dependencies from requirements-dev.txt ..."
-    & $venvPy -m pip install -r $reqDev | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw "pip install -r requirements_window-dev.txt failed." }
-  }
+  if ($LASTEXITCODE -ne 0) { throw "pip install -r requirements.txt failed." }
 } elseif (Test-Path $pyproj) {
   Info "pyproject.toml found; installing package in editable mode ..."
   & $venvPy -m pip install -e $backend | Out-Host
