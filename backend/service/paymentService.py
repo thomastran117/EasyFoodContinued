@@ -1,134 +1,241 @@
-# service/paymentService.py
-import paypalrestsdk
+import requests
 from datetime import datetime
-
-from tasks.paymentTasks import process_payment_task
+from config.envConfig import settings
 from config.celeryConfig import celery_app
-from utilities.logger import logger
 from resources.database_client import get_db
 from schema.template import Order, OrderStatus, Payment, PaymentMethod
-from config.paypalConfig import init_paypal
+from utilities.logger import logger
 
-init_paypal()
+
+class PayPalAPI:
+    def __init__(self):
+        self.base_url = "https://api-m.sandbox.paypal.com"
+        self.client_id = settings.paypal_client_id
+        self.client_secret = settings.paypal_secret_key
+
+    def _get_access_token(self):
+        r = requests.post(
+            f"{self.base_url}/v1/oauth2/token",
+            auth=(self.client_id, self.client_secret),
+            data={"grant_type": "client_credentials"},
+        )
+        r.raise_for_status()
+        return r.json()["access_token"]
+
+    def create_order(self, total: float, currency="CAD"):
+        token = self._get_access_token()
+        payload = {
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {"amount": {"currency_code": currency, "value": f"{total:.2f}"}}
+            ],
+            "application_context": {
+                "return_url": f"http://localhost:8050/api/payment/capture",
+                "cancel_url": f"http://localhost:8050/api/payment/cancel",
+            },
+        }
+        r = requests.post(
+            f"{self.base_url}/v2/checkout/orders",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+        r.raise_for_status()
+        return r.json()
+
+    def capture_order(self, order_id: str):
+        token = self._get_access_token()
+        r = requests.post(
+            f"{self.base_url}/v2/checkout/orders/{order_id}/capture",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+        )
+        r.raise_for_status()
+        return r.json()
+
+    def cancel_order(self, order_id: str, token: str):
+        url = f"{self.base_url}/v2/checkout/orders/{order_id}/void"
+        r = requests.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+        )
+        if r.status_code == 204:
+            logger.info(f"[PayPal] Order {order_id} voided successfully.")
+            return {"status": "cancelled"}
+        logger.warning(f"[PayPal] Cancel order failed: {r.text}")
+        return {"status": "error", "response": r.text}
 
 
 class PaymentService:
     """
-    Handles PayPal payment orchestration and Celery queuing.
+    Orchestrates PayPal creation, capture, and Celery scheduling.
     """
 
     def __init__(self, db_factory=get_db):
         self.db_factory = db_factory
+        self.paypal = PayPalAPI()
 
-    def enqueue_payment(
-        self,
-        order_id: int,
-        user_id: int,
-        total: float,
-        currency: str = "CAD",
-        delay_seconds: int = 5,
-    ):
+    def create_payment(self, order_id: int, total: float, currency="CAD"):
         try:
+            order_data = self.paypal.create_order(total, currency)
+            paypal_order_id = order_data["id"]
+
             with self.db_factory() as db:
                 order = db.query(Order).filter(Order.id == order_id).first()
                 if not order:
-                    return {"status": "error", "error": "Order not found"}
+                    return {"status": "error", "message": "Order not found"}
 
-                if order.status in [OrderStatus.QUEUE, OrderStatus.PAID]:
-                    return {
-                        "status": "ignored",
-                        "message": f"Order {order_id} already {order.status.value}",
-                        "task_id": order.task_id,
-                    }
-
-                job = process_payment_task.apply_async(
-                    args=[order_id, total, currency],
-                    countdown=delay_seconds,
+                payment_entry = Payment(
+                    method=PaymentMethod.PAYPAL,
+                    paypal_order_id=paypal_order_id,
+                    paypal_status="CREATED",
+                    order_id=order.id,
+                    created_at=datetime.utcnow(),
                 )
-
+                db.add(payment_entry)
                 order.status = OrderStatus.QUEUE
-                order.task_id = job.id
                 db.commit()
 
-                logger.info(
-                    f"[PaymentService] Queued Celery task {job.id} for order {order_id}"
-                )
-                return {
-                    "status": "queued",
-                    "task_id": job.id,
-                    "eta_seconds": delay_seconds,
-                }
+            approval_link = next(
+                (l["href"] for l in order_data["links"] if l["rel"] == "approve"), None
+            )
+
+            finalize_job = celery_app.send_task(
+                "finalize_payment_task",
+                args=[paypal_order_id, order_id],
+                countdown=300,
+            )
+
+            logger.info(
+                f"[PaymentService] Queued finalize task {finalize_job.id} for order {order_id}"
+            )
+
+            return {
+                "status": "created",
+                "paypal_order_id": paypal_order_id,
+                "approval_url": approval_link,
+                "finalize_task_id": finalize_job.id,
+            }
 
         except Exception as e:
-            logger.error(f"[PaymentService] Failed to enqueue payment: {e}")
-            return {"status": "error", "error": str(e)}
-
-    def execute_payment(self, paymentId: str, PayerID: str):
-        """
-        Completes PayPal payment execution once user approves it.
-        """
-        try:
-            logger.info(f"[PayPal] Executing payment for paymentId={paymentId}")
-
-            payment = paypalrestsdk.Payment.find(paymentId)
-            if not payment:
-                return {"status": "error", "message": "Payment not found in PayPal"}
-
-            if payment.execute({"payer_id": PayerID}):
-                with self.db_factory() as db:
-                    record = (
-                        db.query(Payment)
-                        .filter(Payment.paypal_order_id == paymentId)
-                        .first()
-                    )
-                    if not record:
-                        return {
-                            "status": "error",
-                            "message": "Payment record not found",
-                        }
-
-                    order = db.query(Order).filter(Order.id == record.order_id).first()
-                    if not order:
-                        return {"status": "error", "message": "Order not found"}
-
-                    order.status = OrderStatus.PAID
-                    record.paypal_status = payment.state
-                    record.paypal_capture_id = (
-                        payment.transactions[0].related_resources[0].sale.id
-                        if payment.transactions
-                        else None
-                    )
-                    db.commit()
-
-                    logger.info(f"[PayPal] Order {order.id} marked as PAID (executed).")
-
-                return {
-                    "status": "success",
-                    "order_id": order.id,
-                    "paypal_status": payment.state,
-                }
-
-            else:
-                logger.error(f"[PayPal] Execute failed: {payment.error}")
-                return {"status": "error", "message": str(payment.error)}
-
-        except Exception as e:
-            logger.error(f"[PayPal] Exception during execute_payment: {e}")
+            logger.error(f"[PayPal] Create payment failed: {e}")
             return {"status": "error", "message": str(e)}
 
-    def cancel_queued_payment(self, task_id: str):
+    def capture_payment(self, paypal_order_id: str):
         try:
-            celery_app.control.revoke(task_id, terminate=False)
-            logger.info(f"[PaymentService] Revoked Celery task {task_id}")
-            return {"status": "cancelled", "task_id": task_id}
-        except Exception as e:
-            logger.error(f"[PaymentService] Failed to revoke task {task_id}: {e}")
-            return {"status": "error", "error": str(e)}
+            logger.info(f"[PayPal] Capturing order {paypal_order_id}")
+            capture_data = self.paypal.capture_order(paypal_order_id)
 
-    def get_payment_status(self, task_id: str):
-        async_result = celery_app.AsyncResult(task_id)
-        return {
-            "task_id": task_id,
-            "status": async_result.status,
-            "result": async_result.result,
-        }
+            with self.db_factory() as db:
+                payment = (
+                    db.query(Payment)
+                    .filter(Payment.paypal_order_id == paypal_order_id)
+                    .first()
+                )
+                if not payment:
+                    return {"status": "error", "message": "Payment record not found"}
+
+                order = db.query(Order).filter(Order.id == payment.order_id).first()
+                if not order:
+                    return {"status": "error", "message": "Order not found"}
+
+                order.status = OrderStatus.PAID
+                payment.paypal_status = "COMPLETED"
+                db.commit()
+
+            # revoke any scheduled finalizer (optional)
+            # celery_app.control.revoke(order.finalize_task_id, terminate=False)
+
+            celery_app.send_task("process_payment_task", args=[order.id], countdown=5)
+            return {"status": "success", "paypal_status": "COMPLETED"}
+
+        except Exception as e:
+            logger.error(f"[PayPal] Capture failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def cancel_user_payment(self, paypal_order_id: str):
+        try:
+            logger.info(f"[PayPal] User requested cancel for {paypal_order_id}")
+            token = self.paypal._get_access_token()
+            result = self.paypal.cancel_order(paypal_order_id, token)
+
+            with self.db_factory() as db:
+                payment = (
+                    db.query(Payment)
+                    .filter(Payment.paypal_order_id == paypal_order_id)
+                    .first()
+                )
+                if not payment:
+                    return {"status": "error", "message": "Payment record not found"}
+
+                order = db.query(Order).filter(Order.id == payment.order_id).first()
+                if not order:
+                    return {"status": "error", "message": "Order not found"}
+
+                order.status = OrderStatus.CANCELLED
+                db.commit()
+
+            return {
+                "status": "cancelled",
+                "paypal_order_id": paypal_order_id,
+                "result": result,
+            }
+
+        except Exception as e:
+            logger.error(f"[PayPal] User cancel failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def view_queue(self):
+        insp = celery_app.control.inspect()
+        try:
+            snapshot = {
+                "active": insp.active() or {},
+                "reserved": insp.reserved() or {},
+                "scheduled": insp.scheduled() or {},
+                "revoked": insp.revoked() or {},
+            }
+
+            def _clean(entries):
+                if not entries:
+                    return []
+                cleaned = []
+                for e in entries:
+                    cleaned.append(
+                        {
+                            "id": e.get("id"),
+                            "name": e.get("name"),
+                            "args": e.get("args"),
+                            "eta": e.get("eta"),
+                            "state": e.get("state", "queued"),
+                        }
+                    )
+                return cleaned
+
+            queues = {}
+            for key, val in snapshot.items():
+                queues[key] = _clean(next(iter(val.values()), []))
+
+            return {"status": "success", "queues": queues}
+        except Exception as e:
+            logger.error(f"[Celery] Failed to inspect queue: {e}")
+            return {"status": "error", "message": str(e)}
+
+    def clear_queue(self):
+        """
+        Purges all messages from every Celery queue.
+        Use with caution — this deletes all pending tasks immediately.
+        """
+        try:
+            purged = celery_app.control.purge()
+            logger.warning(f"[Celery] Purged {purged} tasks from all queues.")
+            return {"status": "success", "purged": purged}
+        except Exception as e:
+            logger.error(f"[Celery] Failed to purge Celery queues: {e}")
+            return {"status": "error", "message": str(e)}

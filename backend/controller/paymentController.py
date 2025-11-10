@@ -1,40 +1,39 @@
 from fastapi import HTTPException
 from utilities.logger import logger
 from service.paymentService import PaymentService
+from dtos.paymentDtos import PaymentCreateDto, PaymentCaptureDto, PaymentCancelDto
 
 
 class PaymentController:
     """
-    Controller responsible for handling PayPal success/cancel routes.
-    Delegates business logic to PaymentService.
+    Handles all payment-related endpoints (create, capture, cancel).
     """
 
-    def __init__(self):
-        self.payment_service = PaymentService()
+    def __init__(self, payment_service: PaymentService):
+        self.payment_service = payment_service
 
-    def payment_success(self, paymentId: str, PayerID: str):
-        """
-        Called by PayPal after user approves payment.
-        Completes the transaction and updates DB.
-        """
-        try:
-            logger.info(
-                f"[PayPalController] Processing success for paymentId={paymentId}"
-            )
-            result = self.payment_service.execute_payment(paymentId, PayerID)
+    def create_payment(self, data: PaymentCreateDto):
+        result = self.payment_service.create_payment(
+            data.order_id, data.total, data.currency
+        )
+        if result["status"] != "created":
+            raise HTTPException(status_code=400, detail=result)
+        return result
 
-            if result.get("status") != "success":
-                raise HTTPException(status_code=400, detail=result)
+    def capture_payment(self, token):
+        result = self.payment_service.capture_payment(token)
+        if result["status"] != "success":
+            raise HTTPException(status_code=400, detail=result)
+        return result
 
-            return result
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"[PayPalController] Exception: {e}")
-            raise HTTPException(status_code=500, detail=str(e))
+    def cancel_payment(self, data: PaymentCancelDto):
+        result = self.payment_service.cancel_user_payment(data.paypal_order_id)
+        if result["status"] != "cancelled":
+            raise HTTPException(status_code=400, detail=result)
+        return result
 
-    def payment_cancel(self):
-        """
-        Called when user cancels the PayPal payment.
-        """
-        return {"status": "cancelled", "message": "Payment was cancelled by the user"}
+    def view_queue(self):
+        return self.payment_service.view_queue()
+
+    def clear_queue(self):
+        return self.payment_service.clear_queue()
