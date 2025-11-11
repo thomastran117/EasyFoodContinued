@@ -9,7 +9,8 @@ from resources.database_client import get_db
 from schema.template import User
 from service.tokenService import TokenService
 from service.emailService import EmailService
-from service.webService import google_verify_captcha
+from service.oauthService import OAuthService
+from service.webService import WebService
 from utilities.errorRaiser import (
     BadRequestException,
     ConflictException,
@@ -25,6 +26,8 @@ class AuthService:
         self,
         token_service: TokenService,
         email_service: EmailService,
+        oauth_service: OAuthService,
+        web_service: WebService,
         db_factory=get_db,
     ):
         """
@@ -32,13 +35,15 @@ class AuthService:
         """
         self.token_service = token_service
         self.email_service = email_service
+        self.oauth_service = oauth_service
+        self.web_service = web_service
         self.db_factory = db_factory
 
     async def login_user(
         self, email: str, password: str, captcha: str, remember: bool = False
     ):
         if settings.recaptcha_enabled:
-            is_valid_captcha = await google_verify_captcha(captcha)
+            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
             if not is_valid_captcha:
                 raise UnauthorizedException("Captcha verification failed.")
         else:
@@ -59,7 +64,7 @@ class AuthService:
 
     async def signup_user(self, email: str, password: str, role: str, captcha: str):
         if settings.recaptcha_enabled:
-            is_valid_captcha = await google_verify_captcha(captcha)
+            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
             if not is_valid_captcha:
                 raise UnauthorizedException("Captcha verification failed.")
         else:
@@ -106,33 +111,10 @@ class AuthService:
             db.refresh(new_user)
             return new_user
 
-    async def microsoft_login(self, id_token: str, remember: bool = False):
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-            )
-            resp.raise_for_status()
-            jwks = resp.json()
-
-        header = jose_jwt.get_unverified_header(id_token)
-        kid = header.get("kid")
-
-        key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
-        if not key:
-            raise BadRequestException("Unable to find matching JWKS key")
-
-        decoded_ms = jose_jwt.decode(
-            id_token,
-            key,
-            algorithms=["RS256"],
-            audience=settings.ms_client_id,
-            options={"verify_iss": False},
+    async def microsoft_login(self, token: str, remember: bool = False):
+        email, user_id, name, picture = await self.oauth_service.verifyMicrosoftToken(
+            token
         )
-
-        email = decoded_ms.get("preferred_username") or decoded_ms.get("email")
-        user_id = decoded_ms.get("sub")
-        name = decoded_ms.get("name")
-        picture = decoded_ms.get("picture")
 
         if not email:
             raise UnauthorizedException("No email claim in Microsoft token")
@@ -163,17 +145,9 @@ class AuthService:
         return access, refresh, user
 
     async def google_login(self, token: str, remember: bool = False):
-        idinfo = id_token.verify_oauth2_token(
-            token, requests.Request(), settings.google_client_id
+        email, name, picture, user_id = await self.oauth_service.verifyGoogleToken(
+            token
         )
-
-        if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
-            raise UnauthorizedException("Invalid issuer.")
-
-        email = idinfo.get("email")
-        name = idinfo.get("name")
-        picture = idinfo.get("picture")
-        user_id = idinfo.get("sub")
 
         with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
@@ -244,14 +218,12 @@ class AuthService:
         self.token_service.invalidate_refresh_token(token)
         return {"message": "Logged out successfully"}
 
-    @staticmethod
-    def hash_password(plain_password: str) -> str:
+    def hash_password(self, plain_password: str) -> str:
         return bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt()).decode(
             "utf-8"
         )
 
-    @staticmethod
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(
             plain_password.encode("utf-8"), hashed_password.encode("utf-8")
         )

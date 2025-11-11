@@ -6,72 +6,7 @@ from resources.database_client import get_db
 from schema.template import Order, OrderStatus, Payment, PaymentMethod
 from utilities.logger import logger
 from utilities.celeryHealthCheck import CeleryHealth
-
-
-class PayPalAPI:
-    def __init__(self):
-        self.base_url = "https://api-m.sandbox.paypal.com"
-        self.client_id = settings.paypal_client_id
-        self.client_secret = settings.paypal_secret_key
-
-    def _get_access_token(self):
-        r = requests.post(
-            f"{self.base_url}/v1/oauth2/token",
-            auth=(self.client_id, self.client_secret),
-            data={"grant_type": "client_credentials"},
-        )
-        r.raise_for_status()
-        return r.json()["access_token"]
-
-    def create_order(self, total: float, currency="CAD"):
-        token = self._get_access_token()
-        payload = {
-            "intent": "CAPTURE",
-            "purchase_units": [
-                {"amount": {"currency_code": currency, "value": f"{total:.2f}"}}
-            ],
-            "application_context": {
-                "return_url": f"http://localhost:8050/api/payment/capture",
-                "cancel_url": f"http://localhost:8050/api/payment/cancel",
-            },
-        }
-        r = requests.post(
-            f"{self.base_url}/v2/checkout/orders",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
-        r.raise_for_status()
-        return r.json()
-
-    def capture_order(self, order_id: str):
-        token = self._get_access_token()
-        r = requests.post(
-            f"{self.base_url}/v2/checkout/orders/{order_id}/capture",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-        )
-        r.raise_for_status()
-        return r.json()
-
-    def cancel_order(self, order_id: str, token: str):
-        url = f"{self.base_url}/v2/checkout/orders/{order_id}/void"
-        r = requests.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-        )
-        if r.status_code == 204:
-            logger.info(f"[PayPal] Order {order_id} voided successfully.")
-            return {"status": "cancelled"}
-        logger.warning(f"[PayPal] Cancel order failed: {r.text}")
-        return {"status": "error", "response": r.text}
+from service.webService import WebService
 
 
 class PaymentService:
@@ -79,16 +14,16 @@ class PaymentService:
     Orchestrates PayPal creation, capture, and Celery scheduling.
     """
 
-    def __init__(self, db_factory=get_db):
+    def __init__(self, web_service: WebService, db_factory=get_db):
         self.db_factory = db_factory
-        self.paypal = PayPalAPI()
+        self.web_service = web_service
         self.health = CeleryHealth()
 
     def create_payment(self, order_id: int, total: float, currency="CAD"):
         try:
             if not self.health.check():
                 return
-            order_data = self.paypal.create_order(total, currency)
+            order_data = self.web_service.createPayPalOrder(total, currency)
             paypal_order_id = order_data["id"]
 
             with self.db_factory() as db:
@@ -138,7 +73,7 @@ class PaymentService:
                 return
 
             logger.info(f"[PayPal] Capturing order {paypal_order_id}")
-            capture_data = self.paypal.capture_order(paypal_order_id)
+            capture_data = self.web_service.capturePaypalOrder(paypal_order_id)
 
             with self.db_factory() as db:
                 payment = (
@@ -173,8 +108,8 @@ class PaymentService:
                 return
 
             logger.info(f"[PayPal] User requested cancel for {paypal_order_id}")
-            token = self.paypal._get_access_token()
-            result = self.paypal.cancel_order(paypal_order_id, token)
+            token = self.web_service.getPaypalToken()
+            result = self.web_service.cancelPayPalOrder(paypal_order_id, token)
 
             with self.db_factory() as db:
                 payment = (

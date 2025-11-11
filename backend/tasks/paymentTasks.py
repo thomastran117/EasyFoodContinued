@@ -1,10 +1,11 @@
 from datetime import datetime
+import math
 from config.celeryConfig import celery_app
 from resources.database_client import get_db
 from utilities.logger import logger
 from schema.template import Order, OrderStatus
-from service.paymentService import PayPalAPI
-import math
+from container.containerEntry import container
+from service.webService import WebService
 
 
 MAX_RETRIES = 5
@@ -30,11 +31,12 @@ def _retry_with_backoff(task, exc, countdown_base=10):
 @celery_app.task(bind=True, name="cancel_payment_task", max_retries=MAX_RETRIES)
 def cancel_payment_task(self, paypal_order_id: str, order_id: int):
     logger.info(f"[Celery] Attempting to cancel PayPal order {paypal_order_id}")
-    paypal_api = PayPalAPI()
+
+    web_service: WebService = container.resolve("WebService")
 
     try:
-        token = paypal_api._get_access_token()
-        result = paypal_api.cancel_order(paypal_order_id, token)
+        token = web_service._get_paypal_access_token()
+        result = web_service.paypal_cancel_order(paypal_order_id, token)
 
         with get_db() as db:
             order = db.query(Order).filter(Order.id == order_id).first()
@@ -66,10 +68,11 @@ def cancel_payment_task(self, paypal_order_id: str, order_id: int):
 @celery_app.task(bind=True, name="finalize_payment_task", max_retries=MAX_RETRIES)
 def finalize_payment_task(self, paypal_order_id: str, order_id: int):
     logger.info(f"[Celery] Finalizing PayPal order {paypal_order_id}")
-    paypal_api = PayPalAPI()
+
+    web_service: WebService = container.resolve("WebService")
 
     try:
-        capture = paypal_api.capture_order(paypal_order_id)
+        capture = web_service.paypal_capture_order(paypal_order_id)
 
         if capture.get("status") == "COMPLETED":
             logger.info(
@@ -89,6 +92,7 @@ def finalize_payment_task(self, paypal_order_id: str, order_id: int):
 
 @celery_app.task(bind=True, name="process_payment_task", max_retries=MAX_RETRIES)
 def process_payment_task(self, order_id: int):
+    """Mark order as paid in the database."""
     try:
         with get_db() as db:
             order = db.query(Order).filter(Order.id == order_id).first()
