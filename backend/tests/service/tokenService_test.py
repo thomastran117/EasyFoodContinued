@@ -40,7 +40,7 @@ def mock_cache():
 @pytest.fixture
 def token_service(mock_cache):
     """Provide TokenService with mocked env settings."""
-    with patch("config.envConfig.settings", autospec=True) as mock_settings:
+    with patch("config.environmentConfig.settings", autospec=True) as mock_settings:
         mock_settings.algorithm = "HS256"
         mock_settings.jwt_secret_access = "access_secret"
         mock_settings.jwt_secret_refresh = "refresh_secret"

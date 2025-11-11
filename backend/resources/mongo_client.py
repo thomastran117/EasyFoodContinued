@@ -5,7 +5,7 @@ import motor.motor_asyncio
 from beanie import Document, Indexed, init_beanie
 from pydantic import EmailStr
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 from utilities.logger import get_logger
 
 logger = get_logger(__name__)

@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from utilities.errorRaiser import UnauthorizedException, ForbiddenException
 from service.cacheService import CacheService
-from config.envConfig import settings
+from config.environmentConfig import settings
 
 
 class BasicTokenService:

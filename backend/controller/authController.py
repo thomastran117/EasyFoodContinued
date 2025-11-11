@@ -1,7 +1,7 @@
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 from dtos.authDtos import (
     ChangePasswordDto,
     ForgotPasswordDto,

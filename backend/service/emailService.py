@@ -1,7 +1,7 @@
 from fastapi_mail import FastMail, MessageSchema, MessageType
 
 from config.emailConfig import conf
-from config.envConfig import settings
+from config.environmentConfig import settings
 from utilities.logger import logger
 from fastapi_mail.errors import ConnectionErrors
 

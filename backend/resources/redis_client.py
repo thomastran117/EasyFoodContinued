@@ -1,6 +1,6 @@
 import redis
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 from utilities.logger import logger
 
 REDIS_URL = settings.redis_url

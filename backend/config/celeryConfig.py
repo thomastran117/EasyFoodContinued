@@ -1,7 +1,7 @@
 import os
 import sys
 from celery import Celery
-from config.envConfig import settings
+from config.environmentConfig import settings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 backend_root = os.path.abspath(os.path.join(current_dir, ".."))

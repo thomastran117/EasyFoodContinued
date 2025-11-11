@@ -1,6 +1,6 @@
 import requests
 from datetime import datetime
-from config.envConfig import settings
+from config.environmentConfig import settings
 from config.celeryConfig import celery_app
 from resources.database_client import get_db
 from schema.template import Order, OrderStatus, Payment, PaymentMethod

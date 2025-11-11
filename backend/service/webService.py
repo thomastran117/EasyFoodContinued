@@ -1,6 +1,6 @@
 import httpx
 import requests
-from config.envConfig import settings
+from config.environmentConfig import settings
 from utilities.logger import logger
 
 

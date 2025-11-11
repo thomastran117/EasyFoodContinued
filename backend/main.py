@@ -7,7 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 from middleware.errorHandlerMiddleware import setup_exception_handlers
 from middleware.httpLogger import HTTPLoggerMiddleware
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware

@@ -4,7 +4,7 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from jose import jwt as jose_jwt
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 from resources.database_client import get_db
 from schema.template import User
 from service.tokenService import TokenService

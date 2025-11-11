@@ -1,7 +1,7 @@
 from fastapi_mail import ConnectionConfig
 from pydantic import BaseModel
 
-from config.envConfig import settings
+from config.environmentConfig import settings
 
 EMAIL = settings.email
 PASSWORD = settings.password
