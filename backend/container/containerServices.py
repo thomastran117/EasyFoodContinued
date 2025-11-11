@@ -7,7 +7,10 @@ from service.tokenService import TokenService
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
-def register_services(container, *,
+
+def register_services(
+    container,
+    *,
     auth_service_lifetime: Lifetime = "transient",
     user_service_lifetime: Lifetime = "transient",
     payment_service_lifetime: Lifetime = "transient",

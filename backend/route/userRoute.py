@@ -14,7 +14,9 @@ def get_user_controller() -> UserController:
 
 
 @userRouter.get("/{id}")
-async def get_user(id: int, user_controller: UserController = Depends(get_user_controller)):
+async def get_user(
+    id: int, user_controller: UserController = Depends(get_user_controller)
+):
     return await user_controller.get_user(id)
 
 

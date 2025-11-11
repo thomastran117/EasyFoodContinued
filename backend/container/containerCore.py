@@ -6,7 +6,10 @@ from service.basicTokenService import BasicTokenService
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
-def register_singletons(container, *, 
+
+def register_singletons(
+    container,
+    *,
     cache_lifetime: Lifetime = "singleton",
     email_lifetime: Lifetime = "singleton",
     file_lifetime: Lifetime = "singleton",

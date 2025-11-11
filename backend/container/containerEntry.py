@@ -8,8 +8,10 @@ from .containerControllers import register_controllers
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
+
 class Container:
     """Advanced IoC container with configurable lifetimes and factory-based dependency resolution."""
+
     _instance: Optional["Container"] = None
 
     def __new__(cls) -> "Container":
@@ -26,7 +28,12 @@ class Container:
         self._instances: Dict[str, Any] = {}
         self._initialized = True
 
-    def register(self, name: str, factory: Callable[["Container"], Any], lifetime: Lifetime = "singleton") -> None:
+    def register(
+        self,
+        name: str,
+        factory: Callable[["Container"], Any],
+        lifetime: Lifetime = "singleton",
+    ) -> None:
         self._factories[name] = factory
         self._lifetimes[name] = lifetime
 
@@ -40,7 +47,9 @@ class Container:
             return self._factories[name](self)
         elif lifetime == "scoped":
             if scope is None:
-                raise RuntimeError(f"Scope required to resolve scoped dependency '{name}'")
+                raise RuntimeError(
+                    f"Scope required to resolve scoped dependency '{name}'"
+                )
             if name not in scope:
                 scope[name] = self._factories[name](self)
             return scope[name]

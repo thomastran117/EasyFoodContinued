@@ -7,7 +7,10 @@ from controller.orderController import OrderController
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 
-def register_controllers(container, *,
+
+def register_controllers(
+    container,
+    *,
     auth_controller_lifetime: Lifetime = "scoped",
     user_controller_lifetime: Lifetime = "scoped",
     file_controller_lifetime: Lifetime = "scoped",

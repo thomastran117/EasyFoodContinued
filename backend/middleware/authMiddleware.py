@@ -9,7 +9,8 @@ require_auth_token = OAuth2PasswordBearer(tokenUrl="/auth/login")
 def get_token_service():
     """Lazy-load BasicTokenService from IoC container to avoid circular imports."""
     # ⬇️ Import here, not at module top
-    from container.containerEntry import container  
+    from container.containerEntry import container
+
     return container.resolve("TokenService")
 
 
