@@ -74,6 +74,7 @@ class Container:
                 logger.warning(f"CacheService health check failed: {e}")
             self.resolve("EmailService")
             self.resolve("FileService")
+            self.resolve("BasicTokenService")
             logger.info("Core services initialized successfully.")
         except Exception as e:
             logger.error(f"Bootstrap failed: {e}", exc_info=True)
@@ -89,7 +90,7 @@ def bootstrap() -> Container:
     register_services(container)
     register_controllers(container)
     container.build()
-
+    container.summary()
     logger.info("IoC container Bootstrap completed")
     return container
 

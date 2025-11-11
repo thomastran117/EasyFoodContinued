@@ -1,22 +1,16 @@
-from fastapi import Depends, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import File, UploadFile, HTTPException
 from PIL import Image
 import filetype
 import io
-import secrets
 from dtos.userDtos import UpdateUserDto
 from service.userService import UserService
 from utilities.errorRaiser import raise_error
-from common.authGuard import require_auth_token, get_current_user
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
 class UserController:
     def __init__(self, user_service: UserService):
-        """
-        auth_service: instance of AuthService (which uses TokenService internally)
-        """
         self.user_service = user_service
 
     async def get_user(self, id: int):
@@ -34,11 +28,8 @@ class UserController:
         except Exception as e:
             raise_error(e)
 
-    async def update_user(
-        self, update: UpdateUserDto, token: str = Depends(require_auth_token)
-    ):
+    async def update_user(self, user_payload: dict, update: UpdateUserDto):
         try:
-            user_payload = get_current_user(token)
             updated_user = self.user_service.update_user(
                 user_payload["id"],
                 username=update.username,
@@ -51,22 +42,15 @@ class UserController:
         except Exception as e:
             raise_error(e)
 
-    async def delete_user(self, token: str = Depends(require_auth_token)):
+    async def delete_user(self, user_payload: dict):
         try:
-            user_payload = get_current_user(token)
             self.user_service.delete_user(user_payload["id"])
             return {"message": "User deleted successfully"}
         except Exception as e:
             raise_error(e)
 
-    async def update_avatar(
-        self,
-        file: UploadFile = File(...),
-        token: str = Depends(get_current_user),
-    ):
+    async def update_avatar(self, user_payload: dict, file: UploadFile):
         try:
-            user = token
-
             data = await file.read()
             if len(data) > MAX_FILE_SIZE:
                 raise HTTPException(
@@ -84,7 +68,9 @@ class UserController:
 
             file.file.seek(0)
 
-            avatar_path = await self.user_service.update_avatar(user["id"], file)
+            avatar_path = await self.user_service.update_avatar(
+                user_payload["id"], file
+            )
             return {"message": "Avatar updated successfully", "avatar": avatar_path}
         except Exception as e:
             raise_error(e)
