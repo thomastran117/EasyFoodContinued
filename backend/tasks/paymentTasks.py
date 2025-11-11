@@ -35,8 +35,8 @@ def cancel_payment_task(self, paypal_order_id: str, order_id: int):
     web_service: WebService = container.resolve("WebService")
 
     try:
-        token = web_service._get_paypal_access_token()
-        result = web_service.paypal_cancel_order(paypal_order_id, token)
+        token = web_service.getPaypalToken()
+        result = web_service.cancelPayPalOrder(paypal_order_id, token)
 
         with get_db() as db:
             order = db.query(Order).filter(Order.id == order_id).first()
@@ -72,7 +72,7 @@ def finalize_payment_task(self, paypal_order_id: str, order_id: int):
     web_service: WebService = container.resolve("WebService")
 
     try:
-        capture = web_service.paypal_capture_order(paypal_order_id)
+        capture = web_service.capturePaypalOrder(paypal_order_id)
 
         if capture.get("status") == "COMPLETED":
             logger.info(
