@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from controller.fileController import FileController
-from resources.container import container
+from container.containerEntry import container
 
 fileRouter = APIRouter(tags=["File"])
 

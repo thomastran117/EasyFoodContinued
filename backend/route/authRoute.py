@@ -8,7 +8,7 @@ from dtos.authDtos import (
     GoogleAuthRequest,
     MicrosoftAuthRequest,
 )
-from resources.container import container
+from container.containerEntry import container
 
 
 def get_auth_controller(request: Request) -> AuthController:

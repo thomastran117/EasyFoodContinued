@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from controller.orderController import OrderController
 from dtos.orderDtos import CreateOrderDto, CancelOrderDto
-from resources.container import container
+from container.containerEntry import container
 
 
 def get_order_controller(request: Request) -> OrderController:

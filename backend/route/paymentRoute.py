@@ -5,7 +5,7 @@ from dtos.paymentDtos import (
     PaymentCaptureDto,
     PaymentCancelDto,
 )
-from resources.container import container
+from container.containerEntry import container
 
 
 def get_payment_controller(request: Request) -> PaymentController:

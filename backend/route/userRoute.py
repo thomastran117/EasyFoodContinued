@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from controller.userController import UserController
-from resources.container import container
+from container.containerEntry import container
 
 userRouter = APIRouter(tags=["User"])
 
