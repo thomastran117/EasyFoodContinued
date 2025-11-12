@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from controller.fileController import FileController
-from container.containerEntry import container
 
 fileRouter = APIRouter(tags=["File"])
 
 
-def get_file_controller() -> FileController:
-    """Resolves an FileController with lifetimes managed by the container."""
-    with container.create_scope() as scope:
-        return container.resolve("FileController", scope)
+async def get_file_controller(request: Request) -> FileController:
+    """
+    Resolve a scoped FileController from the IoC container stored
+    in app.state, ensuring per-request lifecycle and dependency resolution.
+    """
+    container = request.app.state.container
+
+    async with container.create_scope() as scope:
+        controller = await container.resolve("FileController", scope)
+        controller.request = request
+        return controller
 
 
 @fileRouter.get("/{category}/{filename}")

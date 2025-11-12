@@ -1,16 +1,22 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Request
 from controller.userController import UserController
-from container.containerEntry import container
 from dtos.userDtos import UpdateUserDto
 from middleware.authMiddleware import get_current_user
 
 userRouter = APIRouter(tags=["User"])
 
 
-def get_user_controller() -> UserController:
-    """Resolves a UserController with lifetimes managed by the container."""
-    with container.create_scope() as scope:
-        return container.resolve("UserController", scope)
+async def get_user_controller(request: Request) -> UserController:
+    """
+    Resolve a scoped UserController from the IoC container stored
+    in app.state, ensuring per-request lifecycle and dependency resolution.
+    """
+    container = request.app.state.container
+
+    async with container.create_scope() as scope:
+        controller = await container.resolve("UserController", scope)
+        controller.request = request
+        return controller
 
 
 @userRouter.get("/{id}")

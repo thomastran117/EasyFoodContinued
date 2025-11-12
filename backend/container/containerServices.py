@@ -26,57 +26,45 @@ def register_services(
     restaurant_service_lifetime: Lifetime = "transient",
 ):
     """Registers all app-level services."""
-    container.register(
-        "OAuthService",
-        lambda c: OAuthService(),
-        oauth_service_lifetime,
-    )
-    container.register(
-        "WebService",
-        lambda c: WebService(),
-        web_service_lifetime,
-    )
-    container.register(
-        "TokenService",
-        lambda c: TokenService(cache_service=c.resolve("CacheService")),
-        token_service_lifetime,
-    )
-    container.register(
-        "PaymentService",
-        lambda c: PaymentService(web_service=c.resolve("WebService")),
-        payment_service_lifetime,
-    )
-    container.register(
-        "UserService",
-        lambda c: UserService(file_service=c.resolve("FileService")),
-        user_service_lifetime,
-    )
-    container.register(
-        "OrderService",
-        lambda c: OrderService(payment_service=c.resolve("PaymentService")),
-        order_service_lifetime,
-    )
-    container.register(
-        "CategoryService",
-        lambda c: CategoryService(cache_service=c.resolve("CacheService")),
-        category_service_lifetime,
-    )
-    container.register(
-        "RestaurantService",
-        lambda c: RestaurantService(
-            cache_service=c.resolve("CacheService"),
-            file_service=c.resolve("FileService"),
-        ),
-        restaurant_service_lifetime,
-    )
-    container.register(
-        "AuthService",
-        lambda c: AuthService(
-            token_service=c.resolve("TokenService"),
-            email_service=c.resolve("EmailService"),
-            oauth_service=c.resolve("OAuthService"),
-            web_service=c.resolve("WebService"),
-        ),
-        auth_service_lifetime,
-    )
+
+    container.register("OAuthService", lambda c: OAuthService(), oauth_service_lifetime)
+    container.register("WebService", lambda c: WebService(), web_service_lifetime)
+
+    async def token_factory(c):
+        return TokenService(cache_service=await c.resolve("CacheService"))
+
+    async def payment_factory(c):
+        return PaymentService(web_service=await c.resolve("WebService"))
+
+    async def user_factory(c):
+        return UserService(file_service=await c.resolve("FileService"))
+
+    async def order_factory(c):
+        return OrderService(payment_service=await c.resolve("PaymentService"))
+
+    async def category_factory(c):
+        return CategoryService(cache_service=await c.resolve("CacheService"))
+
+    async def restaurant_factory(c):
+        return RestaurantService(
+            cache_service=await c.resolve("CacheService"),
+            file_service=await c.resolve("FileService"),
+        )
+
+    async def auth_factory(c):
+        return AuthService(
+            token_service=await c.resolve("TokenService"),
+            email_service=await c.resolve("EmailService"),
+            oauth_service=await c.resolve("OAuthService"),
+            web_service=await c.resolve("WebService"),
+        )
+
+    container.register("TokenService", token_factory, token_service_lifetime)
+    container.register("PaymentService", payment_factory, payment_service_lifetime)
+    container.register("UserService", user_factory, user_service_lifetime)
+    container.register("OrderService", order_factory, order_service_lifetime)
+    container.register("CategoryService", category_factory, category_service_lifetime)
+    container.register("RestaurantService", restaurant_factory, restaurant_service_lifetime)
+    container.register("AuthService", auth_factory, auth_service_lifetime)
+
     return container

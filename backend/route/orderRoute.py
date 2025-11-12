@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, Request
 from controller.orderController import OrderController
 from dtos.orderDtos import CreateOrderDto, CancelOrderDto
-from container.containerEntry import container
 
 
-def get_order_controller(request: Request) -> OrderController:
+async def get_order_controller(request: Request) -> OrderController:
     """
-    Resolve a new scoped AuthController per request and
-    automatically attach the FastAPI Request to it.
+    Resolve a scoped OrderController from the IoC container stored
+    in app.state, ensuring per-request lifecycle and dependency resolution.
     """
-    with container.create_scope() as scope:
-        controller = container.resolve("OrderController", scope)
+    container = request.app.state.container
+
+    async with container.create_scope() as scope:
+        controller = await container.resolve("OrderController", scope)
         controller.request = request
         return controller
-
 
 orderRouter = APIRouter()
 

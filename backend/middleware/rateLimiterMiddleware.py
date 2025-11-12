@@ -1,18 +1,17 @@
-from fastapi import HTTPException, Request
+from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Optional
 from datetime import timedelta
-
-from container.containerEntry import container
-from service.cacheService import CacheService
+from utilities.logger import logger
 
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
     Middleware that enforces tiered rate limits:
       - Auth limiter for login/signup
-      - Refresh/File limiter for light requests
-      - General limiter for everything else
+      - Light limiter for refresh/files/images
+      - General limiter for all other requests
     """
 
     def __init__(
@@ -24,7 +23,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         auth_window: int = 60,
         light_limit: int = 30,
         light_window: int = 60,
-        excluded_paths: list[str] | None = None,
+        excluded_paths: Optional[list[str]] = None,
     ):
         super().__init__(app)
         self.general_limit = general_limit
@@ -35,12 +34,17 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         self.light_window = light_window
         self.excluded_paths = excluded_paths or []
 
-        self.cache: CacheService = container.resolve("CacheService")
-
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
         if any(path.startswith(p) for p in self.excluded_paths):
+            return await call_next(request)
+
+        try:
+            container = request.app.state.container
+            cache_service = await container.resolve("CacheService")
+        except Exception as e:
+            logger.error(f"[RateLimiter] Failed to resolve CacheService: {e}")
             return await call_next(request)
 
         limiter_type, limit, window = self._determine_limiter(path)
@@ -48,11 +52,13 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         key = f"ratelimit:{limiter_type}:{client_id}:{path}"
 
         try:
-            count = self.cache.client.incr(key)
+            redis = cache_service.client
+            count = await redis.incr(key)
             if count == 1:
-                self.cache.client.expire(key, window)
+                await redis.expire(key, window)
 
             if count > limit:
+                logger.warning(f"[RateLimiter] Limit exceeded for {client_id} on {path}")
                 raise HTTPException(
                     status_code=429,
                     detail=f"Too many requests ({limiter_type}): limit {limit} per {window}s",
@@ -65,7 +71,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             )
 
         except Exception as e:
-            # fallback for unexpected issues
+            logger.error(f"[RateLimiter] Unexpected error: {e}")
             return await call_next(request)
 
         return await call_next(request)
@@ -83,6 +89,5 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             return ("general", self.general_limit, self.general_window)
 
     def _identify_client(self, request: Request) -> str:
-        ip = request.client.host or "unknown"
-        auth_header = request.headers.get("authorization")
-        return ip
+        """Identify client based on IP (or header if desired)."""
+        return request.client.host or "unknown"

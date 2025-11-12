@@ -1,9 +1,8 @@
+# main.py
 import os
-
+from contextlib import asynccontextmanager
 import uvicorn
-from authlib.integrations.starlette_client import OAuth
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -18,12 +17,32 @@ from middleware.securityMiddleware import (
 )
 from route.route import serverRouter
 from utilities.logger import logger
+from container.containerBootstrap import bootstrap
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("[Startup] Waiting for IoC container...")
+    container = await bootstrap()
+    app.state.container = container
+    logger.info("[Startup] Container ready.")
+
+    yield
+
+    logger.info("[Shutdown] Cleaning up IoC resources...")
+    with container.create_scope() as scope:
+        for instance in scope.values():
+            close_fn = getattr(instance, "close", None)
+            if callable(close_fn):
+                close_fn()
+    logger.info("[Shutdown] Cleanup done.")
+
+
+app = FastAPI(title="EasyFood", lifespan=lifespan)
 
 setup_cors(app)
 setup_exception_handlers(app)
-
+'''
 app.add_middleware(
     RateLimiterMiddleware,
     general_limit=100,
@@ -34,12 +53,10 @@ app.add_middleware(
     light_window=60,
     excluded_paths=["/docs", "/openapi.json"],
 )
-
+'''
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
-
-setup_exception_handlers(app)
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 if os.path.isdir(PUBLIC_DIR):
@@ -49,34 +66,19 @@ else:
 
 app.include_router(serverRouter, prefix="/api")
 
-
 @app.get("/")
 def read_root():
     return FileResponse("public/index.html")
 
-
-@app.get("/api")
-def api_check():
-    return "EasyFood API is running"
-
-
 @app.get("/ping")
-def api_check():
+def ping():
     return "pong"
 
-
 @app.get("/health")
-def api_check():
-    return "Health check is ok!"
-
+def health():
+    return "ok"
 
 if __name__ == "__main__":
     port = int(settings.port)
     logger.info(f"Server starting at http://localhost:{port}")
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=port,
-        access_log=False,
-        # reload=True,
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=port, access_log=False)

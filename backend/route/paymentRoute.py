@@ -5,17 +5,19 @@ from dtos.paymentDtos import (
     PaymentCaptureDto,
     PaymentCancelDto,
 )
-from container.containerEntry import container
 
+async def get_payment_controller(request: Request) -> PaymentController:
+    """
+    Resolve a scoped PaymentController from the IoC container stored
+    in app.state, ensuring per-request lifecycle and dependency resolution.
+    """
+    container = request.app.state.container
 
-def get_payment_controller(request: Request) -> PaymentController:
-    """
-    Resolve a new scoped PaymentController per request.
-    """
-    with container.create_scope() as scope:
-        controller = container.resolve("PaymentController", scope)
+    async with container.create_scope() as scope:
+        controller = await container.resolve("PaymentController", scope)
         controller.request = request
         return controller
+
 
 
 paymentRouter = APIRouter(tags=["Payment"])
