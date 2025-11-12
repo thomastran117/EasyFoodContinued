@@ -75,12 +75,7 @@ class Container:
 
     def build(self) -> "Container":
         try:
-            cache = self.resolve("CacheService")
-            try:
-                cache.client.ping()
-                logger.info("CacheService passed health check.")
-            except Exception as e:
-                logger.warning(f"CacheService health check failed: {e}")
+            self.resolve("CacheService")
             self.resolve("EmailService")
             self.resolve("FileService")
             self.resolve("BasicTokenService")

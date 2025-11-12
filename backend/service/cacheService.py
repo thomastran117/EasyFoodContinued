@@ -122,10 +122,14 @@ class CacheService:
         values = self.client.mget(full_keys)
         return [self._deserialize(v, as_json) for v in values]
 
-    def mset(self, data: Dict[str, Any], expire: Optional[int] = None, as_json: bool = True):
+    def mset(
+        self, data: Dict[str, Any], expire: Optional[int] = None, as_json: bool = True
+    ):
         """Set multiple key-value pairs."""
         try:
-            mapping = {self._key(k): self._serialize(v, as_json) for k, v in data.items()}
+            mapping = {
+                self._key(k): self._serialize(v, as_json) for k, v in data.items()
+            }
             self.client.mset(mapping)
             if expire:
                 for k in mapping.keys():
@@ -142,10 +146,11 @@ class CacheService:
         """Decrement an integer value atomically."""
         return self.client.decr(self._key(key), amount)
 
-
     def hset(self, name: str, key: str, value: Any, as_json: bool = True) -> bool:
         try:
-            return bool(self.client.hset(self._key(name), key, self._serialize(value, as_json)))
+            return bool(
+                self.client.hset(self._key(name), key, self._serialize(value, as_json))
+            )
         except Exception:
             return False
 
@@ -163,7 +168,6 @@ class CacheService:
         except Exception:
             return {}
 
-
     @contextmanager
     def acquire_lock(self, key: str, timeout: int = 10, blocking_timeout: int = 5):
         """
@@ -172,7 +176,9 @@ class CacheService:
             with cache.acquire_lock("task:123"):
                 ... critical section ...
         """
-        lock = self.client.lock(self._key(key), timeout=timeout, blocking_timeout=blocking_timeout)
+        lock = self.client.lock(
+            self._key(key), timeout=timeout, blocking_timeout=blocking_timeout
+        )
         acquired = lock.acquire(blocking=True)
         try:
             if acquired:
