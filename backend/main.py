@@ -1,4 +1,3 @@
-# main.py
 import os
 from contextlib import asynccontextmanager
 import uvicorn
@@ -18,24 +17,26 @@ from middleware.securityMiddleware import (
 from route.route import serverRouter
 from utilities.logger import logger
 from container.containerBootstrap import bootstrap
+from resources.mongo_client import init_mongo
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("[Startup] Waiting for IoC container...")
+    logger.info("Waiting for IoC container...")
+    await init_mongo()
     container = await bootstrap()
     app.state.container = container
-    logger.info("[Startup] Container ready.")
+    logger.info("Container ready.")
 
     yield
 
-    logger.info("[Shutdown] Cleaning up IoC resources...")
+    logger.info("Cleaning up IoC resources...")
     with container.create_scope() as scope:
         for instance in scope.values():
             close_fn = getattr(instance, "close", None)
             if callable(close_fn):
                 close_fn()
-    logger.info("[Shutdown] Cleanup done.")
+    logger.info("Cleanup done.")
 
 
 app = FastAPI(title="EasyFood", lifespan=lifespan)
