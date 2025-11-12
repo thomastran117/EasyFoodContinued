@@ -75,6 +75,7 @@ def register_services(
             token_service=c.resolve("TokenService"),
             email_service=c.resolve("EmailService"),
             oauth_service=c.resolve("OAuthService"),
+            web_service=c.resolve("WebService"),
         ),
         auth_service_lifetime,
     )

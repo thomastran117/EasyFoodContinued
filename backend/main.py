@@ -24,7 +24,17 @@ app = FastAPI()
 setup_cors(app)
 setup_exception_handlers(app)
 
-app.add_middleware(RateLimiterMiddleware)
+app.add_middleware(
+    RateLimiterMiddleware,
+    general_limit=100,
+    general_window=60,
+    auth_limit=5,
+    auth_window=60,
+    light_limit=100,
+    light_window=60,
+    excluded_paths=["/docs", "/openapi.json"],
+)
+
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
