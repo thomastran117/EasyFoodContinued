@@ -20,6 +20,7 @@ class Category(Document):
 
     class Settings:
         name = "categories"
+        use_revision = False
 
 
 class Restaurant(Document):
@@ -36,6 +37,7 @@ class Restaurant(Document):
 
     class Settings:
         name = "restaurants"
+        use_revision = False
 
 
 class Food(Document):
@@ -51,10 +53,11 @@ class Food(Document):
 
     class Settings:
         name = "foods"
+        use_revision = False
 
 
 class Review(Document):
-    user_id: int 
+    user_id: int  # stored in SQL
     restaurant: Link[Restaurant]
     description: str
     rating: float
@@ -62,6 +65,7 @@ class Review(Document):
 
     class Settings:
         name = "reviews"
+        use_revision = False
 
 
 class Reservation(Document):
@@ -74,6 +78,7 @@ class Reservation(Document):
 
     class Settings:
         name = "reservations"
+        use_revision = False
 
 
 class Survey(Document):
@@ -87,3 +92,4 @@ class Survey(Document):
 
     class Settings:
         name = "surveys"
+        use_revision = False
