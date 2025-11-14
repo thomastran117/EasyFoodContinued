@@ -7,6 +7,7 @@ from config.environmentConfig import settings
 from utilities.errorRaiser import (
     BadRequestException,
     UnauthorizedException,
+    ServiceUnavaliableException
 )
 
 
@@ -45,16 +46,26 @@ class OAuthService:
         return email, user_id, name, picture
 
     async def verifyGoogleToken(self, token: str):
-        idinfo = id_token.verify_oauth2_token(
-            token, requests.Request(), settings.google_client_id
-        )
+        try:
+            idinfo = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                audience=settings.google_client_id if settings.google_client_id else None
+            )
 
-        if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
-            raise UnauthorizedException("Invalid issuer.")
+            if idinfo.get("iss") not in (
+                "accounts.google.com",
+                "https://accounts.google.com"
+            ):
+                raise UnauthorizedException("Invalid Google token issuer.")
 
-        email = idinfo.get("email")
-        name = idinfo.get("name")
-        picture = idinfo.get("picture")
-        user_id = idinfo.get("sub")
+            email = idinfo.get("email")
+            name = idinfo.get("name")
+            picture = idinfo.get("picture")
+            user_id = idinfo.get("sub")
+            return email, name, picture, user_id
 
-        return email, name, picture, user_id
+        except ValueError as e:
+            raise UnauthorizedException(f"Invalid Google token: {str(e)}")
+        except Exception as e:
+            raise ServiceUnavaliableException("Google OAuth Failed")

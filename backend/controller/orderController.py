@@ -5,7 +5,7 @@ from utilities.logger import logger
 
 from service.orderService import OrderService
 from service.paymentService import PaymentService
-from schema.template import OrderStatus
+from schema.psql_template import OrderStatus
 from dtos.orderDtos import CreateOrderDto, CancelOrderDto
 from utilities.errorRaiser import (
     ServiceUnavaliableException,
