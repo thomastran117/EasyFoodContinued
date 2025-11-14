@@ -1,4 +1,4 @@
-from fastapi import File, UploadFile, HTTPException
+from fastapi import File, Request, UploadFile, HTTPException
 from PIL import Image
 import filetype
 import io
@@ -12,6 +12,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 class UserController:
     def __init__(self, user_service: UserService):
         self.user_service = user_service
+        self.request: Request | None = None
 
     async def get_user(self, id: int):
         try:

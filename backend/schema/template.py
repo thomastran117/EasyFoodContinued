@@ -1,8 +1,15 @@
 import enum
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, Integer, Float, Text, DateTime, Enum,
-    ForeignKey, Boolean
+    Column,
+    String,
+    Integer,
+    Float,
+    Text,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Boolean,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -41,7 +48,9 @@ class Category(Base):
     name = Column(String(100), unique=True, nullable=False)
     description = Column(Text, nullable=True)
 
-    restaurants = relationship("Restaurant", back_populates="category", cascade="all, delete-orphan")
+    restaurants = relationship(
+        "Restaurant", back_populates="category", cascade="all, delete-orphan"
+    )
 
 
 class User(Base):
@@ -51,9 +60,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, nullable=True)
     password = Column(String, nullable=True)
-    role = Column(
-        String, nullable=False, default="user"
-    )
+    role = Column(String, nullable=False, default="user")
     provider = Column(String, nullable=False, default="local")
 
     google_id = Column(String, unique=True, nullable=True)
@@ -69,12 +76,27 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     restaurant = relationship("Restaurant", back_populates="owner", uselist=False)
-    orders = relationship("Order", back_populates="user", foreign_keys="[Order.user_id]", cascade="all, delete-orphan")
-    deliveries = relationship("Order", back_populates="driver", foreign_keys="[Order.driver_id]")
-    fulfillments = relationship("Order", back_populates="employee", foreign_keys="[Order.employee_id]")
-    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
-    surveys = relationship("Survey", back_populates="user", cascade="all, delete-orphan")
-    reservations = relationship("Reservation", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship(
+        "Order",
+        back_populates="user",
+        foreign_keys="[Order.user_id]",
+        cascade="all, delete-orphan",
+    )
+    deliveries = relationship(
+        "Order", back_populates="driver", foreign_keys="[Order.driver_id]"
+    )
+    fulfillments = relationship(
+        "Order", back_populates="employee", foreign_keys="[Order.employee_id]"
+    )
+    reviews = relationship(
+        "Review", back_populates="user", cascade="all, delete-orphan"
+    )
+    surveys = relationship(
+        "Survey", back_populates="user", cascade="all, delete-orphan"
+    )
+    reservations = relationship(
+        "Reservation", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Restaurant(Base):
@@ -91,9 +113,15 @@ class Restaurant(Base):
 
     owner = relationship("User", back_populates="restaurant")
     category = relationship("Category", back_populates="restaurants")
-    food_items = relationship("Food", back_populates="restaurant", cascade="all, delete-orphan")
-    reviews_items = relationship("Review", back_populates="restaurant", cascade="all, delete-orphan")
-    reservation_items = relationship("Reservation", back_populates="restaurant", cascade="all, delete-orphan")
+    food_items = relationship(
+        "Food", back_populates="restaurant", cascade="all, delete-orphan"
+    )
+    reviews_items = relationship(
+        "Review", back_populates="restaurant", cascade="all, delete-orphan"
+    )
+    reservation_items = relationship(
+        "Reservation", back_populates="restaurant", cascade="all, delete-orphan"
+    )
 
 
 class Food(Base):
@@ -128,16 +156,26 @@ class Order(Base):
     payment_id = Column(String(128), nullable=True)
     transaction_id = Column(String(128), nullable=True)
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    driver_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    employee_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    driver_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    employee_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     user = relationship("User", back_populates="orders", foreign_keys=[user_id])
     driver = relationship("User", back_populates="deliveries", foreign_keys=[driver_id])
-    employee = relationship("User", back_populates="fulfillments", foreign_keys=[employee_id])
+    employee = relationship(
+        "User", back_populates="fulfillments", foreign_keys=[employee_id]
+    )
 
     payment = relationship("Payment", back_populates="order", uselist=False)
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    items = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )
 
 
 class OrderItem(Base):

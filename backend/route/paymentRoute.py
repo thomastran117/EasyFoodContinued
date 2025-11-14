@@ -6,6 +6,7 @@ from dtos.paymentDtos import (
     PaymentCancelDto,
 )
 
+
 async def get_payment_controller(request: Request) -> PaymentController:
     """
     Resolve a scoped PaymentController from the IoC container stored
@@ -17,7 +18,6 @@ async def get_payment_controller(request: Request) -> PaymentController:
         controller = await container.resolve("PaymentController", scope)
         controller.request = request
         return controller
-
 
 
 paymentRouter = APIRouter(tags=["Payment"])

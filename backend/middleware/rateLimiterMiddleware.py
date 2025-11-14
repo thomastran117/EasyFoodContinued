@@ -58,7 +58,9 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                 await redis.expire(key, window)
 
             if count > limit:
-                logger.warning(f"[RateLimiter] Limit exceeded for {client_id} on {path}")
+                logger.warning(
+                    f"[RateLimiter] Limit exceeded for {client_id} on {path}"
+                )
                 raise HTTPException(
                     status_code=429,
                     detail=f"Too many requests ({limiter_type}): limit {limit} per {window}s",
@@ -83,7 +85,11 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         if path.startswith("/auth/") and not path.startswith("/auth/refresh"):
             return ("auth", self.auth_limit, self.auth_window)
-        elif path.startswith("/auth/refresh") or path.startswith("/files") or path.startswith("/images"):
+        elif (
+            path.startswith("/auth/refresh")
+            or path.startswith("/files")
+            or path.startswith("/images")
+        ):
             return ("light", self.light_limit, self.light_window)
         else:
             return ("general", self.general_limit, self.general_window)

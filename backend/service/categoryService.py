@@ -59,8 +59,9 @@ class CategoryService:
         self.cache.set(key, self._serialize_category(category), expire=self.ttl)
         return category
 
-
-    async def createCategory(self, name: str, description: Optional[str] = None) -> Category:
+    async def createCategory(
+        self, name: str, description: Optional[str] = None
+    ) -> Category:
         existing = await Category.find_one(Category.name == name)
         if existing:
             raise BadRequestException(f"Category name '{name}' already exists")

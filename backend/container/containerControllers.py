@@ -46,12 +46,28 @@ def register_controllers(
             restaurant_service=await c.resolve("RestaurantService")
         )
 
-    container.register("AuthController", auth_controller_factory, auth_controller_lifetime)
-    container.register("UserController", user_controller_factory, user_controller_lifetime)
-    container.register("FileController", file_controller_factory, file_controller_lifetime)
-    container.register("PaymentController", payment_controller_factory, payment_controller_lifetime)
-    container.register("OrderController", order_controller_factory, order_controller_lifetime)
-    container.register("CategoryController", category_controller_factory, category_controller_lifetime)
-    container.register("RestaurantController", restaurant_controller_factory, restaurant_controller_lifetime)
+    container.register(
+        "AuthController", auth_controller_factory, auth_controller_lifetime
+    )
+    container.register(
+        "UserController", user_controller_factory, user_controller_lifetime
+    )
+    container.register(
+        "FileController", file_controller_factory, file_controller_lifetime
+    )
+    container.register(
+        "PaymentController", payment_controller_factory, payment_controller_lifetime
+    )
+    container.register(
+        "OrderController", order_controller_factory, order_controller_lifetime
+    )
+    container.register(
+        "CategoryController", category_controller_factory, category_controller_lifetime
+    )
+    container.register(
+        "RestaurantController",
+        restaurant_controller_factory,
+        restaurant_controller_lifetime,
+    )
 
     return container

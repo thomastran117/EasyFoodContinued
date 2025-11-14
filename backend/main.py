@@ -43,7 +43,7 @@ app = FastAPI(title="EasyFood", lifespan=lifespan)
 
 setup_cors(app)
 setup_exception_handlers(app)
-'''
+"""
 app.add_middleware(
     RateLimiterMiddleware,
     general_limit=100,
@@ -54,7 +54,7 @@ app.add_middleware(
     light_window=60,
     excluded_paths=["/docs", "/openapi.json"],
 )
-'''
+"""
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
@@ -67,17 +67,21 @@ else:
 
 app.include_router(serverRouter, prefix="/api")
 
+
 @app.get("/")
 def read_root():
     return FileResponse("public/index.html")
+
 
 @app.get("/ping")
 def ping():
     return "pong"
 
+
 @app.get("/health")
 def health():
     return "ok"
+
 
 if __name__ == "__main__":
     port = int(settings.port)

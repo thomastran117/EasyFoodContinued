@@ -27,12 +27,16 @@ authRouter = APIRouter(tags=["Auth"])
 
 
 @authRouter.post("/login")
-async def login(dto: LoginRequestDto, ctrl: AuthController = Depends(get_auth_controller)):
+async def login(
+    dto: LoginRequestDto, ctrl: AuthController = Depends(get_auth_controller)
+):
     return await ctrl.login(dto)
 
 
 @authRouter.post("/signup")
-async def signup(dto: SignupRequestDto, ctrl: AuthController = Depends(get_auth_controller)):
+async def signup(
+    dto: SignupRequestDto, ctrl: AuthController = Depends(get_auth_controller)
+):
     return await ctrl.signup(dto)
 
 
@@ -52,17 +56,23 @@ async def logout(ctrl: AuthController = Depends(get_auth_controller)):
 
 
 @authRouter.post("/google")
-async def google(dto: GoogleAuthRequest, ctrl: AuthController = Depends(get_auth_controller)):
+async def google(
+    dto: GoogleAuthRequest, ctrl: AuthController = Depends(get_auth_controller)
+):
     return await ctrl.google(dto)
 
 
 @authRouter.post("/microsoft")
-async def microsoft(dto: MicrosoftAuthRequest, ctrl: AuthController = Depends(get_auth_controller)):
+async def microsoft(
+    dto: MicrosoftAuthRequest, ctrl: AuthController = Depends(get_auth_controller)
+):
     return await ctrl.microsoft(dto)
 
 
 @authRouter.post("/forgot-password")
-async def forgot(dto: ForgotPasswordDto, ctrl: AuthController = Depends(get_auth_controller)):
+async def forgot(
+    dto: ForgotPasswordDto, ctrl: AuthController = Depends(get_auth_controller)
+):
     return await ctrl.forgot_password(dto)
 
 

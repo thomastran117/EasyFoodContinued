@@ -64,7 +64,9 @@ def register_services(
     container.register("UserService", user_factory, user_service_lifetime)
     container.register("OrderService", order_factory, order_service_lifetime)
     container.register("CategoryService", category_factory, category_service_lifetime)
-    container.register("RestaurantService", restaurant_factory, restaurant_service_lifetime)
+    container.register(
+        "RestaurantService", restaurant_factory, restaurant_service_lifetime
+    )
     container.register("AuthService", auth_factory, auth_service_lifetime)
 
     return container
