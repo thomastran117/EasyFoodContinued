@@ -3,7 +3,7 @@ from datetime import datetime
 from config.environmentConfig import settings
 from config.celeryConfig import celery_app
 from resources.database_client import get_db
-from schema.template import Order, OrderStatus, Payment, PaymentMethod
+from schema.psql_template import Order, OrderStatus, Payment, PaymentMethod
 from utilities.logger import logger
 from utilities.celeryHealthCheck import CeleryHealth
 from service.webService import WebService

@@ -4,7 +4,7 @@ import math
 from config.celeryConfig import celery_app
 from resources.database_client import get_db
 from utilities.logger import logger
-from schema.template import Order, OrderStatus
+from schema.psql_template import Order, OrderStatus
 from container.containerWorkerBootstrap import container
 from service.webService import WebService
 

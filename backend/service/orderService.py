@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import select, update
 
 from resources.database_client import get_db
-from schema.template import Order, OrderStatus
+from schema.psql_template import Order, OrderStatus
 from service.paymentService import PaymentService
 from utilities.logger import logger
 

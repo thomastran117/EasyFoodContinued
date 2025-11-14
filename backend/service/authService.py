@@ -6,7 +6,7 @@ from jose import jwt as jose_jwt
 
 from config.environmentConfig import settings
 from resources.database_client import get_db
-from schema.template import User
+from schema.psql_template import User
 from service.tokenService import TokenService
 from service.emailService import EmailService
 from service.oauthService import OAuthService

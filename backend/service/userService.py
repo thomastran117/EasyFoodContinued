@@ -2,7 +2,7 @@ from pathlib import Path
 from fastapi import UploadFile
 
 from resources.database_client import get_db
-from schema.template import User
+from schema.psql_template import User
 from service.fileService import FileService
 from utilities.errorRaiser import BadRequestException, NotFoundException
 
