@@ -7,7 +7,7 @@ from config.environmentConfig import settings
 from utilities.errorRaiser import (
     BadRequestException,
     UnauthorizedException,
-    ServiceUnavaliableException
+    ServiceUnavaliableException,
 )
 
 
@@ -50,12 +50,14 @@ class OAuthService:
             idinfo = id_token.verify_oauth2_token(
                 token,
                 requests.Request(),
-                audience=settings.google_client_id if settings.google_client_id else None
+                audience=(
+                    settings.google_client_id if settings.google_client_id else None
+                ),
             )
 
             if idinfo.get("iss") not in (
                 "accounts.google.com",
-                "https://accounts.google.com"
+                "https://accounts.google.com",
             ):
                 raise UnauthorizedException("Invalid Google token issuer.")
 
