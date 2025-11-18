@@ -8,8 +8,6 @@ from schema.psql_template import OrderStatus
 from service.orderService import OrderService
 from service.paymentService import PaymentService
 from utilities.errorRaiser import (
-    ServiceUnavaliableException,
-    UnauthorizedException,
     raise_error,
 )
 from utilities.logger import logger

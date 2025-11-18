@@ -12,7 +12,7 @@ from dtos.authDtos import (
 )
 from service.authService import AuthService
 from utilities.errorRaiser import (
-    ServiceUnavaliableException,
+    ServiceUnavailableException,
     UnauthorizedException,
     raise_error,
 )
@@ -60,7 +60,7 @@ class AuthController:
         try:
             if not settings.email_enabled:
                 logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavaliableException("Email verification is not available")
+                raise ServiceUnavailableException("Email verification is not available")
             await self.auth_service.verify_user(token)
             return {"message": "Signup successful"}
         except Exception as e:
@@ -111,7 +111,7 @@ class AuthController:
         try:
             if not settings.email_enabled:
                 logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavaliableException("Forgot password is not available")
+                raise ServiceUnavailableException("Forgot password is not available")
 
             await self.auth_service.forgot_password(request.email)
             return {"message": "If your email exists, a reset link was sent."}
@@ -123,7 +123,7 @@ class AuthController:
         try:
             if not settings.email_enabled:
                 logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavaliableException("Change password is not available")
+                raise ServiceUnavailableException("Change password is not available")
 
             await self.auth_service.change_password(request.password, token)
             return {"message": "Password changed successfully"}

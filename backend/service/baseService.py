@@ -1,6 +1,6 @@
 import inspect
 
-from utilities.errorRaiser import ServiceUnavaliableException
+from utilities.errorRaiser import ServiceUnavailableException
 from utilities.logger import logger
 
 
@@ -21,6 +21,6 @@ class BaseService:
                     f"[{self.__class__.__name__}] {caller} failed. "
                     f"{dep_name} is not available"
                 )
-                raise ServiceUnavaliableException(
+                raise ServiceUnavailableException(
                     "Service is not ready to handle this request"
                 )

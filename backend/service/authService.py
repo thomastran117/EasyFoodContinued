@@ -15,7 +15,7 @@ from utilities.errorRaiser import (
     BadRequestException,
     ConflictException,
     NotFoundException,
-    ServiceUnavaliableException,
+    ServiceUnavailableException,
     UnauthorizedException,
 )
 from utilities.logger import logger
@@ -98,7 +98,7 @@ class AuthService:
             logger.warn(
                 "Verifying users can't be served due to email misconfiguration."
             )
-            raise ServiceUnavaliableException("Email verification is not available")
+            raise ServiceUnavailableException("Email verification is not available")
 
         with self.db_factory() as db:
             data = self.token_service.verify_verification_token(token)
@@ -173,7 +173,7 @@ class AuthService:
             logger.warn(
                 "Forgot password can't be served due to email misconfiguration."
             )
-            raise ServiceUnavaliableException("Forgot password service is unavailable")
+            raise ServiceUnavailableException("Forgot password service is unavailable")
 
         with self.db_factory() as db:
             user = db.query(User).filter(User.email == email).first()
@@ -191,7 +191,7 @@ class AuthService:
             logger.warn(
                 "Change password can't be served due to email misconfiguration."
             )
-            raise ServiceUnavaliableException("Change password service is unavailable")
+            raise ServiceUnavailableException("Change password service is unavailable")
 
         data = self.token_service.verify_verification_token(token)
         if not data:
