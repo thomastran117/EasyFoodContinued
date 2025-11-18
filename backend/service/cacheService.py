@@ -35,43 +35,54 @@ class CacheService:
         self.namespace = namespace
         self.default_expire = default_expire
 
-    def _key(self, key: str) -> str:
+    def key(self, key: str) -> str:
         try:
             return f"{self.namespace}:{key}"
         except AppHttpException:
             raise
         except Exception as e:
-            logger.error(f"[TokenService] logoutToken failed: {e}", exc_info=True)
+            logger.error(f"[CacheService] key failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def encode_model(self, value: Any) -> Any:
+    def encodeModel(self, value: Any) -> Any:
         """Convert Beanie or Pydantic models (or lists of them) into JSON-safe dicts."""
+        try:
+            if isinstance(value, (Document, BaseModel)):
+                return value.model_dump(mode="json")
 
-        if isinstance(value, (Document, BaseModel)):
-            return value.model_dump(mode="json")
+            if isinstance(value, list):
+                return [self.encode_model(v) for v in value]
 
-        if isinstance(value, list):
-            return [self.encode_model(v) for v in value]
+            if isinstance(value, dict):
+                return {k: self.encode_model(v) for k, v in value.items()}
 
-        if isinstance(value, dict):
-            return {k: self.encode_model(v) for k, v in value.items()}
+            return value
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] encodeModel failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-        return value
-
-    def decode_model(self, data: Any, model: Any) -> Any:
+    def decodeModel(self, data: Any, model: Any) -> Any:
         """Convert cached data back into model instances."""
-        if data is None:
-            return None
+        try:
+            if data is None:
+                return None
 
-        if isinstance(data, list):
-            return [model(**item) for item in data]
+            if isinstance(data, list):
+                return [model(**item) for item in data]
 
-        if isinstance(data, dict):
-            return model(**data)
+            if isinstance(data, dict):
+                return model(**data)
 
-        return data
+            return data
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] decodeModel failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-    def _serialize(self, value: Any, as_json: bool = True) -> bytes:
+    def serialize(self, value: Any, as_json: bool = True) -> bytes:
         """Serialize to JSON or pickle after encoding models."""
 
         try:
@@ -79,21 +90,25 @@ class CacheService:
 
             if as_json:
                 return json.dumps(value).encode("utf-8")
-
             return pickle.dumps(value)
-
+        except AppHttpException:
+            raise
         except Exception as e:
-            raise ValueError(f"Failed to serialize value for Redis: {e}")
+            logger.error(f"[CacheService] serialize failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-    def _deserialize(self, data: Optional[bytes], as_json: bool = True) -> Any:
+    def deserialize(self, data: Optional[bytes], as_json: bool = True) -> Any:
         """Deserialize JSON or pickle back to Python objects."""
-        if data is None:
-            return None
-
         try:
+            if data is None:
+                return None
+
             return json.loads(data) if as_json else pickle.loads(data)
-        except Exception:
-            return None
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] deserialize failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def set(
         self,
@@ -112,28 +127,49 @@ class CacheService:
             expire = expire or self.default_expire
             self.client.set(key, data, ex=expire)
             return True
-        except Exception:
-            return False
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] set failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def get(self, key: str, as_json: bool = True) -> Optional[Any]:
         try:
             key = self._key(key)
             raw = self.client.get(key)
             return self._deserialize(raw, as_json)
-        except Exception:
-            return None
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] get failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def delete(self, key: str) -> bool:
         try:
             return bool(self.client.delete(self._key(key)))
-        except Exception:
-            return False
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] delete failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def exists(self, key: str) -> bool:
-        return bool(self.client.exists(self._key(key)))
+        try:
+            return bool(self.client.exists(self._key(key)))
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] exists failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def ttl(self, key: str) -> int:
-        return self.client.ttl(self._key(key))
+        try:
+            return self.client.ttl(self._key(key))
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] ttl failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def clear(self, pattern: Optional[str] = None) -> int:
         try:
@@ -142,17 +178,32 @@ class CacheService:
             if keys:
                 self.client.delete(*keys)
             return len(keys)
-        except Exception:
-            return 0
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] clear failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def incr(self, key: str, amount: int = 1) -> int:
-        return self.client.incr(self._key(key), amount)
+        try:
+            return self.client.incr(self._key(key), amount)
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] incr failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def decr(self, key: str, amount: int = 1) -> int:
-        return self.client.decr(self._key(key), amount)
+        try:
+            return self.client.decr(self._key(key), amount)
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] decr failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     @contextmanager
-    def acquire_lock(self, key: str, timeout: int = 10, blocking_timeout: int = 5):
+    def acquireLock(self, key: str, timeout: int = 10, blocking_timeout: int = 5):
         lock = self.client.lock(
             self._key(key), timeout=timeout, blocking_timeout=blocking_timeout
         )
@@ -164,18 +215,24 @@ class CacheService:
             if acquired:
                 lock.release()
 
-    def get_or_set(
+    def getOrSet(
         self,
         key: str,
         callback: Callable[[], Any],
         expire: Optional[Union[int, timedelta]] = None,
         as_json: bool = True,
     ) -> Any:
-        value = self.get(key, as_json)
-        if value is not None:
-            return value
+        try:
+            value = self.get(key, as_json)
+            if value is not None:
+                return value
 
-        value = callback()
-        if value is not None:
-            self.set(key, value, expire, as_json)
-        return value
+            value = callback()
+            if value is not None:
+                self.set(key, value, expire, as_json)
+            return value
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[CacheService] serialize failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
