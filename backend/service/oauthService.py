@@ -10,6 +10,7 @@ from utilities.errorRaiser import (
     InternalErrorException,
     UnauthorizedException,
 )
+from utilities.logger import logger
 
 
 class OAuthService:
@@ -17,34 +18,42 @@ class OAuthService:
         pass
 
     async def verifyMicrosoftToken(self, token: str):
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+                )
+                resp.raise_for_status()
+                jwks = resp.json()
+
+            header = jose_jwt.get_unverified_header(id_token)
+            kid = header.get("kid")
+
+            key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
+            if not key:
+                raise BadRequestException("Unable to find matching JWKS key")
+
+            decoded_ms = jose_jwt.decode(
+                id_token,
+                key,
+                algorithms=["RS256"],
+                audience=settings.ms_client_id,
+                options={"verify_iss": False},
             )
-            resp.raise_for_status()
-            jwks = resp.json()
 
-        header = jose_jwt.get_unverified_header(id_token)
-        kid = header.get("kid")
+            email = decoded_ms.get("preferred_username") or decoded_ms.get("email")
+            user_id = decoded_ms.get("sub")
+            name = decoded_ms.get("name")
+            picture = decoded_ms.get("picture")
 
-        key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
-        if not key:
-            raise BadRequestException("Unable to find matching JWKS key")
-
-        decoded_ms = jose_jwt.decode(
-            id_token,
-            key,
-            algorithms=["RS256"],
-            audience=settings.ms_client_id,
-            options={"verify_iss": False},
-        )
-
-        email = decoded_ms.get("preferred_username") or decoded_ms.get("email")
-        user_id = decoded_ms.get("sub")
-        name = decoded_ms.get("name")
-        picture = decoded_ms.get("picture")
-
-        return email, user_id, name, picture
+            return email, user_id, name, picture
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[OAuthService] verifyMicrosoftToken failed: {e}", exc_info=True
+            )
+            raise InternalErrorException("Internal Server Error")
 
     async def verifyGoogleToken(self, token: str):
         try:
@@ -70,5 +79,8 @@ class OAuthService:
 
         except ValueError as e:
             raise UnauthorizedException(f"Invalid Google token: {str(e)}")
+        except AppHttpException:
+            raise
         except Exception as e:
-            raise ServiceUnavaliableException("Google OAuth Failed")
+            logger.error(f"[OAuthService] verifyGoogleToken failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal Server Error")
