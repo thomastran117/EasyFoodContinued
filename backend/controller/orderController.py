@@ -7,9 +7,7 @@ from dtos.orderDtos import CancelOrderDto, CreateOrderDto
 from schema.psql_template import OrderStatus
 from service.orderService import OrderService
 from service.paymentService import PaymentService
-from utilities.errorRaiser import (
-    raise_error,
-)
+from utilities.errorRaiser import raise_error
 from utilities.logger import logger
 
 

@@ -10,8 +10,8 @@ from service.categoryService import CategoryService
 from service.fileService import FileService
 from service.userService import UserService
 from utilities.errorRaiser import (
-    InternalErrorException,
     AppHttpException,
+    InternalErrorException,
     NotFoundException,
 )
 from utilities.logger import logger
@@ -100,7 +100,14 @@ class RestaurantService(BaseService):
             )
             raise InternalErrorException("Internal server error")
 
-    async def createRestaurant(self, user_id: int, name: str, description: str, location: str, image: UploadFile):
+    async def createRestaurant(
+        self,
+        user_id: int,
+        name: str,
+        description: str,
+        location: str,
+        image: UploadFile,
+    ):
         try:
             self.ensureDependencies("user_service", "category_service", "file_service")
 

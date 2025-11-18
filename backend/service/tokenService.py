@@ -10,9 +10,9 @@ from config.environmentConfig import settings
 from service.basicTokenService import BasicTokenService
 from service.cacheService import CacheService
 from utilities.errorRaiser import (
-    UnauthorizedException,
     AppHttpException,
     InternalErrorException,
+    UnauthorizedException,
 )
 from utilities.logger import logger
 
@@ -32,7 +32,7 @@ class TokenService:
         self.VERIFY_EXPIRE_MINUTES = 60
 
         self.require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
-        
+
     def createAccessToken(self, data: dict) -> str:
         try:
             expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_EXPIRE_MINUTES)

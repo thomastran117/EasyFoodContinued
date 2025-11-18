@@ -2,6 +2,7 @@ import httpx
 import requests
 
 from config.environmentConfig import settings
+from utilities.errorRaiser import AppHttpException, InternalErrorException
 from utilities.logger import logger
 
 

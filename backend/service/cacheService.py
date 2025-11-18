@@ -9,6 +9,8 @@ from beanie import Document
 from pydantic import BaseModel
 
 from resources.redis_client import redis_client
+from utilities.errorRaiser import AppHttpException, InternalErrorException
+from utilities.logger import logger
 
 
 class CacheService:
@@ -34,7 +36,13 @@ class CacheService:
         self.default_expire = default_expire
 
     def _key(self, key: str) -> str:
-        return f"{self.namespace}:{key}"
+        try:
+            return f"{self.namespace}:{key}"
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] logoutToken failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
     def encode_model(self, value: Any) -> Any:
         """Convert Beanie or Pydantic models (or lists of them) into JSON-safe dicts."""

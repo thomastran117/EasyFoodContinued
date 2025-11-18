@@ -6,7 +6,13 @@ from pathlib import Path
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from utilities.errorRaiser import BadRequestException, NotFoundException
+from utilities.errorRaiser import (
+    AppHttpException,
+    BadRequestException,
+    InternalErrorException,
+    NotFoundException,
+)
+from utilities.logger import logger
 
 BASE_UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads"
 BASE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
