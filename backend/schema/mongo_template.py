@@ -31,7 +31,7 @@ class Restaurant(Document):
     location: str
     logoUrl: str
 
-    owner_id: int
+    user_id: int
     category: Optional[Link[Category]] = None
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -59,7 +59,7 @@ class Food(Document):
 
 
 class Review(Document):
-    user_id: int  # stored in SQL
+    user_id: int
     restaurant: Link[Restaurant]
     description: str
     rating: float

@@ -11,7 +11,7 @@ class BaseService:
     to validate that required dependencies exist.
     """
 
-    def ensure_ready(self, *required_deps: str):
+    def ensureDependencies(self, *required_deps: str):
         caller = inspect.stack()[1].function
 
         for dep_name in required_deps:
