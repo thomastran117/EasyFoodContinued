@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Request
+from fastapi import APIRouter, Depends, File, Request, UploadFile
+
 from controller.userController import UserController
 from dtos.userDtos import UpdateUserDto
 from middleware.authMiddleware import get_current_user

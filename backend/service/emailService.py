@@ -1,9 +1,9 @@
 from fastapi_mail import FastMail, MessageSchema, MessageType
+from fastapi_mail.errors import ConnectionErrors
 
 from config.emailConfig import conf
 from config.environmentConfig import settings
 from utilities.logger import logger
-from fastapi_mail.errors import ConnectionErrors
 
 
 class EmailService:

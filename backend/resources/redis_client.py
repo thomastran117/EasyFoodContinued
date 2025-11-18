@@ -14,7 +14,7 @@ try:
         logger.info(f"Skipping Redis connection (mode={MODE})")
     else:
         redis_client.ping()
-        logger.info("Redis connected successfully")
+        # logger.info("Redis connected successfully")
 
 except:
     logger.error("Redis connection failed")

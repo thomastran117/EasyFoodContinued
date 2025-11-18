@@ -1,6 +1,8 @@
 import os
 import sys
+
 from celery import Celery
+
 from config.environmentConfig import settings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))

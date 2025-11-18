@@ -21,7 +21,7 @@ try:
     else:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        logger.info("Database connected successfully")
+        # logger.info("Database connected successfully")
 
 except Exception as e:
     logger.error(f"Database connection failed: {e}")

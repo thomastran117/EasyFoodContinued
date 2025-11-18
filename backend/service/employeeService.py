@@ -1,5 +1,6 @@
-from service.restaurantService import RestaurantService
+from service.baseService import BaseService
 from service.cacheService import CacheService
+from service.restaurantService import RestaurantService
 from service.userService import UserService
 
 

@@ -1,8 +1,9 @@
 from typing import Literal
+
+from service.basicTokenService import BasicTokenService
 from service.cacheService import CacheService
 from service.emailService import EmailService
 from service.fileService import FileService
-from service.basicTokenService import BasicTokenService
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 

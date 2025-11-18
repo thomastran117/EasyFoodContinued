@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from pydantic import field_validator, ConfigDict
+from pydantic import ConfigDict, field_validator
 from pydantic_settings import BaseSettings
 
 from utilities.logger import logger

@@ -1,9 +1,10 @@
 import asyncio
-from utilities.logger import logger
+
 from container.container import Container
+from container.containerControllers import register_controllers
 from container.containerCore import register_singletons
 from container.containerServices import register_services
-from container.containerControllers import register_controllers
+from utilities.logger import logger
 
 
 async def async_bootstrap_worker() -> Container:

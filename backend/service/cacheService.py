@@ -1,13 +1,14 @@
 import json
 import pickle
-import redis
-from typing import Any, Callable, Optional, Union, List, Dict
-from datetime import timedelta
 from contextlib import contextmanager
-from resources.redis_client import redis_client
+from datetime import timedelta
+from typing import Any, Callable, Dict, List, Optional, Union
 
+import redis
 from beanie import Document
 from pydantic import BaseModel
+
+from resources.redis_client import redis_client
 
 
 class CacheService:

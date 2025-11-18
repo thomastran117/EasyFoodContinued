@@ -1,8 +1,10 @@
-from fastapi import Request, HTTPException
+from datetime import timedelta
+from typing import Optional
+
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Optional
-from datetime import timedelta
+
 from utilities.logger import logger
 
 

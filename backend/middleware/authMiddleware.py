@@ -1,7 +1,8 @@
 from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
-from utilities.errorRaiser import UnauthorizedException, ForbiddenException
+
+from utilities.errorRaiser import ForbiddenException, UnauthorizedException
 
 require_auth_token = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

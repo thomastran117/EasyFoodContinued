@@ -1,7 +1,9 @@
-from fastapi import File, Request, UploadFile, HTTPException
-from PIL import Image
-import filetype
 import io
+
+import filetype
+from fastapi import File, HTTPException, Request, UploadFile
+from PIL import Image
+
 from dtos.userDtos import UpdateUserDto
 from service.userService import UserService
 from utilities.errorRaiser import raise_error

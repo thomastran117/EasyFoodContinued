@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import Optional, List
-from datetime import datetime
+
 import enum
+from datetime import datetime
+from typing import List, Optional
+
 from beanie import Document, Indexed, Link
-from pydantic import Field, EmailStr
+from pydantic import EmailStr, Field
 
 
 class OccasionEnum(str, enum.Enum):

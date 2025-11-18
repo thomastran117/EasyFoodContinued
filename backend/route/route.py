@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 
 from route.authRoute import authRouter
-from route.userRoute import userRouter
-from route.fileRoute import fileRouter
-from route.paymentRoute import paymentRouter
-from route.orderRoute import orderRouter
 from route.categoryRoute import categoryRouter
+from route.fileRoute import fileRouter
+from route.orderRoute import orderRouter
+from route.paymentRoute import paymentRouter
+from route.userRoute import userRouter
 
 serverRouter = APIRouter()
 serverRouter.include_router(authRouter, prefix="/auth")

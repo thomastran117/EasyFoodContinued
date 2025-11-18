@@ -1,6 +1,7 @@
+from service.baseService import BaseService
 from service.cacheService import CacheService
-from service.foodService import FoodService
 from service.drinkService import DrinkService
+from service.foodService import FoodService
 
 
 class ComboService:

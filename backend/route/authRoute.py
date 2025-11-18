@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Request
+
 from controller.authController import AuthController
 from dtos.authDtos import (
-    LoginRequestDto,
-    SignupRequestDto,
-    ForgotPasswordDto,
     ChangePasswordDto,
+    ForgotPasswordDto,
     GoogleAuthRequest,
+    LoginRequestDto,
     MicrosoftAuthRequest,
+    SignupRequestDto,
 )
 
 

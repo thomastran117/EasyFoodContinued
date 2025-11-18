@@ -1,7 +1,8 @@
+import threading
+import time
+
 from config.celeryConfig import celery_app
 from utilities.logger import logger
-import time
-import threading
 
 
 class CeleryHealth:

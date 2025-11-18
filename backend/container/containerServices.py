@@ -1,24 +1,25 @@
 from typing import Literal
+
 from service.authService import AuthService
-from service.userService import UserService
-from service.paymentService import PaymentService
-from service.orderService import OrderService
-from service.tokenService import TokenService
-from service.oauthService import OAuthService
-from service.webService import WebService
-from service.categoryService import CategoryService
-from service.restaurantService import RestaurantService
 from service.bookingService import BookingService
+from service.categoryService import CategoryService
 from service.comboService import ComboService
 from service.deliveryService import DeliveryService
-from service.driverService import DriverService
 from service.discountService import DiscountService
 from service.drinkService import DrinkService
+from service.driverService import DriverService
 from service.employeeService import EmployeeService
 from service.favouriteService import FavouriteService
 from service.foodService import FoodService
+from service.oauthService import OAuthService
+from service.orderService import OrderService
+from service.paymentService import PaymentService
 from service.reservationService import ReservationService
+from service.restaurantService import RestaurantService
 from service.reviewService import ReviewService
+from service.tokenService import TokenService
+from service.userService import UserService
+from service.webService import WebService
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 

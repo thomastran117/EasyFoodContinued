@@ -1,8 +1,9 @@
 from utilities.logger import logger
+
+from .container import Container
+from .containerControllers import register_controllers
 from .containerCore import register_singletons
 from .containerServices import register_services
-from .containerControllers import register_controllers
-from .container import Container
 
 
 async def bootstrap() -> Container:

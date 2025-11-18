@@ -1,3 +1,4 @@
+from service.baseService import BaseService
 from service.cacheService import CacheService
 from service.userService import UserService
 

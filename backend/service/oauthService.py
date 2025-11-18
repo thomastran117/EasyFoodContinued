@@ -6,8 +6,8 @@ from jose import jwt as jose_jwt
 from config.environmentConfig import settings
 from utilities.errorRaiser import (
     BadRequestException,
-    UnauthorizedException,
     ServiceUnavaliableException,
+    UnauthorizedException,
 )
 
 

@@ -2,9 +2,11 @@ import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+from unittest.mock import patch
+
 import pytest
 from jose import jwt as jose_jwt
-from unittest.mock import patch
+
 from service.tokenService import TokenService
 from utilities.errorRaiser import UnauthorizedException
 

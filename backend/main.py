@@ -1,11 +1,13 @@
 import os
 from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config.environmentConfig import settings
+from container.containerBootstrap import bootstrap
 from middleware.errorHandlerMiddleware import setup_exception_handlers
 from middleware.httpLogger import HTTPLoggerMiddleware
 from middleware.rateLimiterMiddleware import RateLimiterMiddleware
@@ -14,29 +16,32 @@ from middleware.securityMiddleware import (
     SecurityHeadersMiddleware,
     setup_cors,
 )
+from resources.mongo_client import init_mongo
 from route.route import serverRouter
 from utilities.logger import logger
-from container.containerBootstrap import bootstrap
-from resources.mongo_client import init_mongo
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Waiting for IoC container...")
-    await init_mongo()
-    container = await bootstrap()
-    app.state.container = container
-    logger.info("Container ready.")
-
-    yield
-
-    logger.info("Cleaning up IoC resources...")
-    with container.create_scope() as scope:
-        for instance in scope.values():
-            close_fn = getattr(instance, "close", None)
-            if callable(close_fn):
-                close_fn()
-    logger.info("Cleanup done.")
+    try:
+        logger.info("Initializing Container")
+        await init_mongo()
+        container = await bootstrap()
+        app.state.container = container
+        logger.info("Container ready.")
+        yield
+    except Exception as e:
+        logger.error(f"[Server] Container startup failed: {e}", exc_info=True)
+        raise
+    finally:
+        logger.info("Cleaning up IoC resources...")
+        if hasattr(app.state, "container"):
+            with app.state.container.create_scope() as scope:
+                for instance in scope.values():
+                    close_fn = getattr(instance, "close", None)
+                    if callable(close_fn):
+                        close_fn()
+        logger.info("Cleanup done.")
 
 
 app = FastAPI(title="EasyFood", lifespan=lifespan)
@@ -84,6 +89,16 @@ def health():
 
 
 if __name__ == "__main__":
-    port = int(settings.port)
-    logger.info(f"Server starting at http://localhost:{port}")
-    uvicorn.run("main:app", host="0.0.0.0", port=port, access_log=False)
+    try:
+        port = int(settings.port)
+        logger.info(f"Server starting at http://localhost:{port}")
+
+        uvicorn.run(
+            "main:app",
+            host="0.0.0.0",
+            port=port,
+            access_log=False,
+        )
+
+    except Exception as e:
+        logger.error(f"[Server] Application failed to start: {e}", exc_info=True)

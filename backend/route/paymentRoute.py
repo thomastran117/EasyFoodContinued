@@ -1,10 +1,7 @@
 from fastapi import APIRouter, Depends, Request
+
 from controller.paymentController import PaymentController
-from dtos.paymentDtos import (
-    PaymentCreateDto,
-    PaymentCaptureDto,
-    PaymentCancelDto,
-)
+from dtos.paymentDtos import PaymentCancelDto, PaymentCaptureDto, PaymentCreateDto
 
 
 async def get_payment_controller(request: Request) -> PaymentController:

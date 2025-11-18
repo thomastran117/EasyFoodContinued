@@ -1,22 +1,23 @@
 from typing import Literal
+
 from controller.authController import AuthController
-from controller.userController import UserController
-from controller.fileController import FileController
-from controller.paymentController import PaymentController
-from controller.orderController import OrderController
-from controller.categoryController import CategoryController
-from controller.restaurantController import RestaurantController
 from controller.bookingController import BookingController
+from controller.categoryController import CategoryController
 from controller.comboController import ComboControler
 from controller.deliveryController import DeliveryController
-from controller.driverController import DriverController
 from controller.discountController import DiscountController
 from controller.drinkController import DrinkController
+from controller.driverController import DriverController
 from controller.employeeController import EmployeeController
 from controller.favouriteController import FavouriteController
+from controller.fileController import FileController
 from controller.foodController import FoodController
+from controller.orderController import OrderController
+from controller.paymentController import PaymentController
 from controller.reservationController import ReservationController
+from controller.restaurantController import RestaurantController
 from controller.reviewController import ReviewController
+from controller.userController import UserController
 
 Lifetime = Literal["singleton", "transient", "scoped"]
 

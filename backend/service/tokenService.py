@@ -1,6 +1,7 @@
 import json
 import secrets
 from datetime import datetime, timedelta, timezone
+
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
