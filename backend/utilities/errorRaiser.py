@@ -3,63 +3,56 @@ from fastapi import HTTPException
 from utilities.logger import logger
 
 
-class UserAlreadyExistsException(Exception):
-    pass
+class AppHttpException(Exception):
+    def __init__(self, status_code: int, detail: str):
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(detail)
 
 
-class InvalidCredentialsException(Exception):
-    pass
+class BadRequestException(AppHttpException):
+    def __init__(self, detail="Bad request"):
+        super().__init__(400, detail)
 
 
-class ConflictException(Exception):
-    pass
+class UnauthorizedException(AppHttpException):
+    def __init__(self, detail="Unauthorized"):
+        super().__init__(401, detail)
 
 
-class NotFoundException(Exception):
-    pass
+class ForbiddenException(AppHttpException):
+    def __init__(self, detail="Forbidden"):
+        super().__init__(403, detail)
 
 
-class UnauthorizedException(Exception):
-    pass
+class NotFoundException(AppHttpException):
+    def __init__(self, detail="Not found"):
+        super().__init__(404, detail)
 
 
-class ForbiddenException(Exception):
-    pass
+class ConflictException(AppHttpException):
+    def __init__(self, detail="Conflict"):
+        super().__init__(409, detail)
 
 
-class BadRequestException(Exception):
-    pass
+class InternalErrorException(AppHttpException):
+    def __init__(self, detail="Internal server error"):
+        super().__init__(500, detail)
 
 
-class NotImplementedException(Exception):
-    pass
+class NotImplementedException(AppHttpException):
+    def __init__(self, detail="Not implemented"):
+        super().__init__(501, detail)
 
 
-class ServiceUnavaliableException(Exception):
-    pass
-
-
-class InternalErrorExpection(Exception):
-    pass
+class ServiceUnavailableException(AppHttpException):
+    def __init__(self, detail="Service unavailable"):
+        super().__init__(503, detail)
 
 
 def raise_error(e: Exception):
-    if isinstance(e, BadRequestException):
-        raise HTTPException(status_code=400, detail=str(e))
-    elif isinstance(e, UnauthorizedException):
-        raise HTTPException(status_code=401, detail=str(e))
-    elif isinstance(e, ForbiddenException):
-        raise HTTPException(status_code=403, detail=str(e))
-    elif isinstance(e, NotFoundException):
-        raise HTTPException(status_code=404, detail=str(e))
-    elif isinstance(e, ConflictException):
-        raise HTTPException(status_code=409, detail=str(e))
-    elif isinstance(e, InternalErrorExpection):
-        raise HTTPException(status_code=500, detail=str(e))
-    elif isinstance(e, NotImplementedException):
-        raise HTTPException(status_code=501, detail=str(e))
-    elif isinstance(e, ServiceUnavaliableException):
-        raise HTTPException(status_code=503, detail=str(e))
+    if isinstance(e, AppHttpException):
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
     else:
-        logger.error("An unknown error occured: ", exc_info=True)
+        logger.error("An unknown error occurred", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
