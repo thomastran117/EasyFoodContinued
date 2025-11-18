@@ -9,7 +9,12 @@ from jose import JWTError, jwt
 from config.environmentConfig import settings
 from service.basicTokenService import BasicTokenService
 from service.cacheService import CacheService
-from utilities.errorRaiser import ForbiddenException, UnauthorizedException
+from utilities.errorRaiser import (
+    UnauthorizedException,
+    AppHttpException,
+    InternalErrorException,
+)
+from utilities.logger import logger
 
 
 class TokenService:
@@ -27,116 +32,173 @@ class TokenService:
         self.VERIFY_EXPIRE_MINUTES = 60
 
         self.require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
-
-    def _refresh_key(self, token: str) -> str:
-        return f"refresh:{token}"
-
-    def _verify_key(self, token: str) -> str:
-        return f"verify:{token}"
-
-    def _store_token(self, key: str, token: str, expire: timedelta, payload: dict):
-        self.cache_service.set(key, payload, expire)
-
-    def _load_token(self, key: str):
-        return self.cache_service.get(key)
-
-    def _delete_token(self, key: str):
-        self.cache_service.delete(key)
-
-    def create_access_token(self, data: dict) -> str:
-        expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_EXPIRE_MINUTES)
-        to_encode = {**data, "exp": expire}
-        return jwt.encode(to_encode, self.JWT_SECRET_ACCESS, algorithm=self.algorithm)
-
-    def create_refresh_token(self, data: dict, remember: bool) -> str:
-        refresh_days = (
-            self.REFRESH_EXPIRE_DAYS_LONG
-            if remember
-            else self.REFRESH_EXPIRE_DAYS_SHORT
-        )
-        expire = datetime.utcnow() + timedelta(days=refresh_days)
-
-        to_encode = {**data, "exp": expire, "jti": secrets.token_hex(16)}
-        token = jwt.encode(to_encode, self.JWT_SECRET_REFRESH, algorithm=self.algorithm)
-
-        self._store_token(
-            self._refresh_key(token), token, timedelta(days=refresh_days), to_encode
-        )
-        return token
-
-    def create_verification_token(self, email: str, password: str) -> str:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=self.VERIFY_EXPIRE_MINUTES
-        )
-        payload = {
-            "email": email,
-            "password": password,
-            "exp": expire,
-            "jti": secrets.token_hex(16),
-        }
-        token = jwt.encode(payload, self.JWT_SECRET_VERIFY, algorithm=self.algorithm)
-        self._store_token(
-            self._verify_key(token),
-            token,
-            timedelta(minutes=self.VERIFY_EXPIRE_MINUTES),
-            payload,
-        )
-        return token
-
-    def decode_access_token(self, token: str) -> dict:
-        if not token:
-            raise UnauthorizedException("Missing access token")
+        
+    def createAccessToken(self, data: dict) -> str:
         try:
+            expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_EXPIRE_MINUTES)
+            to_encode = {**data, "exp": expire}
+            return jwt.encode(
+                to_encode, self.JWT_SECRET_ACCESS, algorithm=self.algorithm
+            )
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] createAccessToken failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    def createRefreshToken(self, data: dict, remember: bool) -> str:
+        try:
+            refresh_days = (
+                self.REFRESH_EXPIRE_DAYS_LONG
+                if remember
+                else self.REFRESH_EXPIRE_DAYS_SHORT
+            )
+            expire = datetime.utcnow() + timedelta(days=refresh_days)
+
+            to_encode = {**data, "exp": expire, "jti": secrets.token_hex(16)}
+            token = jwt.encode(
+                to_encode, self.JWT_SECRET_REFRESH, algorithm=self.algorithm
+            )
+
+            self.cache_service.set(
+                f"refresh:{token}", token, timedelta(days=refresh_days), to_encode
+            )
+            return token
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[TokenService] createRefreshToken failed: {e}", exc_info=True
+            )
+            raise InternalErrorException("Internal server error")
+
+    def createVerificationToken(self, email: str, password: str) -> str:
+        try:
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=self.VERIFY_EXPIRE_MINUTES
+            )
+            payload = {
+                "email": email,
+                "password": password,
+                "exp": expire,
+                "jti": secrets.token_hex(16),
+            }
+            token = jwt.encode(
+                payload, self.JWT_SECRET_VERIFY, algorithm=self.algorithm
+            )
+            self.cache_service.set(
+                f"verify:{token}",
+                token,
+                timedelta(minutes=self.VERIFY_EXPIRE_MINUTES),
+                payload,
+            )
+            return token
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[TokenService] createVerificationToken failed: {e}", exc_info=True
+            )
+            raise InternalErrorException("Internal server error")
+
+    def verifyAccessToken(self, token: str) -> dict:
+        try:
+            if not token:
+                raise UnauthorizedException("Missing access token")
             return jwt.decode(
                 token, self.JWT_SECRET_ACCESS, algorithms=[self.algorithm]
             )
         except JWTError:
             raise UnauthorizedException("Invalid access token")
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] verifyAccessToken failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-    def verify_refresh_token(self, token: str) -> dict:
+    def verifyRefreshToken(self, token: str) -> dict:
         try:
             payload = jwt.decode(
                 token, self.JWT_SECRET_REFRESH, algorithms=[self.algorithm]
             )
+            data = self.cache_service.get(f"refresh:{token}")
+
+            if not data:
+                raise UnauthorizedException("Refresh token expired or revoked")
+
+            return payload
+
         except JWTError:
             raise UnauthorizedException("Invalid refresh token")
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[TokenService] verifyRefreshToken failed: {e}", exc_info=True
+            )
+            raise InternalErrorException("Internal server error")
 
-        data = self._load_token(self._refresh_key(token))
-        if not data:
-            raise UnauthorizedException("Refresh token expired or revoked")
-        return payload
-
-    def verify_verification_token(self, token: str) -> dict:
+    def verifyVerificationToken(self, token: str) -> dict:
         try:
             payload = jwt.decode(
                 token, self.JWT_SECRET_VERIFY, algorithms=[self.algorithm]
             )
+            data = self.cache_service.get(f"verify:{token}")
+
+            if not data:
+                raise UnauthorizedException("Verification token expired or revoked")
+
+            self.cache_service.delete(f"verify:{token}")
+            return payload
         except JWTError:
             raise UnauthorizedException("Invalid verification token")
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(
+                f"[TokenService] verifyVerificationToken failed: {e}", exc_info=True
+            )
+            raise InternalErrorException("Internal server error")
 
-        data = self._load_token(self._verify_key(token))
-        if not data:
-            raise UnauthorizedException("Verification token expired or revoked")
-        return payload
-
-    def invalidate_refresh_token(self, token: str):
-        self._delete_token(self._refresh_key(token))
-
-    def invalidate_verification_token(self, token: str):
-        self._delete_token(self._verify_key(token))
-
-    def generate_tokens(
+    def generateTokens(
         self, user_id: str, email: str, role: str = "user", remember: bool = False
     ):
-        user_data = {"id": user_id, "email": email, "role": role, "remember": remember}
-        return self.create_access_token(user_data), self.create_refresh_token(
-            user_data, remember
-        )
+        try:
+            user_data = {
+                "id": user_id,
+                "email": email,
+                "role": role,
+                "remember": remember,
+            }
+            return self.createAccessToken(user_data), self.createRefreshToken(
+                user_data, remember
+            )
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] generateTokens failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-    def rotate_refresh_token(self, old_refresh: str):
-        payload = self.verify_refresh_token(old_refresh)
-        user_data = {k: payload[k] for k in ("id", "email", "role", "remember")}
-        access_token = self.create_access_token(user_data)
-        self._delete_token(self._refresh_key(old_refresh))
-        new_refresh = self.create_refresh_token(user_data, user_data["remember"])
-        return access_token, new_refresh, payload["email"]
+    def rotateTokens(self, old_refresh: str):
+        try:
+            payload = self.verifyRefreshToken(old_refresh)
+            user_data = {k: payload[k] for k in ("id", "email", "role", "remember")}
+            access_token = self.createAccessToken(user_data)
+            self.cache_service.delete(f"refresh:{old_refresh}")
+            new_refresh = self.createRefreshToken(user_data, user_data["remember"])
+            return access_token, new_refresh, payload["email"]
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] rotateTokens failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    def logoutToken(self, token):
+        try:
+            self.verifyRefreshToken(token)
+            self.cache_service.delete(f"refresh:{token}")
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[TokenService] logoutToken failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
