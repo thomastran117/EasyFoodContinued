@@ -8,6 +8,7 @@ from service.deliveryService import DeliveryService
 from service.discountService import DiscountService
 from service.drinkService import DrinkService
 from service.driverService import DriverService
+from service.emailService import EmailService
 from service.employeeService import EmployeeService
 from service.favouriteService import FavouriteService
 from service.foodService import FoodService
@@ -28,29 +29,31 @@ Lifetime = Literal["singleton", "transient", "scoped"]
 def register_services(
     container,
     *,
-    auth_service_lifetime: Lifetime = "transient",
+    auth_service_lifetime: Lifetime = "scoped",
+    email_lifetime: Lifetime = "transient",
     oauth_service_lifetime: Lifetime = "transient",
-    user_service_lifetime: Lifetime = "transient",
-    payment_service_lifetime: Lifetime = "transient",
+    user_service_lifetime: Lifetime = "scoped",
+    payment_service_lifetime: Lifetime = "scoped",
     token_service_lifetime: Lifetime = "transient",
-    order_service_lifetime: Lifetime = "transient",
+    order_service_lifetime: Lifetime = "scoped",
     web_service_lifetime: Lifetime = "transient",
-    category_service_lifetime: Lifetime = "transient",
-    restaurant_service_lifetime: Lifetime = "transient",
-    booking_service_lifetime: Lifetime = "transient",
-    combo_service_lifetime: Lifetime = "transient",
-    delivery_service_lifetime: Lifetime = "transient",
-    discount_service_lifetime: Lifetime = "transient",
-    drink_service_lifetime: Lifetime = "transient",
-    driver_service_lifetime: Lifetime = "transient",
-    employee_service_lifetime: Lifetime = "transient",
-    favourite_service_lifetime: Lifetime = "transient",
-    food_service_lifetime: Lifetime = "transient",
-    reservation_service_lifetime: Lifetime = "transient",
-    review_service_lifetime: Lifetime = "transient",
+    category_service_lifetime: Lifetime = "scoped",
+    restaurant_service_lifetime: Lifetime = "scoped",
+    booking_service_lifetime: Lifetime = "scoped",
+    combo_service_lifetime: Lifetime = "scoped",
+    delivery_service_lifetime: Lifetime = "scoped",
+    discount_service_lifetime: Lifetime = "scoped",
+    drink_service_lifetime: Lifetime = "scoped",
+    driver_service_lifetime: Lifetime = "scoped",
+    employee_service_lifetime: Lifetime = "scoped",
+    favourite_service_lifetime: Lifetime = "scoped",
+    food_service_lifetime: Lifetime = "scoped",
+    reservation_service_lifetime: Lifetime = "scoped",
+    review_service_lifetime: Lifetime = "scoped",
 ):
     """Registers all app-level services."""
     try:
+        container.register("EmailService", lambda c: EmailService(), email_lifetime)
         container.register(
             "OAuthService", lambda c: OAuthService(), oauth_service_lifetime
         )

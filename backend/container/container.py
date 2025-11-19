@@ -77,7 +77,7 @@ class Container:
 
         raise KeyError(f"Unknown lifetime '{lifetime}' for dependency '{name}'")
 
-    async def try_resolve(self, name: str, scope: Optional[dict] = None) -> Any:
+    async def optionalResolve(self, name: str, scope: Optional[dict] = None) -> Any:
         try:
             return await self.resolve(name, scope)
         except Exception as e:
@@ -105,7 +105,6 @@ class Container:
     async def build(self) -> "Container":
         try:
             await self.resolve("CacheService")
-            await self.resolve("EmailService")
             await self.resolve("FileService")
             await self.resolve("BasicTokenService")
             logger.info("Core services initialized successfully.")

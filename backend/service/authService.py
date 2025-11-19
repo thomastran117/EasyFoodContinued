@@ -45,7 +45,7 @@ class AuthService:
                 logger.warn(
                     f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
                 )
-
+        
             with self.db_factory() as db:
                 user = db.query(User).filter(User.email == email).first()
 

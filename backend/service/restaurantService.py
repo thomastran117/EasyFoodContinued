@@ -44,7 +44,7 @@ class RestaurantService(BaseService):
             cached = self.cache_service.get(key)
 
             if cached:
-                return self.cache_service.decode_model(cached, Restaurant)
+                return self.cache_service.decodeModel(cached, Restaurant)
 
             restaurants = await Restaurant.find_all().to_list()
 
@@ -69,7 +69,7 @@ class RestaurantService(BaseService):
             key = self._key_one(restaurant_id)
             cached = self.cache_service.get(key)
             if cached:
-                return self.cache_service.decode_model(cached, Restaurant)
+                return self.cache_service.decodeModel(cached, Restaurant)
 
             restaurant = await Restaurant.get(restaurant_id)
             if not restaurant:

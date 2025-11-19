@@ -1,15 +1,19 @@
 import inspect
+from abc import ABC
 
 from utilities.errorRaiser import InternalErrorException, ServiceUnavailableException
 from utilities.logger import logger
 
 
-class BaseService:
+class BaseService(ABC):
     """
-    Provides dependency validation helpers to all services.
-    Any service that inherits this can call `self.ensure_ready(...)`
-    to validate that required dependencies exist.
+    Base class for all services.
+    Cannot be instantiated directly — must be subclassed.
     """
+
+    def __init__(self):
+        if type(self) is BaseService:
+            raise TypeError("BaseService cannot be instantiated directly. Inherit from it instead.")
 
     def ensureDependencies(self, *required_deps: str):
         try:
@@ -25,6 +29,7 @@ class BaseService:
                     raise ServiceUnavailableException(
                         "Service is not ready to handle this request"
                     )
-        except:
+
+        except Exception as e:
             logger.error(f"[BaseService] ensureDependencies failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
