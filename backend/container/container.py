@@ -50,32 +50,41 @@ class Container:
             raise SystemExit(1)
 
     async def resolve(self, name: str, scope: Optional[dict] = None) -> Any:
+        lifetime = self._lifetimes.get(name, "singleton")
+
+        async def _create_instance():
+            result = self._factories[name](self)
+            if isinstance(result, Awaitable):
+                return await result
+            return result
+
+        if lifetime == "singleton":
+            if name not in self._instances:
+                self._instances[name] = await _create_instance()
+            return self._instances[name]
+
+        elif lifetime == "transient":
+            return await _create_instance()
+
+        elif lifetime == "scoped":
+            if scope is None:
+                raise RuntimeError(
+                    f"Scope required to resolve scoped dependency '{name}'"
+                )
+            if name not in scope:
+                scope[name] = await _create_instance()
+            return scope[name]
+
+        raise KeyError(f"Unknown lifetime '{lifetime}' for dependency '{name}'")
+
+    async def try_resolve(self, name: str, scope: Optional[dict] = None) -> Any:
         try:
-            lifetime = self._lifetimes.get(name, "singleton")
-
-            async def _create_instance():
-                result = self._factories[name](self)
-                if isinstance(result, Awaitable):
-                    return await result
-                return result
-
-            if lifetime == "singleton":
-                if name not in self._instances:
-                    self._instances[name] = await _create_instance()
-                return self._instances[name]
-            elif lifetime == "transient":
-                return await _create_instance()
-            elif lifetime == "scoped":
-                if scope is None:
-                    raise RuntimeError(
-                        f"Scope required to resolve scoped dependency '{name}'"
-                    )
-                if name not in scope:
-                    scope[name] = await _create_instance()
-                return scope[name]
-            raise KeyError(f"Unknown lifetime '{lifetime}' for dependency '{name}'")
+            return await self.resolve(name, scope)
         except Exception as e:
-            logger.error(f"[Container] Unable to resolve a service: {e}", exc_info=True)
+            logger.warn(
+                f"[Container] Optional dependency '{name}' failed to resolve: {e}"
+            )
+            return None
 
     @asynccontextmanager
     async def create_scope(self):

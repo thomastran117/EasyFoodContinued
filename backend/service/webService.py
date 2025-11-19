@@ -15,6 +15,9 @@ class WebService:
         self.paypal_secret_key = settings.paypal_secret_key
         self.backend_url = "http://localhost:8050/api"
 
+    def isRecaptchaAvaliable(self) -> bool:
+        return self.RECAPTCHA_SECRET is not None
+
     async def verifyGoogleCaptcha(self, token: str) -> bool:
         """Verify Google reCAPTCHA token asynchronously."""
         try:

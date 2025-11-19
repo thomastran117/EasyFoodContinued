@@ -11,11 +11,7 @@ from dtos.authDtos import (
     SignupRequestDto,
 )
 from service.authService import AuthService
-from utilities.errorRaiser import (
-    ServiceUnavailableException,
-    UnauthorizedException,
-    raise_error,
-)
+from utilities.errorRaiser import AppHttpException, UnauthorizedException, raise_error
 from utilities.logger import logger
 
 
@@ -29,7 +25,7 @@ class AuthController:
 
     async def login(self, request: LoginRequestDto):
         try:
-            access, refresh, user = await self.auth_service.login_user(
+            access, refresh, user = await self.auth_service.localAuthenticate(
                 request.email, request.password, request.captcha, request.remember
             )
 
@@ -42,28 +38,33 @@ class AuthController:
                     "role": user.role,
                 }
             )
-            return self._set_refresh_cookie(response, refresh)
-
+            return self.setRefreshCookie(response, refresh)
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] login failed: {e}")
             raise_error(e)
 
     async def signup(self, request: SignupRequestDto):
         try:
-            await self.auth_service.signup_user(
+            await self.auth_service.signupUser(
                 request.email, request.password, request.role, request.captcha
             )
             return {"message": "Verification sent. Check your email"}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] signup failed: {e}")
             raise_error(e)
 
-    async def verify_email(self, token: str):
+    async def verifyUser(self, token: str):
         try:
-            if not settings.email_enabled:
-                logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavailableException("Email verification is not available")
-            await self.auth_service.verify_user(token)
+            await self.auth_service.verifyUser(token)
             return {"message": "Signup successful"}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] verifyUser failed: {e}")
             raise_error(e)
 
     async def renew(self):
@@ -72,7 +73,7 @@ class AuthController:
             if not refresh_token:
                 raise UnauthorizedException("Missing refresh token cookie")
 
-            access, refresh, email = await self.auth_service.exchange_tokens(
+            access, refresh, email = await self.auth_service.exchangeTokens(
                 refresh_token
             )
             response = JSONResponse(
@@ -84,9 +85,11 @@ class AuthController:
                     "avatar": "hi",
                 }
             )
-            return self._set_refresh_cookie(response, refresh)
-
+            return self.setRefreshCookie(response, refresh)
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] renew failed: {e}")
             raise_error(e)
 
     async def logout(self):
@@ -95,7 +98,7 @@ class AuthController:
             if not refresh_token:
                 raise UnauthorizedException("No refresh token cookie found")
 
-            await self.auth_service.logout_tokens(refresh_token)
+            await self.auth_service.logoutTokens(refresh_token)
             response = JSONResponse({"message": "Logged out successfully"})
             response.delete_cookie(
                 key="refresh_token",
@@ -104,35 +107,35 @@ class AuthController:
                 samesite="lax",
             )
             return response
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] logout failed: {e}")
             raise_error(e)
 
-    async def forgot_password(self, request: ForgotPasswordDto):
+    async def forgotPassword(self, request: ForgotPasswordDto):
         try:
-            if not settings.email_enabled:
-                logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavailableException("Forgot password is not available")
-
-            await self.auth_service.forgot_password(request.email)
-            return {"message": "If your email exists, a reset link was sent."}
-
+            await self.auth_service.forgotPassword(request.email)
+            return {"message": "If this email exists, a password reset link was sent."}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] forgotPassword failed: {e}")
             raise_error(e)
 
-    async def change_password(self, token: str, request: ChangePasswordDto):
+    async def changePassword(self, token: str, request: ChangePasswordDto):
         try:
-            if not settings.email_enabled:
-                logger.warn("Email service is not available. Please correct")
-                raise ServiceUnavailableException("Change password is not available")
-
-            await self.auth_service.change_password(request.password, token)
+            await self.auth_service.changePassword(request.password, token)
             return {"message": "Password changed successfully"}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] changePassword failed: {e}")
             raise_error(e)
 
-    async def google(self, auth_req: GoogleAuthRequest):
+    async def googleOAuth(self, auth_req: GoogleAuthRequest):
         try:
-            access, refresh, user = await self.auth_service.google_login(
+            access, refresh, user = await self.auth_service.googleOAuth(
                 auth_req.id_token, False
             )
 
@@ -145,14 +148,16 @@ class AuthController:
                     "role": user.role,
                 }
             )
-            return self._set_refresh_cookie(response, refresh)
-
+            return self.setRefreshCookie(response, refresh)
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] googleOAuth failed: {e}")
             raise_error(e)
 
-    async def microsoft(self, auth_req: MicrosoftAuthRequest):
+    async def microsoftOAuth(self, auth_req: MicrosoftAuthRequest):
         try:
-            access, refresh, user = await self.auth_service.microsoft_login(
+            access, refresh, user = await self.auth_service.microsoftOAuth(
                 auth_req.id_token, False
             )
 
@@ -165,20 +170,29 @@ class AuthController:
                     "role": user.role,
                 }
             )
-            return self._set_refresh_cookie(response, refresh)
+            return self.setRefreshCookie(response, refresh)
 
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[AuthController] microsoftOAuth failed: {e}")
             raise_error(e)
 
-    def _set_refresh_cookie(self, response: Response, refresh_token: str):
-        secure_flag = not getattr(settings, "debug", False)
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=secure_flag,
-            samesite="None",
-            path="/",
-            max_age=7 * 24 * 60 * 60,
-        )
-        return response
+    def setRefreshCookie(self, response: Response, refresh_token: str):
+        try:
+            secure_flag = not getattr(settings, "debug", False)
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                secure=secure_flag,
+                samesite="None",
+                path="/",
+                max_age=7 * 24 * 60 * 60,
+            )
+            return response
+        except AppHttpException as e:
+            raise_error(e)
+        except Exception as e:
+            logger.error(f"[AuthController] setRefreshCookie failed: {e}")
+            raise_error(e)

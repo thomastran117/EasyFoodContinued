@@ -51,10 +51,10 @@ class CacheService:
                 return value.model_dump(mode="json")
 
             if isinstance(value, list):
-                return [self.encode_model(v) for v in value]
+                return [self.encodeModel(v) for v in value]
 
             if isinstance(value, dict):
-                return {k: self.encode_model(v) for k, v in value.items()}
+                return {k: self.encodeModel(v) for k, v in value.items()}
 
             return value
         except AppHttpException:
@@ -86,7 +86,7 @@ class CacheService:
         """Serialize to JSON or pickle after encoding models."""
 
         try:
-            value = self.encode_model(value)
+            value = self.encodeModel(value)
 
             if as_json:
                 return json.dumps(value).encode("utf-8")
@@ -118,8 +118,8 @@ class CacheService:
         as_json: bool = True,
     ) -> bool:
         try:
-            key = self._key(key)
-            data = self._serialize(value, as_json)
+            key = self.key(key)
+            data = self.serialize(value, as_json)
 
             if isinstance(expire, timedelta):
                 expire = int(expire.total_seconds())
@@ -135,9 +135,9 @@ class CacheService:
 
     def get(self, key: str, as_json: bool = True) -> Optional[Any]:
         try:
-            key = self._key(key)
+            key = self.key(key)
             raw = self.client.get(key)
-            return self._deserialize(raw, as_json)
+            return self.deserialize(raw, as_json)
         except AppHttpException:
             raise
         except Exception as e:
@@ -146,7 +146,7 @@ class CacheService:
 
     def delete(self, key: str) -> bool:
         try:
-            return bool(self.client.delete(self._key(key)))
+            return bool(self.client.delete(self.key(key)))
         except AppHttpException:
             raise
         except Exception as e:
@@ -155,7 +155,7 @@ class CacheService:
 
     def exists(self, key: str) -> bool:
         try:
-            return bool(self.client.exists(self._key(key)))
+            return bool(self.client.exists(self.key(key)))
         except AppHttpException:
             raise
         except Exception as e:
@@ -164,7 +164,7 @@ class CacheService:
 
     def ttl(self, key: str) -> int:
         try:
-            return self.client.ttl(self._key(key))
+            return self.client.ttl(self.key(key))
         except AppHttpException:
             raise
         except Exception as e:
@@ -186,7 +186,7 @@ class CacheService:
 
     def incr(self, key: str, amount: int = 1) -> int:
         try:
-            return self.client.incr(self._key(key), amount)
+            return self.client.incr(self.key(key), amount)
         except AppHttpException:
             raise
         except Exception as e:
@@ -195,7 +195,7 @@ class CacheService:
 
     def decr(self, key: str, amount: int = 1) -> int:
         try:
-            return self.client.decr(self._key(key), amount)
+            return self.client.decr(self.key(key), amount)
         except AppHttpException:
             raise
         except Exception as e:
@@ -205,7 +205,7 @@ class CacheService:
     @contextmanager
     def acquireLock(self, key: str, timeout: int = 10, blocking_timeout: int = 5):
         lock = self.client.lock(
-            self._key(key), timeout=timeout, blocking_timeout=blocking_timeout
+            self.key(key), timeout=timeout, blocking_timeout=blocking_timeout
         )
         acquired = lock.acquire(blocking=True)
         try:

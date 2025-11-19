@@ -54,5 +54,4 @@ def raise_error(e: Exception):
     if isinstance(e, AppHttpException):
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     else:
-        logger.error("An unknown error occurred", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

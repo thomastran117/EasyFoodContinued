@@ -7,14 +7,18 @@ from .containerServices import register_services
 
 
 async def bootstrap() -> Container:
-    logger.info("Bootstrapping IoC container asynchronously...")
+    try:
+        logger.info("Bootstrapping IoC container asynchronously...")
 
-    container = Container()
-    register_singletons(container)
-    register_services(container)
-    register_controllers(container)
+        container = Container()
+        register_singletons(container)
+        register_services(container)
+        register_controllers(container)
 
-    await container.build()
-    container.summary()
-    logger.info("IoC container Bootstrap completed.")
-    return container
+        await container.build()
+        # container.summary()
+        logger.info("IoC container Bootstrap completed.")
+        return container
+    except Exception as e:
+        logger.error(f"[Container] Bootstrap failed: {e}")
+        raise

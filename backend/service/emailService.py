@@ -11,6 +11,9 @@ class EmailService:
         self.fm = FastMail(conf)
         self.website = website
 
+    async def isEmailAvaliable(self):
+        return settings.email_enabled
+
     async def send_reservation_email(self, email: str, details):
         pass
 

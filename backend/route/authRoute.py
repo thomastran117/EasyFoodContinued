@@ -9,6 +9,8 @@ from dtos.authDtos import (
     MicrosoftAuthRequest,
     SignupRequestDto,
 )
+from utilities.errorRaiser import raise_error
+from utilities.logger import logger
 
 
 async def get_auth_controller(request: Request) -> AuthController:
@@ -16,12 +18,16 @@ async def get_auth_controller(request: Request) -> AuthController:
     Resolve a scoped AuthController from the IoC container stored
     in app.state, ensuring per-request lifecycle and dependency resolution.
     """
-    container = request.app.state.container
+    try:
+        container = request.app.state.container
 
-    async with container.create_scope() as scope:
-        controller = await container.resolve("AuthController", scope)
-        controller.request = request
-        return controller
+        async with container.create_scope() as scope:
+            controller = await container.resolve("AuthController", scope)
+            controller.request = request
+            return controller
+    except Exception as e:
+        logger.error(f"[AuthRoute] Resolving controller failed: {e}")
+        raise_error(e)
 
 
 authRouter = APIRouter(tags=["Auth"])
@@ -43,7 +49,7 @@ async def signup(
 
 @authRouter.get("/verify")
 async def verify(token: str, ctrl: AuthController = Depends(get_auth_controller)):
-    return await ctrl.verify_email(token)
+    return await ctrl.verifyUser(token)
 
 
 @authRouter.post("/refresh")
@@ -60,21 +66,21 @@ async def logout(ctrl: AuthController = Depends(get_auth_controller)):
 async def google(
     dto: GoogleAuthRequest, ctrl: AuthController = Depends(get_auth_controller)
 ):
-    return await ctrl.google(dto)
+    return await ctrl.googleOAuth(dto)
 
 
 @authRouter.post("/microsoft")
 async def microsoft(
     dto: MicrosoftAuthRequest, ctrl: AuthController = Depends(get_auth_controller)
 ):
-    return await ctrl.microsoft(dto)
+    return await ctrl.microsoftOAuth(dto)
 
 
 @authRouter.post("/forgot-password")
 async def forgot(
     dto: ForgotPasswordDto, ctrl: AuthController = Depends(get_auth_controller)
 ):
-    return await ctrl.forgot_password(dto)
+    return await ctrl.forgotPassword(dto)
 
 
 @authRouter.post("/change-password")
@@ -83,4 +89,4 @@ async def change_password(
     dto: ChangePasswordDto,
     ctrl: AuthController = Depends(get_auth_controller),
 ):
-    return await ctrl.change_password(token, dto)
+    return await ctrl.changePassword(token, dto)

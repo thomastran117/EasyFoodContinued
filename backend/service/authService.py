@@ -1,10 +1,5 @@
 import bcrypt
-import httpx
-from google.auth.transport import requests
-from google.oauth2 import id_token
-from jose import jwt as jose_jwt
 
-from config.environmentConfig import settings
 from resources.database_client import get_db
 from schema.psql_template import User
 from service.emailService import EmailService
@@ -32,200 +27,270 @@ class AuthService:
         web_service: WebService,
         db_factory=get_db,
     ):
-        """
-        token_service: instance of TokenService
-        """
         self.token_service = token_service
         self.email_service = email_service
         self.oauth_service = oauth_service
         self.web_service = web_service
         self.db_factory = db_factory
 
-    async def login_user(
+    async def localAuthenticate(
         self, email: str, password: str, captcha: str, remember: bool = False
     ):
-        if settings.recaptcha_enabled:
-            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
-            if not is_valid_captcha:
-                raise UnauthorizedException("Captcha verification failed.")
-        else:
-            logger.warn(
-                "Bot detection can't be served due to unavailable captcha configuration"
-            )
-
-        with self.db_factory() as db:
-            user = db.query(User).filter(User.email == email).first()
-
-        if not user or not self.verify_password(password, user.password):
-            raise UnauthorizedException("Invalid email or password.")
-
-        access, refresh = self.token_service.generate_tokens(
-            user.id, user.email, "user", remember
-        )
-        return access, refresh, user
-
-    async def signup_user(self, email: str, password: str, role: str, captcha: str):
-        if settings.recaptcha_enabled:
-            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
-            if not is_valid_captcha:
-                raise UnauthorizedException("Captcha verification failed.")
-        else:
-            logger.warn("Bot detection can't be served due to captcha misconfiguration")
-
-        with self.db_factory() as db:
-            existing_user = db.query(User).filter(User.email == email).first()
-            if existing_user:
-                raise ConflictException(f"The email '{email}' is already registered.")
-
-            hashed_pw = self.hash_password(password)
-
-            if not settings.email_enabled:
+        try:
+            if self.web_service.isRecaptchaAvaliable():
+                is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
+                if not is_valid_captcha:
+                    raise UnauthorizedException("Invalid captcha")
+            else:
                 logger.warn(
-                    "Verifying users can't be served due to email misconfiguration. Defaulting."
+                    f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
                 )
-                new_user = User(email=email, password=hashed_pw)
+
+            with self.db_factory() as db:
+                user = db.query(User).filter(User.email == email).first()
+
+            if not user or not self.verifyPassword(password, user.password):
+                raise UnauthorizedException("Invalid email or password.")
+
+            access, refresh = self.token_service.generateTokens(
+                user.id, user.email, "user", remember
+            )
+            return access, refresh, user
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] localAuthenticate failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    async def signupUser(self, email: str, password: str, role: str, captcha: str):
+        try:
+            if self.web_service.isRecaptchaAvaliable():
+                is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
+                if not is_valid_captcha:
+                    raise UnauthorizedException("Invalid captcha")
+            else:
+                logger.warn(
+                    f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
+                )
+
+            with self.db_factory() as db:
+                existing_user = db.query(User).filter(User.email == email).first()
+                if existing_user:
+                    raise ConflictException(
+                        f"The email '{email}' is already registered."
+                    )
+
+                hashed_pw = self.hashPassword(password)
+
+                if not self.email_service.isEmailAvaliable():
+                    logger.warn(
+                        "[AuthService] signupUser: Email service is misconfigured - skipping verification"
+                    )
+                    new_user = User(email=email, password=hashed_pw)
+                    db.add(new_user)
+                    db.commit()
+                    db.refresh(new_user)
+                    return True
+
+            if self.email_service.isEmailAvaliable():
+                token = self.token_service.createVerificationToken(email, hashed_pw)
+                await self.email_service.send_verification_email(email, token)
+
+            return True
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] signupUser failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    async def verifyUser(self, token: str):
+        try:
+            if not self.email_service.isEmailAvaliable():
+                logger.warn("[AuthService] Email service is misconfigured - exiting")
+                raise ServiceUnavailableException(
+                    "The server is not ready to handle the request"
+                )
+
+            with self.db_factory() as db:
+                data = self.token_service.verifyVerificationToken(token)
+                if not data:
+                    raise BadRequestException("Invalid token")
+
+                new_user = User(email=data["email"], password=data["password"])
                 db.add(new_user)
                 db.commit()
                 db.refresh(new_user)
-                return True
+                return new_user
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] verifyUser failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-        if settings.email_enabled:
-            token = self.token_service.create_verification_token(email, hashed_pw)
-            await self.email_service.send_verification_email(email, token)
-
-        return True
-
-    async def verify_user(self, token: str):
-        if not settings.email_enabled:
-            logger.warn(
-                "Verifying users can't be served due to email misconfiguration."
+    async def microsoftOAuth(self, token: str, remember: bool = False):
+        try:
+            email, user_id, name, picture = (
+                await self.oauth_service.verifyMicrosoftToken(token)
             )
-            raise ServiceUnavailableException("Email verification is not available")
 
-        with self.db_factory() as db:
-            data = self.token_service.verify_verification_token(token)
-            if not data:
-                raise BadRequestException("Invalid token")
+            if not email:
+                raise UnauthorizedException("No email claim in Microsoft token")
 
-            new_user = User(email=data["email"], password=data["password"])
-            db.add(new_user)
-            db.commit()
-            db.refresh(new_user)
-            return new_user
+            with self.db_factory() as db:
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    user = User(
+                        email=email,
+                        provider="microsoft",
+                        microsoft_id=user_id,
+                        name=name,
+                        avatar=picture,
+                    )
+                    db.add(user)
+                else:
+                    if not user.microsoft_id:
+                        user.microsoft_id = user_id
+                    if not user.provider or user.provider == "local":
+                        user.provider = "microsoft"
 
-    async def microsoft_login(self, token: str, remember: bool = False):
-        email, user_id, name, picture = await self.oauth_service.verifyMicrosoftToken(
-            token
-        )
-
-        if not email:
-            raise UnauthorizedException("No email claim in Microsoft token")
-
-        with self.db_factory() as db:
-            user = db.query(User).filter(User.email == email).first()
-            if not user:
-                user = User(
-                    email=email,
-                    provider="microsoft",
-                    microsoft_id=user_id,
-                    name=name,
-                    avatar=picture,
-                )
-                db.add(user)
-            else:
-                if not user.microsoft_id:
-                    user.microsoft_id = user_id
-                if not user.provider or user.provider == "local":
-                    user.provider = "microsoft"
-
-            db.commit()
-            db.refresh(user)
-
-        access, refresh = self.token_service.generate_tokens(
-            user.id, user.email, user.role, remember
-        )
-        return access, refresh, user
-
-    async def google_login(self, token: str, remember: bool = False):
-        email, name, picture, user_id = await self.oauth_service.verifyGoogleToken(
-            token
-        )
-
-        with self.db_factory() as db:
-            user = db.query(User).filter(User.email == email).first()
-            if not user:
-                user = User(
-                    email=email,
-                    provider="google",
-                    microsoft_id=user_id,
-                    name=name,
-                    avatar=picture,
-                )
-                db.add(user)
                 db.commit()
                 db.refresh(user)
 
-        access, refresh = self.token_service.generate_tokens(
-            user.id, user.email, user.role, remember
-        )
-        return access, refresh, user
-
-    async def forgot_password(self, email: str):
-        if not settings.email_enabled:
-            logger.warn(
-                "Forgot password can't be served due to email misconfiguration."
+            access, refresh = self.token_service.generateTokens(
+                user.id, user.email, user.role, remember
             )
-            raise ServiceUnavailableException("Forgot password service is unavailable")
+            return access, refresh, user
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] microsoftOAuth failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-        with self.db_factory() as db:
-            user = db.query(User).filter(User.email == email).first()
-            if not user:
-                return
-            if user.provider in ["google", "microsoft"]:
-                return
-
-        token = self.token_service.create_verification_token(email, "empty")
-        await self.email_service.send_forgot_password_email(email, token)
-        return
-
-    async def change_password(self, password: str, token: str):
-        if not settings.email_enabled:
-            logger.warn(
-                "Change password can't be served due to email misconfiguration."
+    async def googleOAuth(self, token: str, remember: bool = False):
+        try:
+            email, name, picture, user_id = await self.oauth_service.verifyGoogleToken(
+                token
             )
-            raise ServiceUnavailableException("Change password service is unavailable")
+            with self.db_factory() as db:
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    user = User(
+                        email=email,
+                        provider="google",
+                        microsoft_id=user_id,
+                        name=name,
+                        avatar=picture,
+                    )
+                    db.add(user)
+                    db.commit()
+                    db.refresh(user)
 
-        data = self.token_service.verify_verification_token(token)
-        if not data:
-            raise BadRequestException("Invalid or expired token")
+            access, refresh = self.token_service.generateTokens(
+                user.id, user.email, user.role, remember
+            )
+            return access, refresh, user
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] googleOAuth failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-        with self.db_factory() as db:
-            email = data["email"]
-            user = db.query(User).filter(User.email == email).first()
-            if not user:
-                raise NotFoundException("User not found")
+    async def forgotPassword(self, email: str):
+        try:
+            if not self.email_service.isEmailAvaliable():
+                logger.warn(
+                    "[AuthService] forgotPassword: WebService has invalid configuration - exiting"
+                )
+                raise ServiceUnavailableException(
+                    "The server is not ready to handle the request"
+                )
 
-            hashed_pw = self.hash_password(password)
-            user.password = hashed_pw
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            return user
+            with self.db_factory() as db:
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    return
+                if user.provider in ["google", "microsoft"]:
+                    return
 
-    async def exchange_tokens(self, token: str):
-        access, refresh, email = self.token_service.rotate_refresh_token(token)
-        return access, refresh, email
+            token = self.token_service.createVerificationToken(email, "empty")
+            await self.email_service.send_forgot_password_email(email, token)
+            return
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] forgotPassword failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
 
-    async def logout_tokens(self, token: str):
-        self.token_service.invalidate_refresh_token(token)
-        return {"message": "Logged out successfully"}
+    async def changePassword(self, password: str, token: str):
+        try:
+            if not self.email_service.isEmailAvaliable():
+                logger.warn(
+                    "[AuthService] changePassword: WebService has invalid configuration - exiting"
+                )
+                raise ServiceUnavailableException(
+                    "The server is not ready to handle the request"
+                )
 
-    def hash_password(self, plain_password: str) -> str:
-        return bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt()).decode(
-            "utf-8"
-        )
+            data = self.token_service.verifyVerificationToken(token)
+            if not data:
+                raise BadRequestException("Invalid or expired token")
 
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(
-            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-        )
+            with self.db_factory() as db:
+                email = data["email"]
+                user = db.query(User).filter(User.email == email).first()
+                if not user:
+                    raise NotFoundException("User not found")
+
+                hashed_pw = self.hashPassword(password)
+                user.password = hashed_pw
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+                return
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] changePassword failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    async def exchangeTokens(self, token: str):
+        try:
+            access, refresh, email = self.token_service.rotateTokens(token)
+            return access, refresh, email
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] exchangeTokens failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    async def logoutTokens(self, token: str):
+        try:
+            self.token_service.logoutToken(token)
+            return {"message": "Logged out successfully"}
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] logoutTokens failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    def hashPassword(self, plain_password: str) -> str:
+        try:
+            return bcrypt.hashpw(
+                plain_password.encode("utf-8"), bcrypt.gensalt()
+            ).decode("utf-8")
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] hashPassword failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")
+
+    def verifyPassword(self, plain_password: str, hashed_password: str) -> bool:
+        try:
+            return bcrypt.checkpw(
+                plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+            )
+        except AppHttpException:
+            raise
+        except Exception as e:
+            logger.error(f"[AuthService] verifyPassword failed: {e}", exc_info=True)
+            raise InternalErrorException("Internal server error")

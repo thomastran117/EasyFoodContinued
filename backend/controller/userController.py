@@ -6,7 +6,8 @@ from PIL import Image
 
 from dtos.userDtos import UpdateUserDto
 from service.userService import UserService
-from utilities.errorRaiser import raise_error
+from utilities.errorRaiser import AppHttpException, raise_error
+from utilities.logger import logger
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -16,9 +17,9 @@ class UserController:
         self.user_service = user_service
         self.request: Request | None = None
 
-    async def get_user(self, id: int):
+    async def getUserByID(self, id: int):
         try:
-            user = self.user_service.get_user(user_id=id)
+            user = self.user_service.getUser(user_id=id)
             return {
                 "id": user.id,
                 "email": user.email,
@@ -28,12 +29,15 @@ class UserController:
                 "description": user.description,
                 "profileUrl": user.profileUrl,
             }
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[UserController] getUserByID failed: {e}")
             raise_error(e)
 
-    async def update_user(self, user_payload: dict, update: UpdateUserDto):
+    async def updateUser(self, user_payload: dict, update: UpdateUserDto):
         try:
-            updated_user = self.user_service.update_user(
+            updated_user = self.user_service.updateUser(
                 user_payload["id"],
                 username=update.username,
                 phone=update.phone,
@@ -42,17 +46,23 @@ class UserController:
                 description=update.description,
             )
             return {"message": "User updated successfully", "user_id": updated_user.id}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[UserController] updateAvatar failed: {e}")
             raise_error(e)
 
-    async def delete_user(self, user_payload: dict):
+    async def deleteUser(self, user_payload: dict):
         try:
-            self.user_service.delete_user(user_payload["id"])
+            self.user_service.deleteUser(user_payload["id"])
             return {"message": "User deleted successfully"}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[UserController] deleteUser failed: {e}")
             raise_error(e)
 
-    async def update_avatar(self, user_payload: dict, file: UploadFile):
+    async def updateAvatar(self, user_payload: dict, file: UploadFile):
         try:
             data = await file.read()
             if len(data) > MAX_FILE_SIZE:
@@ -71,9 +81,10 @@ class UserController:
 
             file.file.seek(0)
 
-            avatar_path = await self.user_service.update_avatar(
-                user_payload["id"], file
-            )
+            avatar_path = await self.user_service.updateAvatar(user_payload["id"], file)
             return {"message": "Avatar updated successfully", "avatar": avatar_path}
+        except AppHttpException as e:
+            raise_error(e)
         except Exception as e:
+            logger.error(f"[UserController] updateAvatar failed: {e}")
             raise_error(e)
