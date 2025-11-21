@@ -57,12 +57,14 @@ class OAuthService:
 
     async def verifyGoogleToken(self, token: str):
         try:
+            request = requests.Request()
+            clock_skew = 30
+
             idinfo = id_token.verify_oauth2_token(
                 token,
-                requests.Request(),
-                audience=(
-                    settings.google_client_id if settings.google_client_id else None
-                ),
+                request,
+                audience=settings.google_client_id,
+                clock_skew_in_seconds=clock_skew,
             )
 
             if idinfo.get("iss") not in (
@@ -71,16 +73,39 @@ class OAuthService:
             ):
                 raise UnauthorizedException("Invalid Google token issuer.")
 
-            email = idinfo.get("email")
-            name = idinfo.get("name")
-            picture = idinfo.get("picture")
-            user_id = idinfo.get("sub")
-            return email, name, picture, user_id
+            return (
+                idinfo.get("email"),
+                idinfo.get("name"),
+                idinfo.get("picture"),
+                idinfo.get("sub"),
+            )
 
         except ValueError as e:
+            if "early" in str(e) or "iat" in str(e):
+                import asyncio
+                await asyncio.sleep(0.5)
+
+                try:
+                    idinfo = id_token.verify_oauth2_token(
+                        token,
+                        requests.Request(),
+                        audience=settings.google_client_id,
+                        clock_skew_in_seconds=30,
+                    )
+                    return (
+                        idinfo.get("email"),
+                        idinfo.get("name"),
+                        idinfo.get("picture"),
+                        idinfo.get("sub"),
+                    )
+                except Exception:
+                    raise UnauthorizedException("Google OAuth token not yet valid.")
+            
             raise UnauthorizedException(f"Invalid Google token: {str(e)}")
+
         except AppHttpException:
             raise
+
         except Exception as e:
             logger.error(f"[OAuthService] verifyGoogleToken failed: {e}", exc_info=True)
             raise InternalErrorException("Internal Server Error")
