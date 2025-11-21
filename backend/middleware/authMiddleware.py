@@ -2,32 +2,43 @@ from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 
-from utilities.errorRaiser import ForbiddenException, UnauthorizedException
+from service.basicTokenService import BasicTokenService
+from utilities.errorRaiser import ForbiddenException, UnauthorizedException, raise_error
+from utilities.logger import logger
 
 require_auth_token = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-async def get_token_service(request: Request):
+async def getBasicTokenService(request: Request):
     """
     Resolve TokenService from the IoC container stored in app.state.
     This replaces the old container import from containerEntry.
     """
-    container = request.app.state.container
-    token_service = await container.resolve("BasicTokenService")
-    return token_service
+    try:
+        container = request.app.state.container
+        scope = request.state.scope
+
+        controller = await container.resolve("BasicTokenService", scope)
+        controller.request = request
+
+        return controller
+
+    except Exception as e:
+        logger.error(f"[AuthMiddleware] Resolving BasicTokenService failed: {e}")
+        raise_error(e)
 
 
 async def get_current_user(
     request: Request,
     token: str = Depends(require_auth_token),
-    token_service=Depends(get_token_service),
+    token_service: BasicTokenService = Depends(getBasicTokenService),
 ):
     """
     Extract and validate the current user from the JWT access token.
     Uses the TokenService resolved from IoC container.
     """
     try:
-        payload = token_service.decode_access_token(token)
+        payload = token_service.decodeAccessToken(token)
     except JWTError:
         raise UnauthorizedException("Invalid or expired access token")
 
@@ -38,7 +49,7 @@ async def get_current_user(
     return {f: payload[f] for f in required}
 
 
-def require_role(*roles: str):
+def requireRole(*roles: str):
     """
     Dependency factory that restricts access based on user roles.
     Example: @router.get(..., dependencies=[Depends(require_role("admin"))])

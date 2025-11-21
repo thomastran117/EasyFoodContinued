@@ -17,7 +17,7 @@ class BasicTokenService:
 
         self.require_auth_token = OAuth2PasswordBearer(tokenUrl="token")
 
-    def decode_access_token(self, token: str) -> dict:
+    def decodeAccessToken(self, token: str) -> dict:
         if not token:
             raise UnauthorizedException("Missing access token")
         try:

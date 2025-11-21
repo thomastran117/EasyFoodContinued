@@ -20,7 +20,6 @@ class TokenService:
         self.cache_service = cache_service
         self.algorithm = settings.algorithm
 
-        # Access token still uses JWT
         self.JWT_SECRET_ACCESS = settings.jwt_secret_access
 
         self.ACCESS_EXPIRE_MINUTES = 15
