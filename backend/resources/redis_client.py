@@ -8,14 +8,13 @@ MODE = settings.mode
 
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
-try:
 
-    if MODE in {"ci", "testing", "test"}:
-        logger.info(f"Skipping Redis connection (mode={MODE})")
-    else:
+async def init_redis():
+    try:
+        if MODE in {"ci", "testing", "test"}:
+            logger.info(f"Skipping Redis connection (mode={MODE})")
+
         redis_client.ping()
-        # logger.info("Redis connected successfully")
-
-except:
-    logger.error("Redis connection failed")
-    raise
+    except Exception as e:
+        logger.error(f"Redis connection failed: {e}")
+        raise

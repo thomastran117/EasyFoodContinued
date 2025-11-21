@@ -13,7 +13,7 @@ async def get_token_service(request: Request):
     This replaces the old container import from containerEntry.
     """
     container = request.app.state.container
-    token_service = await container.resolve("TokenService")
+    token_service = await container.resolve("BasicTokenService")
     return token_service
 
 

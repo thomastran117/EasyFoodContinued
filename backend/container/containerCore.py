@@ -1,30 +1,15 @@
-from typing import Literal
-
-from service.basicTokenService import BasicTokenService
-from service.cacheService import CacheService
-from service.fileService import FileService
+from resources.database_client import init_database
+from resources.mongo_client import init_mongo
+from resources.redis_client import init_redis
 from utilities.logger import logger
 
-Lifetime = Literal["singleton", "transient", "scoped"]
 
-
-def register_singletons(
-    container,
-    *,
-    cache_lifetime: Lifetime = "singleton",
-    file_lifetime: Lifetime = "singleton",
-    basic_token_service_lifetime: Lifetime = "singleton",
-):
-    """Registers fundamental singletons (cache, email, file, token)."""
+async def init_connections():
     try:
-        container.register("CacheService", lambda c, s: CacheService(), cache_lifetime)
-        container.register("FileService", lambda c, s: FileService(), file_lifetime)
-        container.register(
-            "BasicTokenService",
-            lambda c, s: BasicTokenService(),
-            basic_token_service_lifetime,
-        )
-        return container
+        await init_database()
+        await init_redis()
+        await init_mongo()
+        logger.info("[Container] Core connections succeeded")
     except Exception as e:
-        logger.error(f"[Container] Singleton registration failed: {e}")
+        logger.error(f"[Container] Connections failed: {e}")
         raise

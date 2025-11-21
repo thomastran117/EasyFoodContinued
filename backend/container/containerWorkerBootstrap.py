@@ -2,7 +2,7 @@ import asyncio
 
 from container.container import Container
 from container.containerControllers import register_controllers
-from container.containerCore import register_singletons
+from container.containerCore import init_connections
 from container.containerServices import register_services
 from utilities.logger import logger
 
@@ -17,6 +17,7 @@ async def async_bootstrap_worker() -> Container:
         logger.info("[Worker] Bootstrapping IoC container...")
 
         container = Container()
+        await init_connections()
         register_services(container)
         register_controllers(container)
 

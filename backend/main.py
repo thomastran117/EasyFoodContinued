@@ -16,7 +16,6 @@ from middleware.securityMiddleware import (
     SecurityHeadersMiddleware,
     setup_cors,
 )
-from resources.mongo_client import init_mongo
 from route.route import serverRouter
 from utilities.logger import logger
 
@@ -25,7 +24,6 @@ from utilities.logger import logger
 async def lifespan(app: FastAPI):
     try:
         logger.info("Initializing Container")
-        await init_mongo()
         container = await bootstrap()
         app.state.container = container
         logger.info("Container ready.")

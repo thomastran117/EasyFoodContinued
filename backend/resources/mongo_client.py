@@ -22,7 +22,6 @@ async def init_mongo():
             database=db,
             document_models=[Category, Restaurant, Food, Review, Reservation, Survey],
         )
-        # logger.info("MongoDB (Beanie) initialized successfully.")
     except Exception as e:
         logger.error(f"MongoDB initialization failed: {e}")
         raise

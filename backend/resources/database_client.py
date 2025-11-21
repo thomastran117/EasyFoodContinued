@@ -1,7 +1,8 @@
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 from config.environmentConfig import settings
 from utilities.logger import logger
@@ -9,33 +10,31 @@ from utilities.logger import logger
 DATABASE_URL = settings.database_url
 MODE = settings.mode
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
-)
+engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+
+SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
 Base = declarative_base()
 
-try:
-    if MODE == "ci" or MODE == "testing":
-        logger.info("Skipping database connection")
-    else:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        # logger.info("Database connected successfully")
 
-except Exception as e:
-    logger.error(f"Database connection failed: {e}")
-    raise
-
-
-@contextmanager
-def get_db():
-    db = SessionLocal()
+async def init_database():
     try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
+        if MODE in {"ci", "testing", "test"}:
+            logger.info("Skipping database connection")
+
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
         raise
-    finally:
-        db.close()
+
+
+@asynccontextmanager
+async def get_db():
+    async with SessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
