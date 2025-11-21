@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -48,6 +48,7 @@ app = FastAPI(title="EasyFood", lifespan=lifespan)
 
 setup_cors(app)
 setup_exception_handlers(app)
+
 """
 app.add_middleware(
     RateLimiterMiddleware,
@@ -63,6 +64,16 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(HTTPLoggerMiddleware)
 app.add_middleware(RequestIDMiddleware)
+
+
+@app.middleware("http")
+async def inject_scope(request: Request, call_next):
+    container = request.app.state.container
+    async with container.create_scope() as scope:
+        request.state.scope = scope
+        response = await call_next(request)
+    return response
+
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 if os.path.isdir(PUBLIC_DIR):

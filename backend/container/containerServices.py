@@ -53,113 +53,115 @@ def register_services(
 ):
     """Registers all app-level services."""
     try:
-        container.register("EmailService", lambda c: EmailService(), email_lifetime)
+        container.register("EmailService", lambda c, s: EmailService(), email_lifetime)
         container.register(
-            "OAuthService", lambda c: OAuthService(), oauth_service_lifetime
+            "OAuthService", lambda c, s: OAuthService(), oauth_service_lifetime
         )
-        container.register("WebService", lambda c: WebService(), web_service_lifetime)
+        container.register(
+            "WebService", lambda c, s: WebService(), web_service_lifetime
+        )
 
-        async def token_factory(c):
-            return TokenService(cache_service=await c.resolve("CacheService"))
+        async def token_factory(c, s):
+            return TokenService(cache_service=await c.resolve("CacheService", s))
 
-        async def payment_factory(c):
-            return PaymentService(web_service=await c.resolve("WebService"))
+        async def payment_factory(c, s):
+            return PaymentService(web_service=await c.resolve("WebService", s))
 
-        async def user_factory(c):
-            return UserService(file_service=await c.resolve("FileService"))
+        async def user_factory(c, s):
+            return UserService(file_service=await c.resolve("FileService", s))
 
-        async def order_factory(c):
-            return OrderService(payment_service=await c.resolve("PaymentService"))
+        async def order_factory(c, s):
+            return OrderService(payment_service=await c.resolve("PaymentService", s))
 
-        async def category_factory(c):
-            return CategoryService(cache_service=await c.resolve("CacheService"))
+        async def category_factory(c, s):
+            return CategoryService(cache_service=await c.resolve("CacheService", s))
 
-        async def delivery_factory(c):
+        async def delivery_factory(c, s):
             return DeliveryService(
-                user_service=await c.resolve("UserService"),
-                cache_service=await c.resolve("CacheService"),
+                user_service=await c.resolve("UserService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def driver_factory(c):
+        async def driver_factory(c, s):
             return DriverService(
-                cache_service=await c.resolve("CacheService"),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def restaurant_factory(c):
+        async def restaurant_factory(c, s):
             return RestaurantService(
-                user_service=await c.resolve("UserService"),
-                category_service=await c.resolve("CategoryService"),
-                cache_service=await c.resolve("CacheService"),
-                file_service=await c.resolve("FileService"),
+                user_service=await c.resolve("UserService", s),
+                category_service=await c.resolve("CategoryService", s),
+                cache_service=await c.resolve("CacheService", s),
+                file_service=await c.resolve("FileService", s),
             )
 
-        async def food_factory(c):
+        async def food_factory(c, s):
             return FoodService(
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def drink_factory(c):
+        async def drink_factory(c, s):
             return DrinkService(
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def review_factory(c):
+        async def review_factory(c, s):
             return ReviewService(
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def reservation_factory(c):
+        async def reservation_factory(c, s):
             return ReservationService(
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def employee_factory(c):
+        async def employee_factory(c, s):
             return EmployeeService(
-                user_service=await c.resolve("UserService"),
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                user_service=await c.resolve("UserService", s),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def favourite_factory(c):
+        async def favourite_factory(c, s):
             return FavouriteService(
-                user_service=await c.resolve("UserService"),
-                restaurant_service=await c.resolve("RestaurantService"),
-                cache_service=await c.resolve("CacheService"),
+                user_service=await c.resolve("UserService", s),
+                restaurant_service=await c.resolve("RestaurantService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def booking_factory(c):
+        async def booking_factory(c, s):
             return BookingService(
-                user_service=await c.resolve("UserService"),
-                reservation_service=await c.resolve("ReservationService"),
-                payment_service=await c.resolve("PaymentService"),
-                cache_service=await c.resolve("CacheService"),
+                user_service=await c.resolve("UserService", s),
+                reservation_service=await c.resolve("ReservationService", s),
+                payment_service=await c.resolve("PaymentService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def combo_factory(c):
+        async def combo_factory(c, s):
             return ComboService(
-                food_service=await c.resolve("FoodService"),
-                drink_service=await c.resolve("DrinkService"),
-                cache_service=await c.resolve("CacheService"),
+                food_service=await c.resolve("FoodService", s),
+                drink_service=await c.resolve("DrinkService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def discount_factory(c):
+        async def discount_factory(c, s):
             return DiscountService(
-                combo_service=await c.resolve("ComboService"),
-                food_service=await c.resolve("FoodService"),
-                drink_service=await c.resolve("DrinkService"),
-                cache_service=await c.resolve("CacheService"),
+                combo_service=await c.resolve("ComboService", s),
+                food_service=await c.resolve("FoodService", s),
+                drink_service=await c.resolve("DrinkService", s),
+                cache_service=await c.resolve("CacheService", s),
             )
 
-        async def auth_factory(c):
+        async def auth_factory(c, s):
             return AuthService(
-                token_service=await c.resolve("TokenService"),
-                email_service=await c.resolve("EmailService"),
-                oauth_service=await c.resolve("OAuthService"),
-                web_service=await c.resolve("WebService"),
+                token_service=await c.resolve("TokenService", s),
+                email_service=await c.resolve("EmailService", s),
+                oauth_service=await c.resolve("OAuthService", s),
+                web_service=await c.resolve("WebService", s),
             )
 
         container.register("TokenService", token_factory, token_service_lifetime)
@@ -187,13 +189,13 @@ def register_services(
             "ReservationService", reservation_factory, reservation_service_lifetime
         )
         container.register("BookingService", booking_factory, booking_service_lifetime)
-        container.register("AuthService", auth_factory, auth_service_lifetime)
         container.register("FoodService", food_factory, food_service_lifetime)
         container.register("DrinkService", drink_factory, drink_service_lifetime)
         container.register("ComboService", combo_factory, combo_service_lifetime)
         container.register(
             "DiscountService", discount_factory, discount_service_lifetime
         )
+        container.register("AuthService", auth_factory, auth_service_lifetime)
         return container
     except Exception as e:
         logger.error(f"[Container] Services registration failed: {e}")

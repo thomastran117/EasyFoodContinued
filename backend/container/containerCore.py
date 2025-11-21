@@ -17,11 +17,11 @@ def register_singletons(
 ):
     """Registers fundamental singletons (cache, email, file, token)."""
     try:
-        container.register("CacheService", lambda c: CacheService(), cache_lifetime)
-        container.register("FileService", lambda c: FileService(), file_lifetime)
+        container.register("CacheService", lambda c, s: CacheService(), cache_lifetime)
+        container.register("FileService", lambda c, s: FileService(), file_lifetime)
         container.register(
             "BasicTokenService",
-            lambda c: BasicTokenService(),
+            lambda c, s: BasicTokenService(),
             basic_token_service_lifetime,
         )
         return container

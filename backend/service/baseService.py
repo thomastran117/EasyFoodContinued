@@ -13,7 +13,9 @@ class BaseService(ABC):
 
     def __init__(self):
         if type(self) is BaseService:
-            raise TypeError("BaseService cannot be instantiated directly. Inherit from it instead.")
+            raise TypeError(
+                "BaseService cannot be instantiated directly. Inherit from it instead."
+            )
 
     def ensureDependencies(self, *required_deps: str):
         try:

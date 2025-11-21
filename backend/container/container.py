@@ -53,7 +53,7 @@ class Container:
         lifetime = self._lifetimes.get(name, "singleton")
 
         async def _create_instance():
-            result = self._factories[name](self)
+            result = self._factories[name](self, scope)
             if isinstance(result, Awaitable):
                 return await result
             return result

@@ -16,7 +16,7 @@ async def bootstrap() -> Container:
         register_controllers(container)
 
         await container.build()
-        # container.summary()
+        container.summary()
         logger.info("IoC container Bootstrap completed.")
         return container
     except Exception as e:

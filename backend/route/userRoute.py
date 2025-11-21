@@ -16,13 +16,15 @@ async def get_user_controller(request: Request) -> UserController:
     """
     try:
         container = request.app.state.container
+        scope = request.state.scope
 
-        async with container.create_scope() as scope:
-            controller = await container.resolve("UserController", scope)
-            controller.request = request
-            return controller
+        controller = await container.resolve("UserController", scope)
+        controller.request = request
+
+        return controller
+
     except Exception as e:
-        logger.error(f"[UserRoute] Resolving controller failed: {e}")
+        logger.error(f"[UserRoute] Resolving UserController failed: {e}")
         raise_error(e)
 
 

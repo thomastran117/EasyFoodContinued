@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, Request
 from controller.categoryController import CategoryController
 from dtos.categoryDtos import CreateCategoryRequest, UpdateCategoryRequest
 from middleware.authMiddleware import get_current_user
+from utilities.errorRaiser import raise_error
+from utilities.logger import logger
 
 
 async def get_category_controller(request: Request) -> CategoryController:
@@ -10,12 +12,19 @@ async def get_category_controller(request: Request) -> CategoryController:
     Resolve a scoped CategoryController from the IoC container stored
     in app.state, ensuring per-request lifecycle and dependency resolution.
     """
-    container = request.app.state.container
+    try:
+        container = request.app.state.container
+        scope = request.state.scope
 
-    async with container.create_scope() as scope:
         controller = await container.resolve("CategoryController", scope)
         controller.request = request
+
         return controller
+
+    except Exception as e:
+        logger.error(f"[CategoryRoute] Resolving CategoryController failed: {e}")
+        raise_error(e)
+
 
 
 categoryRouter = APIRouter(tags=["Category"])

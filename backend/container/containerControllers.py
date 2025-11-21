@@ -48,73 +48,77 @@ def register_controllers(
     try:
         """Registers all controllers."""
 
-        async def auth_controller_factory(c):
-            return AuthController(auth_service=await c.resolve("AuthService"))
+        async def auth_controller_factory(c, s):
+            return AuthController(auth_service=await c.resolve("AuthService", s))
 
-        async def user_controller_factory(c):
-            return UserController(user_service=await c.resolve("UserService"))
+        async def user_controller_factory(c, s):
+            return UserController(user_service=await c.resolve("UserService", s))
 
-        async def file_controller_factory(c):
-            return FileController(file_service=await c.resolve("FileService"))
+        async def file_controller_factory(c, s):
+            return FileController(file_service=await c.resolve("FileService", s))
 
-        async def payment_controller_factory(c):
-            return PaymentController(payment_service=await c.resolve("PaymentService"))
+        async def payment_controller_factory(c, s):
+            return PaymentController(
+                payment_service=await c.resolve("PaymentService", s)
+            )
 
-        async def order_controller_factory(c):
-            return OrderController(order_service=await c.resolve("OrderService"))
+        async def order_controller_factory(c, s):
+            return OrderController(order_service=await c.resolve("OrderService", s))
 
-        async def category_controller_factory(c):
+        async def category_controller_factory(c, s):
             return CategoryController(
-                category_service=await c.resolve("CategoryService")
+                category_service=await c.resolve("CategoryService", s)
             )
 
-        async def restaurant_controller_factory(c):
+        async def restaurant_controller_factory(c, s):
             return RestaurantController(
-                restaurant_service=await c.resolve("RestaurantService")
+                restaurant_service=await c.resolve("RestaurantService", s)
             )
 
-        async def booking_controller_factory(c):
-            return BookingController(booking_service=await c.resolve("BookingService"))
+        async def booking_controller_factory(c, s):
+            return BookingController(
+                booking_service=await c.resolve("BookingService", s)
+            )
 
-        async def combo_controller_factory(c):
-            return ComboControler(combo_service=await c.resolve("ComboService"))
+        async def combo_controller_factory(c, s):
+            return ComboControler(combo_service=await c.resolve("ComboService", s))
 
-        async def delivery_controller_factory(c):
+        async def delivery_controller_factory(c, s):
             return DeliveryController(
-                delivery_service=await c.resolve("DeliveryService")
+                delivery_service=await c.resolve("DeliveryService", s)
             )
 
-        async def discount_controller_factory(c):
+        async def discount_controller_factory(c, s):
             return DiscountController(
-                discount_service=await c.resolve("DiscountService")
+                discount_service=await c.resolve("DiscountService", s)
             )
 
         async def drink_controller_factory(c):
-            return DrinkController(drink_service=await c.resolve("DrinkService"))
+            return DrinkController(drink_service=await c.resolve("DrinkService", s))
 
-        async def employee_controller_factory(c):
+        async def employee_controller_factory(c, s):
             return EmployeeController(
-                employee_service=await c.resolve("EmployeeService")
+                employee_service=await c.resolve("EmployeeService, s")
             )
 
-        async def favourite_controller_factory(c):
+        async def favourite_controller_factory(c, s):
             return FavouriteController(
-                favourite_service=await c.resolve("FavouriteService")
+                favourite_service=await c.resolve("FavouriteService", s)
             )
 
-        async def food_controller_factory(c):
-            return FoodController(food_service=await c.resolve("FoodService"))
+        async def food_controller_factory(c, s):
+            return FoodController(food_service=await c.resolve("FoodService", s))
 
-        async def reservation_controller_factory(c):
+        async def reservation_controller_factory(c, s):
             return ReservationController(
-                reservation_service=await c.resolve("ReservationService")
+                reservation_service=await c.resolve("ReservationService", s)
             )
 
-        async def driver_controller_factory(c):
-            return DriverController(driver_service=await c.resolve("DriverService"))
+        async def driver_controller_factory(c, s):
+            return DriverController(driver_service=await c.resolve("DriverService", s))
 
-        async def review_controller_factory(c):
-            return ReviewController(review_service=await c.resolve("ReviewService"))
+        async def review_controller_factory(c, s):
+            return ReviewController(review_service=await c.resolve("ReviewService", s))
 
         container.register(
             "AuthController", auth_controller_factory, auth_controller_lifetime

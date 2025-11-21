@@ -14,13 +14,15 @@ async def get_file_controller(request: Request) -> FileController:
     """
     try:
         container = request.app.state.container
+        scope = request.state.scope
 
-        async with container.create_scope() as scope:
-            controller = await container.resolve("FileController", scope)
-            controller.request = request
-            return controller
+        controller = await container.resolve("FileController", scope)
+        controller.request = request
+
+        return controller
+
     except Exception as e:
-        logger.error(f"[AuthRoute] Resolving controller failed: {e}")
+        logger.error(f"[FileRoute] Resolving FileController failed: {e}")
         raise_error(e)
 
 
