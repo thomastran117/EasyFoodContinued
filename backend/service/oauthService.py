@@ -83,6 +83,7 @@ class OAuthService:
         except ValueError as e:
             if "early" in str(e) or "iat" in str(e):
                 import asyncio
+
                 await asyncio.sleep(0.5)
 
                 try:
@@ -100,7 +101,7 @@ class OAuthService:
                     )
                 except Exception:
                     raise UnauthorizedException("Google OAuth token not yet valid.")
-            
+
             raise UnauthorizedException(f"Invalid Google token: {str(e)}")
 
         except AppHttpException:

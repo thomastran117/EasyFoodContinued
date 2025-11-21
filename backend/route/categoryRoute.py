@@ -26,7 +26,6 @@ async def get_category_controller(request: Request) -> CategoryController:
         raise_error(e)
 
 
-
 categoryRouter = APIRouter(tags=["Category"])
 
 
