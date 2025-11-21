@@ -67,11 +67,19 @@ app.add_middleware(RequestIDMiddleware)
 
 
 @app.middleware("http")
-async def inject_scope(request: Request, call_next):
+async def createRequestScope(request: Request, call_next):
     container = request.app.state.container
     async with container.create_scope() as scope:
         request.state.scope = scope
         response = await call_next(request)
+
+        try:
+            logger.info(f"[Scope] Resolved services: {list(scope.keys())}")
+            for name, instance in scope.items():
+                logger.info(f"[Scope] {name}: {type(instance).__name__}")
+        except Exception as e:
+            logger.error(f"[Scope] Failed to inspect scope: {e}")
+
     return response
 
 
