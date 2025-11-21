@@ -1,7 +1,9 @@
 from typing import Literal
 
 from service.authService import AuthService
+from service.basicTokenService import BasicTokenService
 from service.bookingService import BookingService
+from service.cacheService import CacheService
 from service.categoryService import CategoryService
 from service.comboService import ComboService
 from service.deliveryService import DeliveryService
@@ -11,6 +13,7 @@ from service.driverService import DriverService
 from service.emailService import EmailService
 from service.employeeService import EmployeeService
 from service.favouriteService import FavouriteService
+from service.fileService import FileService
 from service.foodService import FoodService
 from service.oauthService import OAuthService
 from service.orderService import OrderService
@@ -29,6 +32,9 @@ Lifetime = Literal["singleton", "transient", "scoped"]
 def register_services(
     container,
     *,
+    cache_lifetime: Lifetime = "singleton",
+    file_lifetime: Lifetime = "singleton",
+    basic_token_service_lifetime: Lifetime = "singleton",
     auth_service_lifetime: Lifetime = "scoped",
     email_lifetime: Lifetime = "transient",
     oauth_service_lifetime: Lifetime = "transient",
@@ -53,13 +59,6 @@ def register_services(
 ):
     """Registers all app-level services."""
     try:
-        container.register("EmailService", lambda c, s: EmailService(), email_lifetime)
-        container.register(
-            "OAuthService", lambda c, s: OAuthService(), oauth_service_lifetime
-        )
-        container.register(
-            "WebService", lambda c, s: WebService(), web_service_lifetime
-        )
 
         async def token_factory(c, s):
             return TokenService(cache_service=await c.resolve("CacheService", s))
@@ -163,6 +162,21 @@ def register_services(
                 oauth_service=await c.resolve("OAuthService", s),
                 web_service=await c.resolve("WebService", s),
             )
+
+        container.register("CacheService", lambda c, s: CacheService(), cache_lifetime)
+        container.register("FileService", lambda c, s: FileService(), file_lifetime)
+        container.register(
+            "BasicTokenService",
+            lambda c, s: BasicTokenService(),
+            basic_token_service_lifetime,
+        )
+        container.register("EmailService", lambda c, s: EmailService(), email_lifetime)
+        container.register(
+            "OAuthService", lambda c, s: OAuthService(), oauth_service_lifetime
+        )
+        container.register(
+            "WebService", lambda c, s: WebService(), web_service_lifetime
+        )
 
         container.register("TokenService", token_factory, token_service_lifetime)
         container.register("PaymentService", payment_factory, payment_service_lifetime)

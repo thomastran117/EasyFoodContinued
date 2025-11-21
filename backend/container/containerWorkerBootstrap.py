@@ -17,7 +17,6 @@ async def async_bootstrap_worker() -> Container:
         logger.info("[Worker] Bootstrapping IoC container...")
 
         container = Container()
-        register_singletons(container)
         register_services(container)
         register_controllers(container)
 
