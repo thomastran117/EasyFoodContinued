@@ -24,7 +24,7 @@ class CategoryService:
         cached = self.cache.get(key)
 
         if cached:
-            return self.cache.decode_model(cached, Category)
+            return self.cache.decodeModel(cached, Category)
 
         categories = await Category.find_all().to_list()
 
@@ -39,7 +39,7 @@ class CategoryService:
         key = self._key_one(category_id)
         cached = self.cache.get(key)
         if cached:
-            return self.cache.decode_model(cached, Category)
+            return self.cache.decodeModel(cached, Category)
 
         category = await Category.get(category_id)
         if not category:
