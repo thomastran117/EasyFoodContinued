@@ -20,7 +20,7 @@ class TokenService:
         self.cache_service = cache_service
         self.algorithm = settings.algorithm
 
-        self.JWT_SECRET_ACCESS = settings.jwt_secret_access
+        self.JWT_SECRET_ACCESS = settings.secret_key
 
         self.ACCESS_EXPIRE_MINUTES = 15
         self.REFRESH_EXPIRE_DAYS_SHORT = 1

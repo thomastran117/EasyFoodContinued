@@ -11,7 +11,7 @@ class BasicTokenService:
     def __init__(self):
         self.algorithm = settings.algorithm
 
-        self.JWT_SECRET_ACCESS = settings.jwt_secret_access
+        self.JWT_SECRET_ACCESS = settings.secret_key
 
         self.ACCESS_EXPIRE_MINUTES = 15
 
