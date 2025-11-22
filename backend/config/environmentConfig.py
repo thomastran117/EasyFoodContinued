@@ -28,9 +28,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
     ]
 
-    jwt_secret_access: str = "default-key"
-    jwt_secret_refresh: str = "default-key"
-    jwt_secret_verify: str = "default-key"
+    secret_key: str = "default-key"
     algorithm: str = "HS256"
 
     email: Optional[str] = None

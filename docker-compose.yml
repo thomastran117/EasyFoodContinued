@@ -1,8 +1,9 @@
 x-environment-defaults: &default-env
-  DATABASE_URL: "postgresql+psycopg://postgres:postgres@db:5432/postgres"
+  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/postgres"
   REDIS_URL: "redis://redis:6379/0"
   CELERY_BROKER_URL: "redis://redis:6379/0"
   CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+  MONGO_URL: "mongodb://mongo:27017/easyfoodapp"
   PYTHONUNBUFFERED: "1"
   PYTHONPATH: "/app"
 
@@ -24,7 +25,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     networks:
-      - app_net
+      - easyfood_net
 
   backend:
     build:
@@ -41,10 +42,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mongo:
+        condition: service_started
       redis:
         condition: service_started
     networks:
-      - app_net
+      - easyfood_net
 
   celery:
     container_name: easyfood-celery
@@ -57,12 +60,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mongo:
+        condition: service_started
       redis:
         condition: service_started
     volumes:
       - ./backend:/app
     networks:
-      - app_net
+      - easyfood_net
 
   db:
     image: postgres:16
@@ -82,7 +87,19 @@ services:
       timeout: 3s
       retries: 20
     networks:
-      - app_net
+      - easyfood_net
+
+  mongo:
+    image: mongo:7
+    container_name: easyfood-mongo
+    environment:
+      MONGO_INITDB_DATABASE: easyfoodapp
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - "27018:27017"
+    networks:
+      - easyfood_net
 
   redis:
     image: redis:7
@@ -91,10 +108,11 @@ services:
     ports:
       - "6380:6379"
     networks:
-      - app_net
+      - easyfood_net
 
 networks:
-  app_net:
+  easyfood_net:
 
 volumes:
   pgdata:
+  mongodata:
