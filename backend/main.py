@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from config.environmentConfig import settings
@@ -17,7 +17,14 @@ from middleware.securityMiddleware import (
     setup_cors,
 )
 from route.route import serverRouter
+from utilities.errorRaiser import AppHttpException
 from utilities.logger import logger
+
+
+def register_app_exceptions(app: FastAPI):
+    @app.exception_handler(AppHttpException)
+    async def app_exception_handler(request, exc: AppHttpException):
+        return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
 
 
 @asynccontextmanager
@@ -33,6 +40,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="EasyFood", lifespan=lifespan)
 
+register_app_exceptions(app)
 setup_cors(app)
 setup_exception_handlers(app)
 
@@ -56,9 +64,15 @@ app.add_middleware(RequestIDMiddleware)
 @app.middleware("http")
 async def createRequestScope(request: Request, call_next):
     container = request.app.state.container
+
     async with container.create_scope() as scope:
         request.state.scope = scope
-        response = await call_next(request)
+
+        try:
+            response = await call_next(request)
+        except Exception as e:
+            logger.error(f"[Scope] Error during request: {e}", exc_info=True)
+            raise  # VERY IMPORTANT: bubble up
 
         try:
             logger.info(f"[Scope] Resolved services: {list(scope.keys())}")
@@ -67,7 +81,7 @@ async def createRequestScope(request: Request, call_next):
         except Exception as e:
             logger.error(f"[Scope] Failed to inspect scope: {e}")
 
-    return response
+        return response
 
 
 PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "public")

@@ -92,7 +92,8 @@ class Container:
         try:
             yield scope
         except Exception as e:
-            logger.error(f"[Container] Resolving dependency failed: {e}", exc_info=True)
+            logger.error(f"[Container] Scope failed: {e}", exc_info=True)
+            raise
         finally:
             for instance in scope.values():
                 close_fn = getattr(instance, "close", None)
