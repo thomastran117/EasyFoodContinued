@@ -23,23 +23,12 @@ from utilities.logger import logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        logger.info("Initializing Container")
         container = await bootstrap()
         app.state.container = container
-        logger.info("Container ready.")
         yield
     except Exception as e:
         logger.error(f"[Server] Container startup failed: {e}", exc_info=True)
         raise
-    finally:
-        logger.info("Cleaning up IoC resources...")
-        if hasattr(app.state, "container"):
-            with app.state.container.create_scope() as scope:
-                for instance in scope.values():
-                    close_fn = getattr(instance, "close", None)
-                    if callable(close_fn):
-                        close_fn()
-        logger.info("Cleanup done.")
 
 
 app = FastAPI(title="EasyFood", lifespan=lifespan)
