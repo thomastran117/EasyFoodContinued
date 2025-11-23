@@ -32,6 +32,7 @@ class AuthService:
         self.oauth_service = oauth_service
         self.web_service = web_service
         self.db_factory = db_factory
+        self.DUMMY_HASH = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8T8YtAUD3bFIxVYbcEdb87qfEzS1mS"
 
     async def localAuthenticate(
         self, email: str, password: str, captcha: str, remember: bool = False
@@ -48,8 +49,11 @@ class AuthService:
 
             with self.db_factory() as db:
                 user = db.query(User).filter(User.email == email).first()
+        
+            hash_to_check = user.password if user and user.password else self.DUMMY_HASH
+            password_ok = self.verifyPassword(password, hash_to_check)
 
-            if not user or not self.verifyPassword(password, user.password):
+            if not user or not password_ok:
                 raise UnauthorizedException("Invalid email or password.")
 
             access, refresh = self.token_service.generateTokens(
