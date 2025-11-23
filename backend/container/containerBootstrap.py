@@ -4,7 +4,7 @@ from .container import Container
 from .containerControllers import register_controllers
 from .containerCore import init_connections
 from .containerServices import register_services
-
+from .containerRepositories import register_repositories
 
 async def bootstrap() -> Container:
     try:
@@ -12,11 +12,12 @@ async def bootstrap() -> Container:
 
         container = Container()
         await init_connections()
+        register_repositories(container)
         register_services(container)
         register_controllers(container)
 
         await container.build()
-        # container.summary()
+        container.summary()
         logger.info("IoC container Bootstrap completed.")
         return container
     except Exception as e:
