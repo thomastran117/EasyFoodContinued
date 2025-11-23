@@ -151,14 +151,8 @@ class AuthService:
                         avatar=picture,
                     )
                     db.add(user)
-                else:
-                    if not user.microsoft_id:
-                        user.microsoft_id = user_id
-                    if not user.provider or user.provider == "local":
-                        user.provider = "microsoft"
-
-                db.commit()
-                db.refresh(user)
+                    db.commit()
+                    db.refresh(user)
 
             access, refresh = self.token_service.generateTokens(
                 user.id, user.email, user.role, remember
@@ -181,7 +175,7 @@ class AuthService:
                     user = User(
                         email=email,
                         provider="google",
-                        microsoft_id=user_id,
+                        google_id=user_id,
                         name=name,
                         avatar=picture,
                     )
