@@ -49,7 +49,7 @@ class AuthService:
 
             with self.db_factory() as db:
                 user = db.query(User).filter(User.email == email).first()
-        
+
             hash_to_check = user.password if user and user.password else self.DUMMY_HASH
             password_ok = self.verifyPassword(password, hash_to_check)
 
