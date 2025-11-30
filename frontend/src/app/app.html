@@ -4,11 +4,22 @@
 </ng-container>
 
 <ng-template #loadingScreen>
-  <div class="vh-100 d-flex flex-column align-items-center justify-content-center bg-gradient">
-    <div class="loading-card text-center p-4 rounded-4 shadow-sm">
-      <div class="spinner-grow text-primary mb-3" style="width: 3rem; height: 3rem"></div>
-      <h5 class="fw-bold mb-1 text-dark">EasyFood</h5>
-      <p class="text-muted mb-0">Restoring your session...</p>
+  <div
+    class="easyfood-loading-screen vh-100 d-flex flex-column align-items-center justify-content-center"
+  >
+    <div class="loading-card rounded-4 shadow-lg p-5 text-center">
+      <div class="loader-icon mx-auto mb-4">
+        <i class="bi bi-arrow-repeat"></i>
+      </div>
+
+      <h3 class="fw-bold text-primary mb-1">EasyFood</h3>
+      <p class="text-secondary mb-4">Restoring your session...</p>
+
+      <div class="loading-icons d-flex justify-content-center gap-4 mt-2">
+        <i class="bi bi-cup-hot text-primary icon-pulse"></i>
+        <i class="bi bi-egg-fried text-accent-orange icon-pulse delay-1"></i>
+        <i class="bi bi-basket2 text-primary icon-pulse delay-2"></i>
+      </div>
     </div>
   </div>
 </ng-template>
