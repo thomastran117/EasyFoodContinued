@@ -72,7 +72,7 @@ async def createRequestScope(request: Request, call_next):
             response = await call_next(request)
         except Exception as e:
             logger.error(f"[Scope] Error during request: {e}", exc_info=True)
-            raise  # VERY IMPORTANT: bubble up
+            raise
 
         try:
             logger.info(f"[Scope] Resolved services: {list(scope.keys())}")

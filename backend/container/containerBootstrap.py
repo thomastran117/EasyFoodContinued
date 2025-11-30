@@ -6,6 +6,7 @@ from .containerCore import init_connections
 from .containerServices import register_services
 from .containerRepositories import register_repositories
 
+
 async def bootstrap() -> Container:
     try:
         logger.info("Bootstrapping IoC container asynchronously...")
