@@ -11,7 +11,6 @@ import { MicrosoftCallbackComponent } from './pages/microsoft-callback/microsoft
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    LoginComponent,
     RouterModule.forChild([
       { path: '', redirectTo: 'login', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },

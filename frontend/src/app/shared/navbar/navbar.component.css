@@ -4,10 +4,16 @@
   transition:
     box-shadow 0.3s ease-in-out,
     background-color 0.3s ease-in-out;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-.custom-navbar:hover {
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+.custom-navbar * {
+  max-width: 100%;
+  overflow-x: hidden !important;
 }
 
 .navbar-brand {
@@ -15,7 +21,6 @@
   letter-spacing: 0.3px;
   transition: color 0.3s;
 }
-
 .navbar-brand:hover {
   color: #1565c0 !important;
 }
@@ -26,6 +31,11 @@
   transition:
     color 0.25s,
     border-color 0.25s;
+  white-space: nowrap;
+}
+
+.navbar-nav {
+  flex-wrap: wrap !important;
 }
 
 .nav-link:hover {
@@ -46,6 +56,7 @@
   transition:
     background-color 0.3s,
     transform 0.2s;
+  white-space: nowrap;
 }
 
 .btn-primary:hover {
@@ -58,7 +69,6 @@
   color: #1976d2;
   transition: all 0.25s;
 }
-
 .btn-outline-primary:hover {
   background-color: #1976d2;
   color: white;
@@ -67,7 +77,6 @@
 .navbar-toggler {
   border: none;
 }
-
 .navbar-toggler-icon {
   filter: invert(30%);
 }
@@ -77,7 +86,6 @@
     text-align: center;
     padding-top: 1rem;
   }
-
   .nav-link {
     padding: 0.75rem 0;
   }

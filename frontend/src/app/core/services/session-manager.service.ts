@@ -30,7 +30,7 @@ export class SessionManagerService {
               avatar: res.avatar,
               role: res.role,
             },
-          })
+          }),
         );
       } else {
         this.store.dispatch(clearUser());
