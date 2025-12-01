@@ -154,6 +154,11 @@ class TokenService:
 
     def createVerificationToken(self, email: str, password: str) -> str:
         try:
+            existing_token = self.cache_service.get(f"verify:email:{email}")
+
+            if existing_token:
+                return existing_token
+
             token = self._generateOpaque()
             expire_at = datetime.utcnow() + timedelta(
                 minutes=self.VERIFY_EXPIRE_MINUTES
@@ -165,11 +170,18 @@ class TokenService:
                 "exp": expire_at.isoformat(),
             }
 
+            ttl = timedelta(minutes=self.VERIFY_EXPIRE_MINUTES)
+
             self.cache_service.set(
-                f"verify:{token}",
+                f"verify:token:{token}",
                 json.dumps(payload),
-                timedelta(minutes=self.VERIFY_EXPIRE_MINUTES),
-                payload,
+                ttl,
+            )
+
+            self.cache_service.set(
+                f"verify:email:{email}",
+                token,
+                ttl,
             )
 
             return token
@@ -182,14 +194,20 @@ class TokenService:
 
     def verifyVerificationToken(self, token: str) -> dict:
         try:
-            raw = self.cache_service.get(f"verify:{token}")
+            raw = self.cache_service.get(f"verify:token:{token}")
 
             if not raw:
                 raise UnauthorizedException("Verification token expired or revoked")
 
-            self.cache_service.delete(f"verify:{token}")
+            payload = json.loads(raw) if isinstance(raw, str) else raw
+            email = payload.get("email")
 
-            return json.loads(raw) if isinstance(raw, str) else raw
+            # Delete both lookup keys for atomic invalidation
+            self.cache_service.delete(f"verify:token:{token}")
+            if email:
+                self.cache_service.delete(f"verify:email:{email}")
+
+            return payload
 
         except AppHttpException:
             raise
