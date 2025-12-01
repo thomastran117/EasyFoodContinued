@@ -3,8 +3,8 @@ from utilities.logger import logger
 from .container import Container
 from .containerControllers import register_controllers
 from .containerCore import init_connections
-from .containerServices import register_services
 from .containerRepositories import register_repositories
+from .containerServices import register_services
 
 
 async def bootstrap() -> Container:
@@ -18,7 +18,7 @@ async def bootstrap() -> Container:
         register_controllers(container)
 
         await container.build()
-        container.summary()
+        # container.summary()
         logger.info("IoC container Bootstrap completed.")
         return container
     except Exception as e:

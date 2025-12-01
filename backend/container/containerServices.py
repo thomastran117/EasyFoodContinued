@@ -157,6 +157,7 @@ def register_services(
 
         async def auth_factory(c, s):
             return AuthService(
+                user_repository=await c.resolve("UserRepository", s),
                 token_service=await c.resolve("TokenService", s),
                 email_service=await c.resolve("EmailService", s),
                 oauth_service=await c.resolve("OAuthService", s),

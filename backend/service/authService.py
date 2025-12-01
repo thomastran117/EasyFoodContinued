@@ -1,7 +1,6 @@
 import bcrypt
 
-from resources.database_client import get_db
-from schema.psql_template import User
+from repository.userRepository import UserRepository
 from service.emailService import EmailService
 from service.oauthService import OAuthService
 from service.tokenService import TokenService
@@ -21,17 +20,17 @@ from utilities.logger import logger
 class AuthService:
     def __init__(
         self,
+        user_repository: UserRepository,
         token_service: TokenService,
         email_service: EmailService,
         oauth_service: OAuthService,
         web_service: WebService,
-        db_factory=get_db,
     ):
+        self.user_repository = user_repository
         self.token_service = token_service
         self.email_service = email_service
         self.oauth_service = oauth_service
         self.web_service = web_service
-        self.db_factory = db_factory
         self.DUMMY_HASH = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8T8YtAUD3bFIxVYbcEdb87qfEzS1mS"
 
     async def localAuthenticate(
@@ -47,8 +46,7 @@ class AuthService:
                     f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
                 )
 
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.email == email).first()
+            user = await self.user_repository.getByEmail(email)
 
             hash_to_check = user.password if user and user.password else self.DUMMY_HASH
             password_ok = self.verifyPassword(password, hash_to_check)
@@ -77,26 +75,18 @@ class AuthService:
                     f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
                 )
 
-            with self.db_factory() as db:
-                existing_user = db.query(User).filter(User.email == email).first()
-                if existing_user:
-                    raise ConflictException(
-                        f"The email '{email}' is already registered."
-                    )
+            existing_user = await self.user_repository.getByEmail(email)
+            if existing_user:
+                raise ConflictException(f"The email '{email}' is already registered.")
 
-                hashed_pw = self.hashPassword(password)
+            hashed_pw = self.hashPassword(password)
 
-                if not self.email_service.isEmailAvaliable():
-                    logger.warn(
-                        "[AuthService] signupUser: Email service is misconfigured - skipping verification"
-                    )
-                    new_user = User(email=email, password=hashed_pw)
-                    db.add(new_user)
-                    db.commit()
-                    db.refresh(new_user)
-                    return True
-
-            if self.email_service.isEmailAvaliable():
+            if not self.email_service.isEmailAvaliable():
+                logger.warn(
+                    "[AuthService] signupUser: Email service is misconfigured - skipping verification"
+                )
+                await self.user_repository.create(email, "local", role, password)
+            else:
                 token = self.token_service.createVerificationToken(email, hashed_pw)
                 await self.email_service.send_verification_email(email, token)
 
@@ -115,16 +105,15 @@ class AuthService:
                     "The server is not ready to handle the request"
                 )
 
-            with self.db_factory() as db:
-                data = self.token_service.verifyVerificationToken(token)
-                if not data:
-                    raise BadRequestException("Invalid token")
+            data = self.token_service.verifyVerificationToken(token)
+            if not data:
+                raise BadRequestException("Invalid token")
 
-                new_user = User(email=data["email"], password=data["password"])
-                db.add(new_user)
-                db.commit()
-                db.refresh(new_user)
-                return new_user
+            new_user = await self.user_repository.create(
+                data["email"], "local", data["role"], data["password"]
+            )
+
+            return new_user
         except AppHttpException:
             raise
         except Exception as e:
@@ -140,19 +129,17 @@ class AuthService:
             if not email:
                 raise UnauthorizedException("No email claim in Microsoft token")
 
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.email == email).first()
-                if not user:
-                    user = User(
-                        email=email,
-                        provider="microsoft",
-                        microsoft_id=user_id,
-                        name=name,
-                        avatar=picture,
-                    )
-                    db.add(user)
-                    db.commit()
-                    db.refresh(user)
+            user = await self.user_repository.getByEmail(
+                email
+            ) or await self.user_repository.getByMicrosoftId(user_id)
+
+            if not user:
+                user = await self.user_repository.create(
+                    email=email,
+                    provider="microsoft",
+                    role="undefined",
+                    microsoft_id=user_id,
+                )
 
             access, refresh = self.token_service.generateTokens(
                 user.id, user.email, user.role, remember
@@ -169,23 +156,19 @@ class AuthService:
             email, name, picture, user_id = await self.oauth_service.verifyGoogleToken(
                 token
             )
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.email == email).first()
-                if not user:
-                    user = User(
-                        email=email,
-                        provider="google",
-                        google_id=user_id,
-                        name=name,
-                        avatar=picture,
-                    )
-                    db.add(user)
-                    db.commit()
-                    db.refresh(user)
+            user = await self.user_repository.getByEmail(
+                email
+            ) or await self.user_repository.getByGoogleId(user_id)
+
+            if not user:
+                user = await self.user_repository.create(
+                    email=email, provider="google", role="undefined", google_id=user_id
+                )
 
             access, refresh = self.token_service.generateTokens(
                 user.id, user.email, user.role, remember
             )
+
             return access, refresh, user
         except AppHttpException:
             raise
@@ -203,12 +186,11 @@ class AuthService:
                     "The server is not ready to handle the request"
                 )
 
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.email == email).first()
-                if not user:
-                    return
-                if user.provider in ["google", "microsoft"]:
-                    return
+            user = await self.user_repository.getByEmail(email)
+            if not user:
+                return
+            if user.provider in ["google", "microsoft"]:
+                return
 
             token = self.token_service.createVerificationToken(email, "empty")
             await self.email_service.send_forgot_password_email(email, token)
@@ -233,18 +215,18 @@ class AuthService:
             if not data:
                 raise BadRequestException("Invalid or expired token")
 
-            with self.db_factory() as db:
-                email = data["email"]
-                user = db.query(User).filter(User.email == email).first()
-                if not user:
-                    raise NotFoundException("User not found")
+            user = await self.user_repository.getByEmail(data["email"])
+            if not user:
+                raise NotFoundException("User not found")
 
-                hashed_pw = self.hashPassword(password)
-                user.password = hashed_pw
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-                return
+            hashed_password = self.hashPassword(password)
+
+            updated_user = await self.user_repository.update(
+                user.id, {"password": hashed_password}
+            )
+
+            return updated_user
+
         except AppHttpException:
             raise
         except Exception as e:

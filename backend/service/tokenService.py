@@ -202,7 +202,6 @@ class TokenService:
             payload = json.loads(raw) if isinstance(raw, str) else raw
             email = payload.get("email")
 
-            # Delete both lookup keys for atomic invalidation
             self.cache_service.delete(f"verify:token:{token}")
             if email:
                 self.cache_service.delete(f"verify:email:{email}")
