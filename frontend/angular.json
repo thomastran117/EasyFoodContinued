@@ -59,7 +59,7 @@
         },
         "serve": {
           "options": {
-            "port": 3050
+            "port": 3040
           },
           "builder": "@angular/build:dev-server",
           "configurations": {

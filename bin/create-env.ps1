@@ -29,8 +29,8 @@ $envContent = @"
 # Server
 ##############################################
 
-FRONTEND_CLIENT="http://localhost:3050"
-PORT=8050
+FRONTEND_CLIENT="http://localhost:3040"
+PORT=8040
 
 ##############################################
 # Databases
@@ -50,7 +50,7 @@ CELERY_RESULT_BACKEND="redis://127.0.0.1:6379/1"
 ##############################################
 # CORS Configuration
 ##############################################
-CORS_ALLOWED_REGION=["http://localhost:3050"]
+CORS_ALLOWED_REGION=["http://localhost:3040"]
 
 ##############################################
 # Security / JWT

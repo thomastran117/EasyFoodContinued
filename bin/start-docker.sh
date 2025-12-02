@@ -52,8 +52,8 @@ docker compose -f "$COMPOSE_FILE" run --rm "$BACKEND_SERVICE" alembic upgrade he
 
 step "Starting backend, frontend, and celery (attached)..."
 echo ""
-echo "   🌐 Frontend: http://localhost:3050"
-echo "   🐍 Backend:  http://localhost:8050"
+echo "   🌐 Frontend: http://localhost:3040"
+echo "   🐍 Backend:  http://localhost:8040"
 echo "   ⚙️  Celery logs: docker logs -f easyfood-celery"
 echo ""
 echo "Press Ctrl+C to stop all containers."

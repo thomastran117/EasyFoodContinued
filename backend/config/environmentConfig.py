@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     celery_broker_url: str
     celery_result_backend: str
     mongo_url: str
-    port: int = 8050
+    port: int = 8040
     model_config = ConfigDict(
         extra="ignore",
         env_file=os.path.join(os.path.dirname(__file__), "..", ".env"),
@@ -23,8 +23,8 @@ class Settings(BaseSettings):
         dotenv_override=False,
     )
     cors_allowed_region: List[str] = [
-        "http://localhost:3050",
-        "http://127.0.0.1:3050",
+        "http://localhost:3040",
+        "http://127.0.0.1:3040",
         "http://localhost:5173",
     ]
 

@@ -113,10 +113,10 @@ Install the backend's dependencies with python. It is recommended to use a Virtu
   npm run dev
 ```
 
-The frontend is avaliable at http://localhost:3050
+The frontend is avaliable at http://localhost:3040
 ### Running the backend
 
-The backend is avaliable at http://localhost:8050
+The backend is avaliable at http://localhost:8040
 
 ```bash
   # If not already in backend directory
@@ -135,7 +135,7 @@ Using docker, run the following command in the root directory:
   docker-compose up --build
 ```
   
-The frontend is avaliable at http://localhost:3090 and the backend is at http://localhost:8050. Remember to use the api prefix for the server.
+The frontend is avaliable at http://localhost:3040 and the backend is at http://localhost:8040. Remember to use the api prefix for the server.
 ## Running Tests
 
 To run tests, run the following command

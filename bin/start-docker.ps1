@@ -49,8 +49,8 @@ Invoke-Step "Starting application stack..."
 Write-Host ""
 Write-Host "Press Ctrl+C to stop containers." -ForegroundColor Yellow
 Write-Host ""
-Write-Host "   🌐 Frontend: http://localhost:3050"
-Write-Host "   🐍 Backend:  http://localhost:8050"
+Write-Host "   🌐 Frontend: http://localhost:3040"
+Write-Host "   🐍 Backend:  http://localhost:8040"
 Write-Host "   ⚙️  Celery Worker: docker logs -f easyfood-celery"
 Write-Host ""
 

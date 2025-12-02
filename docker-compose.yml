@@ -15,9 +15,9 @@ services:
       dockerfile: Dockerfile
       args:
         NODE_VERSION: "20"
-    command: ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "3050"]
+    command: ["npm", "run", "start", "--", "--host", "0.0.0.0", "--port", "3040"]
     ports:
-      - "3050:3050"
+      - "3040:3040"
     environment:
       CI: "true"
     working_dir: /app
@@ -34,7 +34,7 @@ services:
     command: ["python", "main.py"]
     container_name: easyfood-backend
     ports:
-      - "8050:8050"
+      - "8040:8040"
     environment:
       <<: *default-env
     volumes:
