@@ -1,4 +1,4 @@
-from datetime import timedelta
+import time
 from typing import Optional
 
 from fastapi import HTTPException, Request
@@ -10,31 +10,30 @@ from utilities.logger import logger
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
     """
-    Middleware that enforces tiered rate limits:
-      - Auth limiter for login/signup
-      - Light limiter for refresh/files/images
-      - General limiter for all other requests
+    Token-bucket rate limiter with tiered limits.
     """
 
     def __init__(
         self,
         app,
-        general_limit: int = 100,
-        general_window: int = 60,
-        auth_limit: int = 5,
-        auth_window: int = 60,
-        light_limit: int = 30,
-        light_window: int = 60,
+        general_capacity: int = 100,
+        general_refill_window: int = 60,
+        auth_capacity: int = 5,
+        auth_refill_window: int = 60,
+        light_capacity: int = 30,
+        light_refill_window: int = 60,
         excluded_paths: Optional[list[str]] = None,
     ):
         super().__init__(app)
-        self.general_limit = general_limit
-        self.general_window = general_window
-        self.auth_limit = auth_limit
-        self.auth_window = auth_window
-        self.light_limit = light_limit
-        self.light_window = light_window
         self.excluded_paths = excluded_paths or []
+
+        self.general_rate = general_capacity / general_refill_window
+        self.auth_rate = auth_capacity / auth_refill_window
+        self.light_rate = light_capacity / light_refill_window
+
+        self.general_capacity = general_capacity
+        self.auth_capacity = auth_capacity
+        self.light_capacity = light_capacity
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -45,57 +44,63 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         try:
             container = request.app.state.container
             cache_service = await container.resolve("CacheService")
+            redis = cache_service.client
         except Exception as e:
             logger.error(f"[RateLimiter] Failed to resolve CacheService: {e}")
             return await call_next(request)
 
-        limiter_type, limit, window = self._determine_limiter(path)
-        client_id = self._identify_client(request)
-        key = f"ratelimit:{limiter_type}:{client_id}:{path}"
+        limiter_type, capacity, rate = self._determine_limiter(path)
+
+        client_id = request.client.host or "unknown"
+        key = f"ratelimit:{limiter_type}:{client_id}"
+
+        now = time.time()
 
         try:
-            redis = cache_service.client
-            count = await redis.incr(key)
-            if count == 1:
-                await redis.expire(key, window)
+            bucket = await redis.hgetall(key)
+            tokens = float(bucket.get(b"tokens", capacity))
+            last_ts = float(bucket.get(b"ts", now))
 
-            if count > limit:
-                logger.warning(
-                    f"[RateLimiter] Limit exceeded for {client_id} on {path}"
-                )
-                raise HTTPException(
+            elapsed = now - last_ts
+            tokens = min(capacity, tokens + elapsed * rate)
+
+            if tokens < 1:
+                retry_after = (1 - tokens) / rate
+
+                return JSONResponse(
                     status_code=429,
-                    detail=f"Too many requests ({limiter_type}): limit {limit} per {window}s",
+                    content={
+                        "detail": f"Rate limit exceeded ({limiter_type})",
+                        "retry_after": round(retry_after, 2),
+                    },
+                    headers={"Retry-After": str(int(retry_after))},
                 )
 
-        except HTTPException as exc:
-            return JSONResponse(
-                status_code=exc.status_code,
-                content={"detail": exc.detail},
-            )
+            tokens -= 1
+
+            await redis.hset(key, mapping={"tokens": tokens, "ts": now})
+            await redis.expire(key, 2 * int(capacity / rate))
 
         except Exception as e:
-            logger.error(f"[RateLimiter] Unexpected error: {e}")
+            logger.error(f"[RateLimiter] Unexpected Redis error: {e}")
             return await call_next(request)
 
         return await call_next(request)
 
-    def _determine_limiter(self, path: str) -> tuple[str, int, int]:
-        """Select limiter type and parameters based on the path."""
+    def _determine_limiter(self, path: str) -> tuple[str, int, float]:
+        """Return limiter type, bucket capacity, refill rate."""
+
         if path.startswith("/api/"):
             path = path[4:]
 
         if path.startswith("/auth/") and not path.startswith("/auth/refresh"):
-            return ("auth", self.auth_limit, self.auth_window)
+            return ("auth", self.auth_capacity, self.auth_rate)
+
         elif (
             path.startswith("/auth/refresh")
             or path.startswith("/files")
             or path.startswith("/images")
         ):
-            return ("light", self.light_limit, self.light_window)
-        else:
-            return ("general", self.general_limit, self.general_window)
+            return ("light", self.light_capacity, self.light_rate)
 
-    def _identify_client(self, request: Request) -> str:
-        """Identify client based on IP (or header if desired)."""
-        return request.client.host or "unknown"
+        return ("general", self.general_capacity, self.general_rate)
