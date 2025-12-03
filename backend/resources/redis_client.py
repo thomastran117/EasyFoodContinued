@@ -1,4 +1,4 @@
-import redis
+import redis.asyncio as redis
 
 from config.environmentConfig import settings
 from utilities.logger import logger
@@ -6,7 +6,7 @@ from utilities.logger import logger
 REDIS_URL = settings.redis_url
 MODE = settings.mode
 
-redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
+redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=False)
 
 
 async def init_redis():

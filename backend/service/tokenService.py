@@ -56,7 +56,7 @@ class TokenService:
     def _generateOpaque(self) -> str:
         return secrets.token_hex(64)
 
-    def createRefreshToken(self, user_data: dict, remember: bool) -> str:
+    async def createRefreshToken(self, user_data: dict, remember: bool) -> str:
         try:
             refresh_days = (
                 self.REFRESH_EXPIRE_DAYS_LONG
@@ -75,7 +75,7 @@ class TokenService:
                 "exp": expire_at.isoformat(),
             }
 
-            self.cache_service.set(
+            await self.cache_service.set(
                 f"refresh:{token}",
                 json.dumps(redis_value),
                 timedelta(days=refresh_days),
@@ -90,9 +90,9 @@ class TokenService:
             )
             raise InternalErrorException("Internal server error")
 
-    def verifyRefreshToken(self, token: str) -> dict:
+    async def verifyRefreshToken(self, token: str) -> dict:
         try:
-            raw = self.cache_service.get(f"refresh:{token}")
+            raw = await self.cache_service.get(f"refresh:{token}")
             if not raw:
                 raise UnauthorizedException("Refresh token expired or revoked")
             return json.loads(raw) if isinstance(raw, str) else raw
@@ -105,7 +105,9 @@ class TokenService:
             )
             raise InternalErrorException("Internal server error")
 
-    def generateTokens(self, user_id: str, email: str, role="user", remember=False):
+    async def generateTokens(
+        self, user_id: str, email: str, role="user", remember=False
+    ):
         try:
             user_data = {
                 "id": user_id,
@@ -115,16 +117,16 @@ class TokenService:
             }
 
             access = self.createAccessToken(user_data)
-            refresh = self.createRefreshToken(user_data, remember)
+            refresh = await self.createRefreshToken(user_data, remember)
 
             return access, refresh
         except Exception as e:
             logger.error(f"[TokenService] generateTokens failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def rotateTokens(self, old_refresh: str):
+    async def rotateTokens(self, old_refresh: str):
         try:
-            payload = self.verifyRefreshToken(old_refresh)
+            payload = await self.verifyRefreshToken(old_refresh)
 
             user_data = {
                 "id": payload["id"],
@@ -134,9 +136,11 @@ class TokenService:
             }
 
             new_access = self.createAccessToken(user_data)
-            new_refresh = self.createRefreshToken(user_data, user_data["remember"])
+            new_refresh = await self.createRefreshToken(
+                user_data, user_data["remember"]
+            )
 
-            self.cache_service.delete(f"refresh:{old_refresh}")
+            await self.cache_service.delete(f"refresh:{old_refresh}")
 
             return new_access, new_refresh, payload["email"]
 
@@ -144,17 +148,17 @@ class TokenService:
             logger.error(f"[TokenService] rotateTokens failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def logoutToken(self, token: str):
+    async def logoutToken(self, token: str):
         try:
-            self.verifyRefreshToken(token)
-            self.cache_service.delete(f"refresh:{token}")
+            await self.verifyRefreshToken(token)
+            await self.cache_service.delete(f"refresh:{token}")
         except Exception as e:
             logger.error(f"[TokenService] logoutToken failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def createVerificationToken(self, email: str, password: str) -> str:
+    async def createVerificationToken(self, email: str, password: str) -> str:
         try:
-            existing_token = self.cache_service.get(f"verify:email:{email}")
+            existing_token = await self.cache_service.get(f"verify:email:{email}")
 
             if existing_token:
                 return existing_token
@@ -172,13 +176,13 @@ class TokenService:
 
             ttl = timedelta(minutes=self.VERIFY_EXPIRE_MINUTES)
 
-            self.cache_service.set(
+            await self.cache_service.set(
                 f"verify:token:{token}",
                 json.dumps(payload),
                 ttl,
             )
 
-            self.cache_service.set(
+            await self.cache_service.set(
                 f"verify:email:{email}",
                 token,
                 ttl,
@@ -192,9 +196,9 @@ class TokenService:
             )
             raise InternalErrorException("Internal server error")
 
-    def verifyVerificationToken(self, token: str) -> dict:
+    async def verifyVerificationToken(self, token: str) -> dict:
         try:
-            raw = self.cache_service.get(f"verify:token:{token}")
+            raw = await self.cache_service.get(f"verify:token:{token}")
 
             if not raw:
                 raise UnauthorizedException("Verification token expired or revoked")
@@ -202,9 +206,8 @@ class TokenService:
             payload = json.loads(raw) if isinstance(raw, str) else raw
             email = payload.get("email")
 
-            self.cache_service.delete(f"verify:token:{token}")
-            if email:
-                self.cache_service.delete(f"verify:email:{email}")
+            await self.cache_service.delete(f"verify:token:{token}")
+            await self.cache_service.delete(f"verify:email:{email}")
 
             return payload
 

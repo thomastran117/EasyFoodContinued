@@ -54,7 +54,7 @@ class AuthService:
             if not user or not password_ok:
                 raise UnauthorizedException("Invalid email or password.")
 
-            access, refresh = self.token_service.generateTokens(
+            access, refresh = await self.token_service.generateTokens(
                 user.id, user.email, "user", remember
             )
             return access, refresh, user
@@ -87,7 +87,9 @@ class AuthService:
                 )
                 await self.user_repository.create(email, "local", role, password)
             else:
-                token = self.token_service.createVerificationToken(email, hashed_pw)
+                token = await self.token_service.createVerificationToken(
+                    email, hashed_pw
+                )
                 await self.email_service.send_verification_email(email, token)
 
             return True
@@ -141,7 +143,7 @@ class AuthService:
                     microsoft_id=user_id,
                 )
 
-            access, refresh = self.token_service.generateTokens(
+            access, refresh = await self.token_service.generateTokens(
                 user.id, user.email, user.role, remember
             )
             return access, refresh, user
@@ -165,7 +167,7 @@ class AuthService:
                     email=email, provider="google", role="undefined", google_id=user_id
                 )
 
-            access, refresh = self.token_service.generateTokens(
+            access, refresh = await self.token_service.generateTokens(
                 user.id, user.email, user.role, remember
             )
 
@@ -192,7 +194,7 @@ class AuthService:
             if user.provider in ["google", "microsoft"]:
                 return
 
-            token = self.token_service.createVerificationToken(email, "empty")
+            token = await self.token_service.createVerificationToken(email, "empty")
             await self.email_service.send_forgot_password_email(email, token)
             return
         except AppHttpException:
@@ -211,7 +213,7 @@ class AuthService:
                     "The server is not ready to handle the request"
                 )
 
-            data = self.token_service.verifyVerificationToken(token)
+            data = await self.token_service.verifyVerificationToken(token)
             if not data:
                 raise BadRequestException("Invalid or expired token")
 
@@ -235,7 +237,7 @@ class AuthService:
 
     async def exchangeTokens(self, token: str):
         try:
-            access, refresh, email = self.token_service.rotateTokens(token)
+            access, refresh, email = await self.token_service.rotateTokens(token)
             return access, refresh, email
         except AppHttpException:
             raise
@@ -245,7 +247,7 @@ class AuthService:
 
     async def logoutTokens(self, token: str):
         try:
-            self.token_service.logoutToken(token)
+            await self.token_service.logoutToken(token)
             return {"message": "Logged out successfully"}
         except AppHttpException:
             raise
