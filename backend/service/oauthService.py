@@ -26,7 +26,7 @@ class OAuthService:
                 resp.raise_for_status()
                 jwks = resp.json()
 
-            header = jose_jwt.get_unverified_header(id_token)
+            header = jose_jwt.get_unverified_header(token)
             kid = header.get("kid")
 
             key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
@@ -34,7 +34,7 @@ class OAuthService:
                 raise BadRequestException("Unable to find matching JWKS key")
 
             decoded_ms = jose_jwt.decode(
-                id_token,
+                token,
                 key,
                 algorithms=["RS256"],
                 audience=settings.ms_client_id,

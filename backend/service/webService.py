@@ -13,7 +13,7 @@ class WebService:
         self.paypal_base_url = "https://api-m.sandbox.paypal.com"
         self.paypal_client_id = settings.paypal_client_id
         self.paypal_secret_key = settings.paypal_secret_key
-        self.backend_url = "http://localhost:8050/api"
+        self.backend_url = "http://localhost:8040/api"
 
     def isRecaptchaAvaliable(self) -> bool:
         return self.RECAPTCHA_SECRET is not None
