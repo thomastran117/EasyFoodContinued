@@ -116,19 +116,4 @@ if (Test-Path $reqTxt) {
 }
 Ok "Backend dependencies installed."
 
-Write-Host "`n=== Alembic migration ==="
-if (-not (Test-Path (Join-Path $backend "alembic.ini"))) {
-  Warn "alembic.ini not found in $backend. Skipping migrations."
-} else {
-  Push-Location $backend
-  try {
-    Info "Running 'alembic upgrade head' with venv python..."
-    & $venvPy -m alembic upgrade head | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw "alembic upgrade head failed. Ensure Alembic is in requirements and DATABASE_URL is valid." }
-    Ok "Alembic migration completed."
-  } finally {
-    Pop-Location
-  }
-}
-
 Write-Host "`nSetup finished successfully."
