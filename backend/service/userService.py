@@ -1,10 +1,10 @@
 from pathlib import Path
+from typing import Optional
 
+from beanie import PydanticObjectId
 from fastapi import UploadFile
 
-from resources.database_client import get_db
-from schema.psql_template import User
-from service.baseService import BaseService
+from repository.userRepository import UserRepository
 from service.fileService import FileService
 from utilities.errorRaiser import (
     AppHttpException,
@@ -17,95 +17,100 @@ from utilities.logger import logger
 class UserService:
     def __init__(
         self,
+        user_repository: UserRepository,
         file_service: FileService,
-        db_factory=get_db,
     ):
+        self.user_repository = user_repository
         self.file_service = file_service
-        self.db_factory = db_factory
 
-    def getUser(self, user_id: int):
+    async def getUser(self, user_id: PydanticObjectId):
         try:
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.id == user_id).first()
+            user = await self.user_repository.getById(user_id)
             if not user:
                 raise NotFoundException("User not found.")
             return user
+
         except AppHttpException:
             raise
         except Exception as e:
             logger.error(f"[UserService] getUser failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def updateUser(
+    async def updateUser(
         self,
-        user_id: int,
-        username: str = None,
-        phone: str = None,
-        address: str = None,
-        description: str = None,
+        user_id: PydanticObjectId,
+        username: Optional[str] = None,
+        phone: Optional[str] = None,
+        address: Optional[str] = None,
+        description: Optional[str] = None,
     ):
         try:
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.id == user_id).first()
-                if not user:
-                    raise NotFoundException("User not found.")
+            data = {}
 
-                if username is not None:
-                    user.username = username
-                if phone is not None:
-                    user.phone = phone
-                if address is not None:
-                    user.address = address
-                if description is not None:
-                    user.description = description
+            if username is not None:
+                data["username"] = username
+            if phone is not None:
+                data["phone"] = phone
+            if address is not None:
+                data["address"] = address
+            if description is not None:
+                data["description"] = description
 
-                db.commit()
-                db.refresh(user)
-                return user
+            if not data:
+                return await self.getUser(user_id)
+
+            user = await self.user_repository.update(user_id, data)
+            if not user:
+                raise NotFoundException("User not found.")
+
+            return user
+
         except AppHttpException:
             raise
         except Exception as e:
             logger.error(f"[UserService] updateUser failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    def deleteUser(self, user_id: int):
+    async def deleteUser(self, user_id: PydanticObjectId):
         try:
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.id == user_id).first()
-                if not user:
-                    raise NotFoundException("User not found.")
+            deleted = await self.user_repository.delete(user_id)
+            if not deleted:
+                raise NotFoundException("User not found.")
 
-                db.delete(user)
-                db.commit()
         except AppHttpException:
             raise
         except Exception as e:
             logger.error(f"[UserService] deleteUser failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    async def updateAvatar(self, user_id: int, file: UploadFile) -> str:
-        """Upload avatar, update DB record, and remove old one if exists."""
+    async def updateAvatar(self, user_id: PydanticObjectId, file: UploadFile) -> str:
+        """
+        Upload avatar, update DB record, and remove old one if exists.
+        """
         try:
-            with self.db_factory() as db:
-                user = db.query(User).filter(User.id == user_id).first()
-                if not user:
-                    raise NotFoundException("User not found")
+            user = await self.user_repository.getById(user_id)
+            if not user:
+                raise NotFoundException("User not found")
 
-                if user.avatar:
-                    try:
-                        old_filename = Path(user.avatar).name
-                        self.file_service.deleteUploadFile("users", old_filename)
-                    except Exception:
-                        pass
+            if user.avatar:
+                try:
+                    old_filename = Path(user.avatar).name
+                    self.file_service.deleteUploadFile("users", old_filename)
+                except Exception:
+                    pass
 
-                avatar_path = await self.file_service.handleUploadFile(file, "users")
+            avatar_path = await self.file_service.handleUploadFile(file, "users")
 
-                user.avatar = avatar_path
-                db.add(user)
-                db.commit()
-                db.refresh(user)
+            updated_user = await self.user_repository.update(
+                user_id,
+                {"avatar": avatar_path},
+            )
 
-                return avatar_path
+            if not updated_user:
+                raise NotFoundException("User not found")
+
+            return avatar_path
+
         except AppHttpException:
             raise
         except Exception as e:

@@ -67,7 +67,10 @@ def register_services(
             return PaymentService(web_service=await c.resolve("WebService", s))
 
         async def user_factory(c, s):
-            return UserService(file_service=await c.resolve("FileService", s))
+            return UserService(
+                user_repository=await c.resolve("UserRepository", s),
+                file_service=await c.resolve("FileService", s),
+            )
 
         async def order_factory(c, s):
             return OrderService(payment_service=await c.resolve("PaymentService", s))

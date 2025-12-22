@@ -3,8 +3,6 @@ from datetime import datetime
 
 from config.celeryConfig import celery_app
 from container.containerWorkerBootstrap import container
-from resources.database_client import get_db
-from schema.psql_template import Order, OrderStatus
 from service.webService import WebService
 from utilities.logger import logger
 

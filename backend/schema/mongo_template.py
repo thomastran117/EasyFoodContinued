@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from beanie import Document, Indexed, Link
 from pydantic import EmailStr, Field
+from pymongo import IndexModel
 
 
 class OccasionEnum(str, enum.Enum):
@@ -95,3 +96,47 @@ class Survey(Document):
     class Settings:
         name = "surveys"
         use_revision = False
+
+
+class User(Document):
+    email: EmailStr
+    username: Optional[str] = None
+
+    password: Optional[str] = None
+    role: str = Field(default="user")
+    provider: str = Field(default="local")
+
+    google_id: Optional[str] = None
+    microsoft_id: Optional[str] = None
+
+    name: Optional[str] = None
+    avatar: Optional[str] = None
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
+
+    class Settings:
+        name = "users"
+        indexes = [
+            IndexModel(
+                [("email", 1)],
+                unique=True,
+            ),
+            IndexModel(
+                [("username", 1)],
+                unique=True,
+                partialFilterExpression={"username": {"$exists": True, "$ne": None}},
+            ),
+            IndexModel(
+                [("google_id", 1)],
+                unique=True,
+                partialFilterExpression={"google_id": {"$exists": True, "$ne": None}},
+            ),
+            IndexModel(
+                [("microsoft_id", 1)],
+                unique=True,
+                partialFilterExpression={
+                    "microsoft_id": {"$exists": True, "$ne": None}
+                },
+            ),
+        ]

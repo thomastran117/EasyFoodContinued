@@ -1,28 +1,51 @@
 import asyncio
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any, Awaitable, Callable
 
-from sqlalchemy.exc import DBAPIError, IntegrityError, OperationalError
+from pymongo.errors import (
+    AutoReconnect,
+    NetworkTimeout,
+    NotPrimaryError,
+    ServerSelectionTimeoutError,
+    PyMongoError,
+    DuplicateKeyError,
+    OperationFailure,
+)
 
 from utilities.logger import logger
 
 
 class BaseRepository:
     """
-    Base class for all repositories. Provides:
-      - transient DB/network error detection
+    Base class for all repositories (MongoDB).
+
+    Provides:
+      - transient MongoDB error detection
       - exponential-backoff retries
     """
 
     def isTransient(self, e: Exception) -> bool:
         """
-        Returns True only for network-related or database transient failures
+        Returns True only for MongoDB transient failures
         that are safe to retry.
         """
-        if isinstance(e, OperationalError):
+
+        if isinstance(
+            e,
+            (
+                AutoReconnect,
+                NetworkTimeout,
+                NotPrimaryError,
+                ServerSelectionTimeoutError,
+            ),
+        ):
             return True
 
-        if isinstance(e, DBAPIError) and getattr(e, "connection_invalidated", False):
-            return True
+        if isinstance(e, PyMongoError):
+            labels = getattr(e, "error_labels", None)
+            if labels and "TransientTransactionError" in labels:
+                return True
+            if labels and "RetryableWriteError" in labels:
+                return True
 
         return False
 
@@ -34,12 +57,12 @@ class BaseRepository:
         factor: float = 2.0,
     ):
         """
-        Execute `func` with retry on transient errors.
+        Execute `func` with retry on MongoDB transient errors.
 
         Will NOT retry on:
-          - IntegrityError (unique constraint, FK violation)
-          - Programming or logical errors
-          - Unknown fatal errors
+          - DuplicateKeyError (unique index violation)
+          - Validation / logical errors
+          - Non-transient PyMongo errors
         """
         attempt = 0
 
@@ -47,20 +70,33 @@ class BaseRepository:
             try:
                 return await func()
 
-            except IntegrityError:
+            except DuplicateKeyError:
                 raise
 
-            except Exception as e:
-                if attempt >= retries or not self.isTransient(e):
+            except OperationFailure as e:
+                if e.code == 11000:
+                    raise
+
+                if not self.isTransient(e):
                     logger.error(
-                        f"[Repository Retry] Non-retriable or max retries exceeded: {e}"
+                        f"[Repository Retry] Non-retriable Mongo error: {e}",
+                        exc_info=True,
                     )
                     raise
 
-                sleep_time = backoff * (factor**attempt)
-                logger.warning(
-                    f"[Repository Retry] Transient DB error ({e.__class__.__name__}): "
-                    f"retrying in {sleep_time:.2f}s (attempt {attempt + 1}/{retries})"
-                )
-                await asyncio.sleep(sleep_time)
-                attempt += 1
+            except Exception as e:
+                if not self.isTransient(e) or attempt >= retries:
+                    logger.error(
+                        f"[Repository Retry] Non-retriable or max retries exceeded: {e}",
+                        exc_info=True,
+                    )
+                    raise
+
+            sleep_time = backoff * (factor**attempt)
+            logger.warn(
+                f"[Repository Retry] Transient Mongo error "
+                f"({e.__class__.__name__}): retrying in {sleep_time:.2f}s "
+                f"(attempt {attempt + 1}/{retries})"
+            )
+            await asyncio.sleep(sleep_time)
+            attempt += 1
