@@ -2,5 +2,5 @@ from service.bookingService import BookingService
 
 
 class BookingController:
-    def __init__(self, booking_service: BookingService):
-        self.booking_service = booking_service
+    def __init__(self, bookingservice: BookingService):
+        self.booking_service = bookingservice

@@ -11,11 +11,11 @@ from utilities.logger import logger
 
 
 class OrderController:
-    def __init__(self, order_service: OrderService):
+    def __init__(self, orderservice: OrderService):
         """
         order_service: instance of AuthService (which uses PaymentService internally)
         """
-        self.order_service = order_service
+        self.order_service = orderservice
         self.request: Request | None = None
 
     async def create_order(self, payload: CreateOrderDto):

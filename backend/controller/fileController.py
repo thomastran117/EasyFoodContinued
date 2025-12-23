@@ -4,8 +4,8 @@ from utilities.logger import logger
 
 
 class FileController:
-    def __init__(self, file_service: FileService):
-        self.file_service = file_service
+    def __init__(self, fileservice: FileService):
+        self.file_service = fileservice
 
     async def getUploadedFile(self, category: str, filename: str):
         """Fetch a file by category and filename."""

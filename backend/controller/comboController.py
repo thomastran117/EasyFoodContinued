@@ -2,5 +2,5 @@ from service.comboService import ComboService
 
 
 class ComboControler:
-    def __init__(self, combo_service: ComboService):
-        self.combo_service = combo_service
+    def __init__(self, comboservice: ComboService):
+        self.combo_service = comboservice

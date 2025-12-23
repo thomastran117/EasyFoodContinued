@@ -13,8 +13,8 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 
 
 class UserController:
-    def __init__(self, user_service: UserService):
-        self.user_service = user_service
+    def __init__(self, userservice: UserService):
+        self.user_service = userservice
         self.request: Request | None = None
 
     async def getUserByID(self, id: int):

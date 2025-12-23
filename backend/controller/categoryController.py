@@ -9,8 +9,8 @@ from utilities.logger import logger
 
 
 class CategoryController:
-    def __init__(self, category_service: CategoryService):
-        self.category_service = category_service
+    def __init__(self, categoryservice: CategoryService):
+        self.category_service = categoryservice
         self.request: Request | None = None
 
     async def createCategory(self, dto: CreateCategoryRequest):

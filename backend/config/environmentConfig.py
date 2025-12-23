@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mode: str = "development"
     redis_url: str
     mongo_url: str
+    backend_url: str = "http://localhost:8040"
     celery_broker_url: str
     celery_result_backend: str
     port: int = 8040

@@ -16,11 +16,11 @@ from utilities.logger import logger
 
 
 class AuthController:
-    def __init__(self, auth_service: AuthService):
+    def __init__(self, authservice: AuthService):
         """
         auth_service: instance of AuthService (which uses TokenService internally)
         """
-        self.auth_service = auth_service
+        self.auth_service = authservice
         self.request: Request | None = None
 
     async def login(self, request: LoginRequestDto):

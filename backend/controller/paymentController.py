@@ -10,8 +10,8 @@ class PaymentController:
     Handles all payment-related endpoints (create, capture, cancel).
     """
 
-    def __init__(self, payment_service: PaymentService):
-        self.payment_service = payment_service
+    def __init__(self, paymentservice: PaymentService):
+        self.payment_service = paymentservice
 
     def create_payment(self, data: PaymentCreateDto):
         result = self.payment_service.create_payment(
