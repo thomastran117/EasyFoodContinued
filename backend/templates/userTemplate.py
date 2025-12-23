@@ -35,22 +35,16 @@ class User(Document):
             IndexModel(
                 [("username", 1)],
                 unique=True,
-                partialFilterExpression={
-                    "username": {"$type": "string"}
-                },
+                partialFilterExpression={"username": {"$type": "string"}},
             ),
             IndexModel(
                 [("google_id", 1)],
                 unique=True,
-                partialFilterExpression={
-                    "google_id": {"$type": "string"}
-                },
+                partialFilterExpression={"google_id": {"$type": "string"}},
             ),
             IndexModel(
                 [("microsoft_id", 1)],
                 unique=True,
-                partialFilterExpression={
-                    "microsoft_id": {"$type": "string"}
-                },
+                partialFilterExpression={"microsoft_id": {"$type": "string"}},
             ),
         ]

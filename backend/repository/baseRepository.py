@@ -1,4 +1,5 @@
 import asyncio
+import random
 from typing import Any, Awaitable, Callable
 
 from pymongo.errors import (
@@ -11,24 +12,35 @@ from pymongo.errors import (
     ServerSelectionTimeoutError,
 )
 
+from utilities.circuitBreaker import CircuitBreaker
 from utilities.logger import logger
 
 
 class BaseRepository:
     """
-    Base class for all repositories (MongoDB).
-
-    Provides:
-      - transient MongoDB error detection
-      - exponential-backoff retries
+    MongoDB repository base with:
+      - retry + exponential backoff
+      - jitter
+      - circuit breaker
+      - clear retry semantics
     """
 
-    def isTransient(self, e: Exception) -> bool:
-        """
-        Returns True only for MongoDB transient failures
-        that are safe to retry.
-        """
+    def __init__(
+        self,
+        *,
+        retries: int = 3,
+        base_delay: float = 0.25,
+        backoff_factor: float = 2.0,
+        max_delay: float = 5.0,
+        circuit_breaker: CircuitBreaker | None = None,
+    ):
+        self.retries = retries
+        self.base_delay = base_delay
+        self.backoff_factor = backoff_factor
+        self.max_delay = max_delay
+        self.breaker = circuit_breaker or CircuitBreaker()
 
+    def is_transient(self, e: Exception) -> bool:
         if isinstance(
             e,
             (
@@ -41,62 +53,68 @@ class BaseRepository:
             return True
 
         if isinstance(e, PyMongoError):
-            labels = getattr(e, "error_labels", None)
-            if labels and "TransientTransactionError" in labels:
-                return True
-            if labels and "RetryableWriteError" in labels:
-                return True
+            labels = getattr(e, "error_labels", None) or set()
+            return (
+                "TransientTransactionError" in labels or "RetryableWriteError" in labels
+            )
 
         return False
 
-    async def retry(
+    def is_non_retriable(self, e: Exception) -> bool:
+        if isinstance(e, DuplicateKeyError):
+            return True
+
+        if isinstance(e, OperationFailure) and e.code == 11000:
+            return True
+
+        return False
+
+    async def executeAsync(
         self,
         func: Callable[[], Awaitable[Any]],
-        retries: int = 3,
-        backoff: float = 0.25,
-        factor: float = 2.0,
-    ):
-        """
-        Execute `func` with retry on MongoDB transient errors.
+        *,
+        retries: int | None = None,
+    ) -> Any:
+        if not self.breaker.allow():
+            raise RuntimeError("MongoDB circuit breaker OPEN — fast failing")
 
-        Will NOT retry on:
-          - DuplicateKeyError (unique index violation)
-          - Validation / logical errors
-          - Non-transient PyMongo errors
-        """
+        attempts = retries if retries is not None else self.retries
         attempt = 0
 
         while True:
             try:
-                return await func()
-
-            except DuplicateKeyError:
-                raise
-
-            except OperationFailure as e:
-                if e.code == 11000:
-                    raise
-
-                if not self.isTransient(e):
-                    logger.error(
-                        f"[Repository Retry] Non-retriable Mongo error: {e}",
-                        exc_info=True,
-                    )
-                    raise
+                result = await func()
+                self.breaker.record_success()
+                return result
 
             except Exception as e:
-                if not self.isTransient(e) or attempt >= retries:
-                    logger.error(
-                        f"[Repository Retry] Non-retriable or max retries exceeded: {e}",
+                if self.is_non_retriable(e):
+                    logger.debug(
+                        "[Repository] Non-retriable Mongo error",
                         exc_info=True,
                     )
                     raise
 
-            sleep_time = backoff * (factor**attempt)
-            logger.warn(
-                f"[Repository Retry] Transient Mongo error "
-                f"({e.__class__.__name__}): retrying in {sleep_time:.2f}s "
-                f"(attempt {attempt + 1}/{retries})"
-            )
-            await asyncio.sleep(sleep_time)
-            attempt += 1
+                if not self.is_transient(e) or attempt >= attempts:
+                    self.breaker.record_failure()
+                    logger.error(
+                        "[Repository] Mongo operation failed",
+                        exc_info=True,
+                    )
+                    raise
+
+                delay = min(
+                    self.base_delay * (self.backoff_factor**attempt),
+                    self.max_delay,
+                )
+
+                delay *= random.uniform(0.8, 1.2)
+
+                logger.warning(
+                    f"[Repository Retry] Transient Mongo error "
+                    f"({e.__class__.__name__}) — retrying in {delay:.2f}s "
+                    f"(attempt {attempt + 1}/{attempts})"
+                )
+
+                await asyncio.sleep(delay)
+                attempt += 1

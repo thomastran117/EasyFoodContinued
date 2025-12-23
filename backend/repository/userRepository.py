@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Iterable
 
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
@@ -10,11 +10,18 @@ from .baseRepository import BaseRepository
 
 
 class UserRepository(BaseRepository):
-    def __init__(self):
-        super().__init__()
+    """
+    MongoDB User repository.
+
+    All operations are protected by:
+      - retry logic
+      - circuit breaker
+      - transient error handling
+    """
 
     async def create(
         self,
+        *,
         email: str,
         provider: str,
         role: str,
@@ -25,7 +32,6 @@ class UserRepository(BaseRepository):
         name: Optional[str] = None,
         avatar: Optional[str] = None,
     ) -> User:
-
         async def op():
             user = User(
                 email=email,
@@ -41,33 +47,32 @@ class UserRepository(BaseRepository):
             return await user.insert()
 
         try:
-            return await self.retry(op)
-        except DuplicateKeyError as e:
-            logger.warning("Duplicate key error creating user")
-            raise e
+            return await self.executeAsync(op)
+        except DuplicateKeyError:
+            logger.warning("[UserRepository] Duplicate key while creating user")
+            raise
 
     async def update(
         self,
         user_id: PydanticObjectId,
         data: Dict[str, Any],
     ) -> Optional[User]:
+        if not data:
+            return await self.get_by_id(user_id)
 
         async def op():
-            data["updated_at"] = (
-                data.get("updated_at") or User.updated_at.default_factory()
-            )
+            data["updated_at"] = User.updated_at.default_factory()
 
-            user = await User.get(user_id)
-            if not user:
+            result = await User.find_one(User.id == user_id).update({"$set": data})
+
+            if result.modified_count == 0:
                 return None
 
-            await user.update({"$set": data})
             return await User.get(user_id)
 
-        return await self.retry(op)
+        return await self.executeAsync(op)
 
     async def delete(self, user_id: PydanticObjectId) -> bool:
-
         async def op():
             user = await User.get(user_id)
             if not user:
@@ -76,39 +81,23 @@ class UserRepository(BaseRepository):
             await user.delete()
             return True
 
-        return await self.retry(op)
+        return await self.executeAsync(op)
 
-    async def getById(self, id: PydanticObjectId) -> Optional[User]:
+    async def getById(self, user_id: PydanticObjectId) -> Optional[User]:
+        return await self.executeAsync(lambda: User.get(user_id))
 
-        async def op():
-            return await User.get(id)
-
-        return await self.retry(op)
-
-    async def getAll(self):
-
-        async def op():
-            return await User.find_all().to_list()
-
-        return await self.retry(op)
+    async def getAll(self) -> Iterable[User]:
+        return await self.executeAsync(lambda: User.find_all().to_list())
 
     async def getByEmail(self, email: str) -> Optional[User]:
-
-        async def op():
-            return await User.find_one(User.email == email)
-
-        return await self.retry(op)
+        return await self.executeAsync(lambda: User.find_one(User.email == email))
 
     async def getByGoogleId(self, google_id: str) -> Optional[User]:
-
-        async def op():
-            return await User.find_one(User.google_id == google_id)
-
-        return await self.retry(op)
+        return await self.executeAsync(
+            lambda: User.find_one(User.google_id == google_id)
+        )
 
     async def getByMicrosoftId(self, microsoft_id: str) -> Optional[User]:
-
-        async def op():
-            return await User.find_one(User.microsoft_id == microsoft_id)
-
-        return await self.retry(op)
+        return await self.executeAsync(
+            lambda: User.find_one(User.microsoft_id == microsoft_id)
+        )
