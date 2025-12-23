@@ -35,18 +35,22 @@ class User(Document):
             IndexModel(
                 [("username", 1)],
                 unique=True,
-                partialFilterExpression={"username": {"$exists": True, "$ne": None}},
+                partialFilterExpression={
+                    "username": {"$type": "string"}
+                },
             ),
             IndexModel(
                 [("google_id", 1)],
                 unique=True,
-                partialFilterExpression={"google_id": {"$exists": True, "$ne": None}},
+                partialFilterExpression={
+                    "google_id": {"$type": "string"}
+                },
             ),
             IndexModel(
                 [("microsoft_id", 1)],
                 unique=True,
                 partialFilterExpression={
-                    "microsoft_id": {"$exists": True, "$ne": None}
+                    "microsoft_id": {"$type": "string"}
                 },
             ),
         ]
