@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
-from schema.mongo_template import User
+from templates.userTemplate import User
 from utilities.logger import logger
 
 from .baseRepository import BaseRepository
