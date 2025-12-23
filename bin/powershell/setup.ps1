@@ -5,13 +5,24 @@ function Ok($m)   { Write-Host "[OK]    $m" -ForegroundColor Green }
 function Warn($m) { Write-Warning $m }
 function Err($m)  { Write-Host "[ERR]   $m" -ForegroundColor Red }
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot  = Join-Path $scriptDir ".."
-$frontend  = Join-Path $repoRoot "frontend"
-$backend   = Join-Path $repoRoot "backend"
+# ------------------------------------------------------------
+# Resolve script directory safely (works even if dot-sourced)
+# ------------------------------------------------------------
+$ScriptDir =
+    if ($PSScriptRoot) {
+        $PSScriptRoot
+    } else {
+        Split-Path -Parent $MyInvocation.MyCommand.Definition
+    }
 
-if (-not (Test-Path $frontend)) { throw "Frontend directory not found: $frontend" }
-if (-not (Test-Path $backend))  { throw "Backend directory not found: $backend"  }
+# bin/powershell → repo root
+$RepoRoot = Resolve-Path (Join-Path $ScriptDir "..\..")
+
+$Frontend = Join-Path $RepoRoot "frontend"
+$Backend  = Join-Path $RepoRoot "backend"
+
+if (-not (Test-Path $Frontend)) { throw "Frontend directory not found: $Frontend" }
+if (-not (Test-Path $Backend))  { throw "Backend directory not found: $Backend" }
 
 function Invoke-Cmd {
   param(

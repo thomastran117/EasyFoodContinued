@@ -3,6 +3,20 @@ param()
 
 $ErrorActionPreference = "Stop"
 
+$ScriptDir =
+    if ($PSScriptRoot) {
+        $PSScriptRoot
+    } else {
+        Split-Path -Parent $MyInvocation.MyCommand.Definition
+    }
+
+$RootDir = Resolve-Path (Join-Path $ScriptDir "..\..")
+$FrontendDir = Join-Path $RootDir "frontend"
+$BackendDir  = Join-Path $RootDir "backend"
+
+if (-not (Test-Path $FrontendDir)) { throw "Frontend directory not found: $FrontendDir" }
+if (-not (Test-Path $BackendDir))  { throw "Backend directory not found: $BackendDir" }
+
 try {
   $nodeVersion = & node -v
   $npmVersion  = & npm -v
@@ -18,13 +32,10 @@ try {
   throw "Python is not installed or not on PATH."
 }
 
-$RootDir     = Resolve-Path (Join-Path $PSScriptRoot "..")
-$FrontendDir = Resolve-Path (Join-Path $RootDir "frontend")
-$BackendDir  = Resolve-Path (Join-Path $RootDir "backend")
-
 $activateBat1 = Join-Path $BackendDir "venv\Scripts\activate.bat"
 $activateBat2 = Join-Path $BackendDir ".venv\Scripts\activate.bat"
 $activateBat  = $null
+
 if (Test-Path $activateBat1) { $activateBat = $activateBat1 }
 elseif (Test-Path $activateBat2) { $activateBat = $activateBat2 }
 
