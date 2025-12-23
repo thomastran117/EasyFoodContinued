@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from jose import JWTError
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from service.cacheService import CacheService
@@ -58,11 +59,6 @@ class RateLimitStore:
 
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):
-    """
-    Token-bucket rate limiter.
-    FAIL-OPEN if cache/storage is unavailable.
-    """
-
     def __init__(
         self,
         app,
@@ -70,20 +66,16 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         general_refill_window: int = 60,
         auth_capacity: int = 5,
         auth_refill_window: int = 60,
-        light_capacity: int = 30,
-        light_refill_window: int = 60,
-        excluded_paths: Optional[list[str]] = None,
+        excluded_paths: list[str] | None = None,
     ):
         super().__init__(app)
         self.excluded_paths = excluded_paths or []
 
         self.general_capacity = general_capacity
         self.auth_capacity = auth_capacity
-        self.light_capacity = light_capacity
 
         self.general_rate = general_capacity / general_refill_window
         self.auth_rate = auth_capacity / auth_refill_window
-        self.light_rate = light_capacity / light_refill_window
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -91,18 +83,24 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if any(path.startswith(p) for p in self.excluded_paths):
             return await call_next(request)
 
+        # --------------------------------------------------
+        # Resolve CacheService (fail-open)
+        # --------------------------------------------------
         try:
             container = request.app.state.container
-            cache_service = await container.resolve("CacheService")
-            store = RateLimitStore(cache_service)
+            cache = await container.resolve("CacheService")
+            store = RateLimitStore(cache)
         except Exception as e:
             logger.warn(f"[RateLimiter] Cache unavailable — bypassing: {e}")
             return await call_next(request)
 
-        limiter_type, capacity, rate = self._determine_limiter(path)
-        client_id = request.client.host or "unknown"
+        # --------------------------------------------------
+        # Determine identity (user > ip)
+        # --------------------------------------------------
+        identity = self._resolve_identity(request)
 
-        key = f"ratelimit:{limiter_type}:{client_id}"
+        limiter_type, capacity, rate = self._determine_limiter(path)
+        key = f"ratelimit:{limiter_type}:{identity}"
 
         allowed, retry_after = await store.consume_token(
             key=key,
@@ -114,7 +112,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=429,
                 content={
-                    "detail": f"Rate limit exceeded ({limiter_type})",
+                    "detail": "Rate limit exceeded",
                     "retry_after": round(retry_after, 2),
                 },
                 headers={"Retry-After": str(int(retry_after))},
@@ -122,14 +120,28 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-    def _determine_limiter(self, path: str) -> tuple[str, int, float]:
-        if path.startswith("/api/"):
-            path = path[4:]
+    def _resolve_identity(self, request: Request) -> str:
+        auth = request.headers.get("authorization")
 
-        if path.startswith("/auth/") and not path.startswith("/auth/refresh"):
+        if auth and auth.startswith("Bearer "):
+            token = auth[7:]
+            try:
+                container = request.app.state.container
+                token_service = container.resolve_sync("BasicTokenService")
+                payload = token_service.decodeAccessToken(token)
+
+                user_id = payload["id"]
+                if user_id:
+                    return f"user:{user_id}"
+
+            except Exception:
+                pass
+
+        ip = request.client.host if request.client else "unknown"
+        return f"ip:{ip}"
+
+    def _determine_limiter(self, path: str):
+        if path.startswith("/api/auth/"):
             return ("auth", self.auth_capacity, self.auth_rate)
-
-        if path.startswith("/auth/refresh") or path.startswith("/files"):
-            return ("light", self.light_capacity, self.light_rate)
 
         return ("general", self.general_capacity, self.general_rate)
