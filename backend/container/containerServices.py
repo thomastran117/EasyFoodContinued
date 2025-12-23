@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Type, TypedDict
 
 from service.authService import AuthService
 from service.basicTokenService import BasicTokenService
@@ -29,192 +29,214 @@ from utilities.logger import logger
 Lifetime = Literal["singleton", "transient", "scoped"]
 
 
+class ServiceSpec(TypedDict):
+    cls: Type
+    deps: dict[str, str]
+
+
+SERVICES: dict[str, ServiceSpec] = {
+    "CacheService": {
+        "cls": CacheService,
+        "deps": {},
+    },
+    "FileService": {
+        "cls": FileService,
+        "deps": {},
+    },
+    "BasicTokenService": {
+        "cls": BasicTokenService,
+        "deps": {},
+    },
+    "EmailService": {
+        "cls": EmailService,
+        "deps": {},
+    },
+    "OAuthService": {
+        "cls": OAuthService,
+        "deps": {},
+    },
+    "WebService": {
+        "cls": WebService,
+        "deps": {},
+    },
+    "TokenService": {
+        "cls": TokenService,
+        "deps": {
+            "cache_service": "CacheService",
+        },
+    },
+    "PaymentService": {
+        "cls": PaymentService,
+        "deps": {
+            "web_service": "WebService",
+        },
+    },
+    "UserService": {
+        "cls": UserService,
+        "deps": {
+            "user_repository": "UserRepository",
+            "file_service": "FileService",
+        },
+    },
+    "OrderService": {
+        "cls": OrderService,
+        "deps": {
+            "payment_service": "PaymentService",
+        },
+    },
+    "CategoryService": {
+        "cls": CategoryService,
+        "deps": {
+            "cache_service": "CacheService",
+        },
+    },
+    "RestaurantService": {
+        "cls": RestaurantService,
+        "deps": {
+            "user_service": "UserService",
+            "category_service": "CategoryService",
+            "cache_service": "CacheService",
+            "file_service": "FileService",
+        },
+    },
+    "FoodService": {
+        "cls": FoodService,
+        "deps": {
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "DrinkService": {
+        "cls": DrinkService,
+        "deps": {
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "ReviewService": {
+        "cls": ReviewService,
+        "deps": {
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "ReservationService": {
+        "cls": ReservationService,
+        "deps": {
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "EmployeeService": {
+        "cls": EmployeeService,
+        "deps": {
+            "user_service": "UserService",
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "FavouriteService": {
+        "cls": FavouriteService,
+        "deps": {
+            "user_service": "UserService",
+            "restaurant_service": "RestaurantService",
+            "cache_service": "CacheService",
+        },
+    },
+    "DriverService": {
+        "cls": DriverService,
+        "deps": {
+            "cache_service": "CacheService",
+        },
+    },
+    "DeliveryService": {
+        "cls": DeliveryService,
+        "deps": {
+            "user_service": "UserService",
+            "cache_service": "CacheService",
+        },
+    },
+    "BookingService": {
+        "cls": BookingService,
+        "deps": {
+            "user_service": "UserService",
+            "reservation_service": "ReservationService",
+            "payment_service": "PaymentService",
+            "cache_service": "CacheService",
+        },
+    },
+    "ComboService": {
+        "cls": ComboService,
+        "deps": {
+            "food_service": "FoodService",
+            "drink_service": "DrinkService",
+            "cache_service": "CacheService",
+        },
+    },
+    "DiscountService": {
+        "cls": DiscountService,
+        "deps": {
+            "combo_service": "ComboService",
+            "food_service": "FoodService",
+            "drink_service": "DrinkService",
+            "cache_service": "CacheService",
+        },
+    },
+    "AuthService": {
+        "cls": AuthService,
+        "deps": {
+            "user_repository": "UserRepository",
+            "token_service": "TokenService",
+            "email_service": "EmailService",
+            "oauth_service": "OAuthService",
+            "web_service": "WebService",
+        },
+    },
+}
+
+
+def make_service_factory(cls, deps: dict[str, str]):
+    async def factory(container, scope):
+        resolved = {
+            arg: await container.resolve(service_name, scope)
+            for arg, service_name in deps.items()
+        }
+        return cls(**resolved)
+
+    return factory
+
+
 def register_services(
     container,
     *,
-    cache_lifetime: Lifetime = "singleton",
-    file_lifetime: Lifetime = "singleton",
-    basic_token_service_lifetime: Lifetime = "singleton",
-    auth_service_lifetime: Lifetime = "scoped",
-    email_lifetime: Lifetime = "transient",
-    oauth_service_lifetime: Lifetime = "transient",
-    user_service_lifetime: Lifetime = "scoped",
-    payment_service_lifetime: Lifetime = "scoped",
-    token_service_lifetime: Lifetime = "transient",
-    order_service_lifetime: Lifetime = "scoped",
-    web_service_lifetime: Lifetime = "transient",
-    category_service_lifetime: Lifetime = "scoped",
-    restaurant_service_lifetime: Lifetime = "scoped",
-    booking_service_lifetime: Lifetime = "scoped",
-    combo_service_lifetime: Lifetime = "scoped",
-    delivery_service_lifetime: Lifetime = "scoped",
-    discount_service_lifetime: Lifetime = "scoped",
-    drink_service_lifetime: Lifetime = "scoped",
-    driver_service_lifetime: Lifetime = "scoped",
-    employee_service_lifetime: Lifetime = "scoped",
-    favourite_service_lifetime: Lifetime = "scoped",
-    food_service_lifetime: Lifetime = "scoped",
-    reservation_service_lifetime: Lifetime = "scoped",
-    review_service_lifetime: Lifetime = "scoped",
+    default_lifetime: Lifetime = "scoped",
+    overrides: dict[str, Lifetime] | None = None,
 ):
-    """Registers all app-level services."""
+    """
+    Registers all services using a declarative registry.
+
+    overrides example:
+        {
+            "CacheService": "singleton",
+            "EmailService": "transient",
+            "TokenService": "singleton",
+        }
+    """
+    overrides = overrides or {}
+
     try:
+        for name, spec in SERVICES.items():
+            lifetime = overrides.get(name, default_lifetime)
 
-        async def token_factory(c, s):
-            return TokenService(cache_service=await c.resolve("CacheService", s))
-
-        async def payment_factory(c, s):
-            return PaymentService(web_service=await c.resolve("WebService", s))
-
-        async def user_factory(c, s):
-            return UserService(
-                user_repository=await c.resolve("UserRepository", s),
-                file_service=await c.resolve("FileService", s),
+            container.register(
+                name,
+                make_service_factory(spec["cls"], spec["deps"]),
+                lifetime,
             )
 
-        async def order_factory(c, s):
-            return OrderService(payment_service=await c.resolve("PaymentService", s))
-
-        async def category_factory(c, s):
-            return CategoryService(cache_service=await c.resolve("CacheService", s))
-
-        async def delivery_factory(c, s):
-            return DeliveryService(
-                user_service=await c.resolve("UserService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def driver_factory(c, s):
-            return DriverService(
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def restaurant_factory(c, s):
-            return RestaurantService(
-                user_service=await c.resolve("UserService", s),
-                category_service=await c.resolve("CategoryService", s),
-                cache_service=await c.resolve("CacheService", s),
-                file_service=await c.resolve("FileService", s),
-            )
-
-        async def food_factory(c, s):
-            return FoodService(
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def drink_factory(c, s):
-            return DrinkService(
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def review_factory(c, s):
-            return ReviewService(
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def reservation_factory(c, s):
-            return ReservationService(
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def employee_factory(c, s):
-            return EmployeeService(
-                user_service=await c.resolve("UserService", s),
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def favourite_factory(c, s):
-            return FavouriteService(
-                user_service=await c.resolve("UserService", s),
-                restaurant_service=await c.resolve("RestaurantService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def booking_factory(c, s):
-            return BookingService(
-                user_service=await c.resolve("UserService", s),
-                reservation_service=await c.resolve("ReservationService", s),
-                payment_service=await c.resolve("PaymentService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def combo_factory(c, s):
-            return ComboService(
-                food_service=await c.resolve("FoodService", s),
-                drink_service=await c.resolve("DrinkService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def discount_factory(c, s):
-            return DiscountService(
-                combo_service=await c.resolve("ComboService", s),
-                food_service=await c.resolve("FoodService", s),
-                drink_service=await c.resolve("DrinkService", s),
-                cache_service=await c.resolve("CacheService", s),
-            )
-
-        async def auth_factory(c, s):
-            return AuthService(
-                user_repository=await c.resolve("UserRepository", s),
-                token_service=await c.resolve("TokenService", s),
-                email_service=await c.resolve("EmailService", s),
-                oauth_service=await c.resolve("OAuthService", s),
-                web_service=await c.resolve("WebService", s),
-            )
-
-        container.register("CacheService", lambda c, s: CacheService(), cache_lifetime)
-        container.register("FileService", lambda c, s: FileService(), file_lifetime)
-        container.register(
-            "BasicTokenService",
-            lambda c, s: BasicTokenService(),
-            basic_token_service_lifetime,
-        )
-        container.register("EmailService", lambda c, s: EmailService(), email_lifetime)
-        container.register(
-            "OAuthService", lambda c, s: OAuthService(), oauth_service_lifetime
-        )
-        container.register(
-            "WebService", lambda c, s: WebService(), web_service_lifetime
-        )
-
-        container.register("TokenService", token_factory, token_service_lifetime)
-        container.register("PaymentService", payment_factory, payment_service_lifetime)
-        container.register("UserService", user_factory, user_service_lifetime)
-        container.register("OrderService", order_factory, order_service_lifetime)
-        container.register(
-            "CategoryService", category_factory, category_service_lifetime
-        )
-        container.register(
-            "RestaurantService", restaurant_factory, restaurant_service_lifetime
-        )
-        container.register(
-            "EmployeeService", employee_factory, employee_service_lifetime
-        )
-        container.register(
-            "DeliveryService", delivery_factory, delivery_service_lifetime
-        )
-        container.register("DriverService", driver_factory, driver_service_lifetime)
-        container.register(
-            "FavouriteService", favourite_factory, favourite_service_lifetime
-        )
-        container.register("ReviewService", review_factory, review_service_lifetime)
-        container.register(
-            "ReservationService", reservation_factory, reservation_service_lifetime
-        )
-        container.register("BookingService", booking_factory, booking_service_lifetime)
-        container.register("FoodService", food_factory, food_service_lifetime)
-        container.register("DrinkService", drink_factory, drink_service_lifetime)
-        container.register("ComboService", combo_factory, combo_service_lifetime)
-        container.register(
-            "DiscountService", discount_factory, discount_service_lifetime
-        )
-        container.register("AuthService", auth_factory, auth_service_lifetime)
+        logger.info("[Container] Services registered successfully")
         return container
+
     except Exception as e:
         logger.error(f"[Container] Services registration failed: {e}")
         raise

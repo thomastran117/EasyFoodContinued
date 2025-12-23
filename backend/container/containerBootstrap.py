@@ -14,7 +14,19 @@ async def bootstrap() -> Container:
         container = Container()
         await init_connections()
         register_repositories(container)
-        register_services(container)
+        register_services(
+            container,
+            default_lifetime="scoped",
+            overrides={
+                "CacheService": "singleton",
+                "FileService": "singleton",
+                "BasicTokenService": "singleton",
+                "EmailService": "transient",
+                "OAuthService": "transient",
+                "WebService": "transient",
+                "TokenService": "transient",
+            },
+        )
         register_controllers(container)
 
         await container.build()

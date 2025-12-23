@@ -3,12 +3,12 @@ from typing import Any, Awaitable, Callable
 
 from pymongo.errors import (
     AutoReconnect,
+    DuplicateKeyError,
     NetworkTimeout,
     NotPrimaryError,
-    ServerSelectionTimeoutError,
-    PyMongoError,
-    DuplicateKeyError,
     OperationFailure,
+    PyMongoError,
+    ServerSelectionTimeoutError,
 )
 
 from utilities.logger import logger
