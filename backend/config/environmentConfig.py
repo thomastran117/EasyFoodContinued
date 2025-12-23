@@ -9,11 +9,10 @@ from utilities.logger import logger
 
 class Settings(BaseSettings):
     mode: str = "development"
-    database_url: str
     redis_url: str
+    mongo_url: str
     celery_broker_url: str
     celery_result_backend: str
-    mongo_url: str
     port: int = 8040
     model_config = ConfigDict(
         extra="ignore",
@@ -48,13 +47,6 @@ class Settings(BaseSettings):
     paypal_mode: str = "sandbox"
     paypal_client_id: Optional[str] = None
     paypal_secret_key: Optional[str] = None
-
-    @field_validator("database_url", "redis_url")
-    def must_not_be_empty(cls, v, field):
-        if not v:
-            logger.error(f"The {field.name} is not set in .env")
-            raise ValueError(f"The {field.name} is not set in .env")
-        return v
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
