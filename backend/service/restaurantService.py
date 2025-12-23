@@ -3,12 +3,12 @@ from typing import Optional
 
 from fastapi import UploadFile
 
-from schema.mongo_template import Restaurant
 from service.baseService import BaseService
 from service.cacheService import CacheService
 from service.categoryService import CategoryService
 from service.fileService import FileService
 from service.userService import UserService
+from templates.restaurantTemplate import Restaurant
 from utilities.errorRaiser import (
     AppHttpException,
     InternalErrorException,

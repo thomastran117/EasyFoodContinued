@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import List, Optional
 
-from schema.mongo_template import Category
 from service.cacheService import CacheService
+from templates.categoryTemplate import Category
 from utilities.errorRaiser import BadRequestException, NotFoundException
 
 
