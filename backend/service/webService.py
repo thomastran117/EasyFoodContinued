@@ -51,9 +51,6 @@ class WebService:
         self.timeout = httpx.Timeout(5.0, connect=3.0)
         self.max_retries = 3
 
-    # ------------------------------------------------------------------
-    # Google reCAPTCHA
-    # ------------------------------------------------------------------
     def is_recaptcha_available(self) -> bool:
         return bool(self.recaptcha_secret)
 
