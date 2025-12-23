@@ -1,131 +1,177 @@
+import asyncio
+import random
+from typing import Callable, TypeVar
+
 import httpx
-import requests
 
 from config.environmentConfig import settings
-from utilities.errorRaiser import AppHttpException, InternalErrorException
 from utilities.logger import logger
+
+T = TypeVar("T")
+
+
+async def retry_async(
+    fn: Callable[[], T],
+    *,
+    retries: int = 3,
+    base_delay: float = 0.5,
+    factor: float = 2.0,
+    max_delay: float = 5.0,
+    retry_on: tuple[type[Exception], ...] = (Exception,),
+):
+    attempt = 0
+
+    while True:
+        try:
+            return await fn()
+        except retry_on as e:
+            attempt += 1
+            if attempt > retries:
+                raise
+
+            delay = min(base_delay * (factor ** (attempt - 1)), max_delay)
+            delay += random.uniform(0, 0.2)
+            await asyncio.sleep(delay)
 
 
 class WebService:
+    """
+    Unified external API service for:
+      - Google reCAPTCHA
+      - PayPal
+    """
+
     def __init__(self):
-        """Unified external API service for Google reCAPTCHA and PayPal."""
-        self.RECAPTCHA_SECRET = settings.google_secret_key
+        self.recaptcha_secret = settings.google_secret_key
         self.paypal_base_url = "https://api-m.sandbox.paypal.com"
         self.paypal_client_id = settings.paypal_client_id
-        self.paypal_secret_key = settings.paypal_secret_key
-        self.backend_url = "http://localhost:8040/api"
+        self.paypal_secret = settings.paypal_secret_key
+        self.backend_url = settings.backend_url
 
-    def isRecaptchaAvaliable(self) -> bool:
-        return self.RECAPTCHA_SECRET is not None
+        self.timeout = httpx.Timeout(5.0, connect=3.0)
+        self.max_retries = 3
+
+    # ------------------------------------------------------------------
+    # Google reCAPTCHA
+    # ------------------------------------------------------------------
+    def is_recaptcha_available(self) -> bool:
+        return bool(self.recaptcha_secret)
 
     async def verifyGoogleCaptcha(self, token: str) -> bool:
-        """Verify Google reCAPTCHA token asynchronously."""
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.post(
+        """
+        Fail-open captcha verification.
+        If Google is down → do NOT block users.
+        """
+        if not self.is_recaptcha_available():
+            logger.warn("[WebService] reCAPTCHA disabled — skipping validation")
+            return True
+
+        async def op():
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                r = await client.post(
                     "https://www.google.com/recaptcha/api/siteverify",
                     data={
-                        "secret": self.RECAPTCHA_SECRET,
+                        "secret": self.recaptcha_secret,
                         "response": token,
                     },
                 )
+                r.raise_for_status()
+                return r.json()
 
-            result = response.json()
+        try:
+            result = await retry_async(
+                op,
+                retries=self.max_retries,
+                retry_on=(httpx.RequestError, httpx.HTTPStatusError),
+            )
+
             success = result.get("success", False)
-            score = result.get("score", 0)
-
+            score = result.get("score", 0.0)
             return success and score >= 0.5
 
-        except httpx.RequestError as e:
-            logger.error(f"[WebService] Recaptcha network error: {e}")
-            return False
         except Exception as e:
-            logger.error(f"[WebService] Recaptcha unexpected error: {e}")
-            return False
+            logger.error(f"[WebService] reCAPTCHA failed — fail open: {e}")
+            return True
 
-    def getPaypalToken(self) -> str:
-        """Retrieve PayPal OAuth2 access token."""
+    async def _get_paypal_token(self) -> str:
+        async def op():
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                r = await client.post(
+                    f"{self.paypal_base_url}/v1/oauth2/token",
+                    auth=(self.paypal_client_id, self.paypal_secret),
+                    data={"grant_type": "client_credentials"},
+                )
+                r.raise_for_status()
+                return r.json()["access_token"]
+
         try:
-            r = requests.post(
-                f"{self.paypal_base_url}/v1/oauth2/token",
-                auth=(self.paypal_client_id, self.paypal_secret_key),
-                data={"grant_type": "client_credentials"},
+            token = await retry_async(
+                op,
+                retries=self.max_retries,
+                retry_on=(httpx.RequestError, httpx.HTTPStatusError),
             )
-            r.raise_for_status()
-            token = r.json()["access_token"]
-            logger.info("[WebService] PayPal access token retrieved successfully.")
+            logger.info("[WebService] PayPal access token retrieved")
             return token
-        except requests.RequestException as e:
-            logger.error(f"[WebService] Failed to get PayPal token: {e}")
+        except Exception as e:
+            logger.error(f"[WebService] PayPal token fetch failed: {e}")
             raise
 
-    def createPayPalOrder(self, total: float, currency: str = "CAD") -> dict:
-        """Create a new PayPal order."""
+    async def createPayPalOrder(self, total: float, currency: str = "CAD") -> dict:
+        token = await self._get_paypal_token()
+
+        payload = {
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {"amount": {"currency_code": currency, "value": f"{total:.2f}"}}
+            ],
+            "application_context": {
+                "return_url": f"{self.backend_url}/payment/capture",
+                "cancel_url": f"{self.backend_url}/payment/cancel",
+            },
+        }
+
+        async def op():
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                r = await client.post(
+                    f"{self.paypal_base_url}/v2/checkout/orders",
+                    headers={"Authorization": f"Bearer {token}"},
+                    json=payload,
+                )
+                r.raise_for_status()
+                return r.json()
+
         try:
-            token = self.getPaypalToken()
-            payload = {
-                "intent": "CAPTURE",
-                "purchase_units": [
-                    {"amount": {"currency_code": currency, "value": f"{total:.2f}"}}
-                ],
-                "application_context": {
-                    "return_url": f"{self.backend_url}/payment/capture",
-                    "cancel_url": f"{self.backend_url}/payment/cancel",
-                },
-            }
-
-            r = requests.post(
-                f"{self.paypal_base_url}/v2/checkout/orders",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
+            result = await retry_async(
+                op,
+                retries=self.max_retries,
+                retry_on=(httpx.RequestError, httpx.HTTPStatusError),
             )
-            r.raise_for_status()
-            logger.info("[WebService] PayPal order created successfully.")
-            return r.json()
-
-        except requests.RequestException as e:
+            logger.info("[WebService] PayPal order created")
+            return result
+        except Exception as e:
             logger.error(f"[WebService] Failed to create PayPal order: {e}")
             raise
 
-    def capturePaypalOrder(self, order_id: str) -> dict:
-        """Capture a PayPal order."""
-        try:
-            token = self.getPaypalToken()
-            r = requests.post(
-                f"{self.paypal_base_url}/v2/checkout/orders/{order_id}/capture",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-            )
-            r.raise_for_status()
-            logger.info(f"[WebService] PayPal order {order_id} captured successfully.")
-            return r.json()
-        except requests.RequestException as e:
-            logger.error(f"[WebService] Failed to capture PayPal order {order_id}: {e}")
-            raise
+    async def capturePaypalOrder(self, order_id: str) -> dict:
+        token = await self._get_paypal_token()
 
-    def cancelPayPalOrder(self, order_id: str, token: str) -> dict:
-        """Cancel a PayPal order."""
-        try:
-            url = f"{self.paypal_base_url}/v2/checkout/orders/{order_id}/void"
-            r = requests.post(
-                url,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-            )
-            if r.status_code == 204:
-                logger.info(
-                    f"[WebService] PayPal order {order_id} voided successfully."
+        async def op():
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                r = await client.post(
+                    f"{self.paypal_base_url}/v2/checkout/orders/{order_id}/capture",
+                    headers={"Authorization": f"Bearer {token}"},
                 )
-                return {"status": "cancelled"}
-            logger.warning(f"[WebService] Cancel PayPal order failed: {r.text}")
-            return {"status": "error", "response": r.text}
-        except requests.RequestException as e:
-            logger.error(f"[WebService] Failed to cancel PayPal order {order_id}: {e}")
+                r.raise_for_status()
+                return r.json()
+
+        try:
+            result = await retry_async(
+                op,
+                retries=self.max_retries,
+                retry_on=(httpx.RequestError, httpx.HTTPStatusError),
+            )
+            logger.info(f"[WebService] PayPal order {order_id} captured")
+            return result
+        except Exception as e:
+            logger.error(f"[WebService] Capture failed for {order_id}: {e}")
             raise
