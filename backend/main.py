@@ -32,6 +32,8 @@ async def lifespan(app: FastAPI):
     try:
         container = await bootstrap()
         app.state.container = container
+        port = int(settings.port)
+        logger.info(f"Server starting at http://localhost:{port}")
         yield
     except Exception as e:
         logger.error(f"[Server] Container startup failed: {e}", exc_info=True)
@@ -100,7 +102,6 @@ def health():
 if __name__ == "__main__":
     try:
         port = int(settings.port)
-        logger.info(f"Server starting at http://localhost:{port}")
 
         uvicorn.run(
             "main:app",
