@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError

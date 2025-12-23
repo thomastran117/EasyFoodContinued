@@ -37,14 +37,9 @@ class AuthService:
         self, email: str, password: str, captcha: str, remember: bool = False
     ):
         try:
-            if self.web_service.isRecaptchaAvaliable():
-                is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
-                if not is_valid_captcha:
-                    raise UnauthorizedException("Invalid captcha")
-            else:
-                logger.warn(
-                    f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
-                )
+            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
+            if not is_valid_captcha:
+                raise UnauthorizedException("Invalid captcha")
 
             user = await self.user_repository.getByEmail(email)
 
@@ -66,14 +61,9 @@ class AuthService:
 
     async def signupUser(self, email: str, password: str, role: str, captcha: str):
         try:
-            if self.web_service.isRecaptchaAvaliable():
-                is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
-                if not is_valid_captcha:
-                    raise UnauthorizedException("Invalid captcha")
-            else:
-                logger.warn(
-                    f"[AuthService] localAuthenticate: WebService is misconfigured - skipping recaptcha"
-                )
+            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
+            if not is_valid_captcha:
+                raise UnauthorizedException("Invalid captcha")
 
             existing_user = await self.user_repository.getByEmail(email)
             if existing_user:
@@ -99,8 +89,12 @@ class AuthService:
             logger.error(f"[AuthService] signupUser failed: {e}", exc_info=True)
             raise InternalErrorException("Internal server error")
 
-    async def verifyUser(self, token: str):
+    async def verifyUser(self, token: str, captcha: str):
         try:
+            is_valid_captcha = await self.web_service.verifyGoogleCaptcha(captcha)
+            if not is_valid_captcha:
+                raise UnauthorizedException("Invalid captcha")
+
             if not self.email_service.isEmailAvaliable():
                 logger.warn("[AuthService] Email service is misconfigured - exiting")
                 raise ServiceUnavailableException(
