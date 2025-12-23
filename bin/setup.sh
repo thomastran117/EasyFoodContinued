@@ -109,20 +109,6 @@ fi
 ok "Backend dependencies installed."
 
 echo
-echo "=== Alembic migration ==="
-if [[ ! -f "$BACKEND/alembic.ini" ]]; then
-  warn "alembic.ini not found in $BACKEND. Skipping migrations."
-else
-  pushd "$BACKEND" >/dev/null
-  info "Running 'alembic upgrade head' with venv python..."
-  if ! "$VENV_PY" -m alembic upgrade head; then
-    err "alembic upgrade head failed. Ensure Alembic is in your requirements and DATABASE_URL is valid."
-    popd >/dev/null
-    exit 1
-  fi
-  popd >/dev/null
-  ok "Alembic migration completed."
-fi
 
 echo
 echo "Setup finished successfully."

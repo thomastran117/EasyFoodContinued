@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from dtos.orderDtos import CancelOrderDto, CreateOrderDto
-from schema.psql_template import OrderStatus
 from service.orderService import OrderService
 from service.paymentService import PaymentService
 from utilities.errorRaiser import raise_error

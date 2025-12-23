@@ -35,21 +35,6 @@ step "Building images..."
 step "Starting database and redis..."
 docker compose -f "$COMPOSE_FILE" up -d "$DB_SERVICE" redis
 
-step "Waiting for Postgres ($DB_SERVICE) to be ready..."
-MAX_ATTEMPTS=60
-ATTEMPT=0
-until docker compose -f "$COMPOSE_FILE" exec -T "$DB_SERVICE" pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; do
-  ATTEMPT=$((ATTEMPT+1))
-  if (( ATTEMPT >= MAX_ATTEMPTS )); then
-    echo "❌ Postgres did not become ready in time."
-    exit 1
-  fi
-  sleep 2
-done
-
-step "Applying Alembic migrations..."
-docker compose -f "$COMPOSE_FILE" run --rm "$BACKEND_SERVICE" alembic upgrade head
-
 step "Starting backend, frontend, and celery (attached)..."
 echo ""
 echo "   🌐 Frontend: http://localhost:3040"

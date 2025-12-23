@@ -1,5 +1,4 @@
 x-environment-defaults: &default-env
-  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/postgres"
   REDIS_URL: "redis://redis:6379/0"
   CELERY_BROKER_URL: "redis://redis:6379/0"
   CELERY_RESULT_BACKEND: "redis://redis:6379/1"
@@ -40,8 +39,6 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      db:
-        condition: service_healthy
       mongo:
         condition: service_started
       redis:
@@ -58,34 +55,12 @@ services:
     environment:
       <<: *default-env
     depends_on:
-      db:
-        condition: service_healthy
       mongo:
         condition: service_started
       redis:
         condition: service_started
     volumes:
       - ./backend:/app
-    networks:
-      - easyfood_net
-
-  db:
-    image: postgres:16
-    container_name: easyfood-psql
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
     networks:
       - easyfood_net
 
@@ -114,5 +89,4 @@ networks:
   easyfood_net:
 
 volumes:
-  pgdata:
   mongodata:

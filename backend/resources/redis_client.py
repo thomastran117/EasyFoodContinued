@@ -14,7 +14,7 @@ async def init_redis():
         if MODE in {"ci", "testing", "test"}:
             logger.info(f"Skipping Redis connection (mode={MODE})")
 
-        redis_client.ping()
+        await redis_client.ping()
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
         raise
